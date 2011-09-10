@@ -38,330 +38,9 @@ def usage():
 def slicepic(figurenumber, w, h, inputslice, thecaption, themin, themax, dirname, outputname,colormap):
     P.figure(figurenumber, figsize=(w,h))
     figurenumber = figurenumber + 1
-    theimage = showslice2(inputslice,thecaption,themin,themax,colormap)
+    theimage = sf.showslice2(inputslice,thecaption,themin,themax,colormap)
     P.savefig( dirname+outputname, format='png' )
     return(figurenumber, theimage)
-
-# generate a table of weisskoff data
-def weisstable(roiareas,weisscvs,projcvs):
-    theshape=roiareas.shape
-    numareas=theshape[0]
-    
-    tablestring=tablerowtag(
-	tableentrytag("Region Size")+
-	tableentrytag("Predicted Std Dev")+
-	tableentrytag("Actual Std Dev")+
-	tableentrytag("Ratio")
-	)
-    for i in range(0,numareas):
-        tablestring=tablestring+tablerowtag(
-	    tableentrytag("%d" % (roiareas[i]))+
-	    tableentrytag("%.4f" %(projcvs[i]))+
-	    tableentrytag("%.4f" %(weisscvs[i]))+
-	    tableentrytag("%.4f" %(weisscvs[i]/projcvs[i])))
-    return(smalltag(tablepropstag(tablestring,300,"center")))
-
-def showstats(thestats):
-    formatstring = "mean = %2.2f, stddev = %2.2f, max = %2.2f, min = %2.2f"
-    interpstring = (thestats[0],thestats[1],thestats[3],thestats[4])
-    return(formatstring % interpstring)
-    
-# calculate the sum of an array across space
-def arrayspatialsum(thearray):
-    return(np.sum(thearray))
-    
-# show an roi timecourse plot
-def showtc(thexvals,theyvals,thelabel):
-    w, h = P.figaspect(0.25)
-    roiplot = P.figure(figsize=(w,h))
-    roisubplot = roiplot.add_subplot(111)
-    roisubplot.plot(thexvals, theyvals, 'b')
-    roisubplot.grid(True)
-    #roisubplot.axes.Subplot.set_pad(0.1)
-    for tick in roisubplot.xaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    for tick in roisubplot.yaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    roisubplot.set_title(thelabel,fontsize=30)
-    return()
-
-# show an roi timecourse plot and a fit line
-def showtc2(thexvals,theyvals,thefitvals,thelabel):
-    w, h = P.figaspect(0.25)
-    roiplot = P.figure(figsize=(w,h))
-    roisubplot = roiplot.add_subplot(111)
-    roisubplot.plot(thexvals, theyvals, 'b', thexvals, thefitvals, 'g')
-    roisubplot.grid(True)
-    #roisubplot.axes.Subplot.set_pad(0.1)
-    for tick in roisubplot.xaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    for tick in roisubplot.yaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    roisubplot.set_title(thelabel,fontsize=30)
-    return()
-
-# initialize and show a loglog Weiskoff plot
-def showweisskoff(theareas,thestddevs,theprojstddevs,thelabel):
-    w, h = P.figaspect(1.0)
-    roiplot = P.figure(figsize=(w,h))
-    roiplot.subplots_adjust(hspace=0.35)
-    roisubplot = roiplot.add_subplot(111)
-    thestddevs=thestddevs+0.00000001
-    roisubplot.loglog(theareas, thestddevs, 'r', theareas, theprojstddevs, 'k', basex=10)
-    roisubplot.grid(True)
-    #roiplot.title(thelabel)
-    return()
-
-# initialize and show a 2D slice from a dataset in greyscale
-def showslice2(thedata,thelabel,minval,maxval,colormap):
-    theshape=thedata.shape
-    numslices=theshape[0]
-    ysize=theshape[1]
-    xsize=theshape[2]
-    slicesqrt=int(np.ceil(np.sqrt(numslices)))
-    theslice=np.zeros((ysize*slicesqrt,xsize*slicesqrt))
-    for i in range(0,numslices):
-        ypos=int(i/slicesqrt)*ysize
-        xpos=int(i%slicesqrt)*xsize
-        theslice[ypos:ypos+ysize,xpos:xpos+xsize]=thedata[i,:,:]
-    if P.isinteractive():
-	P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.subplots_adjust(hspace=0.0)
-    P.axes([0,0,1,1], frameon = False)
-    if (colormap==0):
-        thecmap=P.cm.gray
-    else:
-	mycmdata1 = {
-	    'red'  :  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 1., 1.)),
-	    'green':  ((0., 0., 0.), (0.5, 1.0, 1.0), (1., 0., 0.)),
-	    'blue' :  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 0., 0.))
-	    }
-	thecmap = P.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
-	#thecmap=P.cm.spectral
-    theimptr = P.imshow(theslice, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
-    #P.colorbar()
-    return()
-
-# initialize and show a 2D slice from a dataset in greyscale
-def showslice3(thedata,thelabel,minval,maxval,colormap):
-    theshape=thedata.shape
-    ysize=theshape[0]
-    xsize=theshape[1]
-    theslice=np.zeros((ysize,xsize))
-    if P.isinteractive():
-	P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.subplots_adjust(hspace=0.0)
-    P.axes([0,0,1,1], frameon = False)
-    if (colormap==0):
-        thecmap=P.cm.gray
-    else:
-	mycmdata1 = {
-	    'red'  :  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 1., 1.)),
-	    'green':  ((0., 0., 0.), (0.5, 1.0, 1.0), (1., 0., 0.)),
-	    'blue' :  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 0., 0.))
-	    }
-	thecmap = P.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
-	#thecmap=P.cm.spectral
-    theimptr = P.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
-    #P.colorbar()
-    return()
-
-# show a 2D slice from a dataset in greyscale
-def showslice(theslice):
-    if P.isinteractive():
-	P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.axis('tight')
-    P.imshow(theslice, interpolation='nearest', aspect='equal', cmap=P.cm.gray)
-    P.colorbar()
-    return()
-
-def smooth(x,window_len=11,window='hanning'):
-    """smooth the data using a window with requested size.
-    
-    This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
-    (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
-    
-    input:
-        x: the input signal 
-        window_len: the dimension of the smoothing window; should be an odd integer
-        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-            flat window will produce a moving average smoothing.
-
-    output:
-        the smoothed signal
-        
-    example:
-
-    t=linspace(-2,2,0.1)
-    x=sin(t)+randn(len(t))*0.1
-    y=smooth(x)
-    
-    see also: 
-    
-    np.hanning, np.hamming, np.bartlett, np.blackman, np.convolve
-    scipy.signal.lfilter
- 
-    TODO: the window parameter could be the window itself if an array instead of a string   
-    """
-
-    if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
-
-    if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
-
-
-    if window_len<3:
-        return x
-
-
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
-
-
-    s=np.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
-    #print(len(s))
-    if window == 'flat': #moving average
-        w=ones(window_len,'d')
-    else:
-        w=eval('np.'+window+'(window_len)')
-
-    y=np.convolve(w/w.sum(),s,mode='same')
-    return y[window_len-1:-window_len+1]
-
-# Find the image intensity value that cleanly separates background from image
-def findsepval(datamat):
-    numbins=200
-    themax = datamat.max()
-    themin = datamat.min()
-    (meanhist,bins) = np.histogram(datamat,bins=numbins,range=(themin,themax))
-    smoothhist = smooth(meanhist)
-    currentpos = int(numbins*0.05)
-    minval=smoothhist[currentpos]
-    for i in range(currentpos+1,numbins):
-	if(smoothhist[i] < smoothhist[currentpos]):
-	    currentpos=i
-	if(smoothhist[i] > 1.2 * smoothhist[currentpos]):
-	    break
-    cummeanhist = np.cumsum(meanhist)
-    #print "curpos %d, cummeanhist[curpos] %2.2f, cummeanhist[numbins-1] %d" % (currentpos, cummeanhist[currentpos], cummeanhist[numbins-1])
-    cummeanhist[currentpos]
-    cumfrac=(1.0*cummeanhist[currentpos])/(1.0*cummeanhist[numbins-1])
-    sepval=bins[currentpos]
-    return([sepval,cumfrac])
-
-# given an roi and a position, mark an roi
-def markroi(theinputroi,zpos,roislice,theval):
-    xstart=theinputroi[0][0]
-    xend=theinputroi[1][0]
-    ystart=theinputroi[0][1]
-    yend=theinputroi[1][1]
-    roislice[zpos,ystart:yend,xstart:xend]=theval
-    return
-
-# given a location and a size, define the corners of an roi
-def setroilims(xpos,ypos,size):
-    if (size%2)==0:
-	halfsize=size/2
-    	return(((int(round(xpos-halfsize)),int(round(ypos-halfsize))),
-	    (int(round(xpos+halfsize)),int(round(ypos+halfsize)))))
-    else:
-	halfsize=(size-1)/2
-    	return(((int(round(xpos-halfsize)),int(round(ypos-halfsize))),
-	    (int(round(xpos+halfsize+1)),int(round(ypos+halfsize+1)))))
-
-# get an snr timecourse from the voxels of an roi
-def getroisnr(theimage,theroi,zpos):
-    xstart=theroi[0][0]
-    xend=theroi[1][0]
-    ystart=theroi[0][1]
-    yend=theroi[1][1]
-    thesubreg=theimage[:,zpos,ystart:yend,xstart:xend]
-    theshape=thesubreg.shape
-    numtimepoints=theshape[0]
-    themeans=np.zeros(numtimepoints)
-    thestddevs=np.zeros(numtimepoints)
-    themax=np.zeros(numtimepoints)
-    themin=np.zeros(numtimepoints)
-    thesnrs=np.zeros(numtimepoints)
-    timeindex=np.arange(0,numtimepoints)
-    for i in timeindex:
-        themeans[i]=np.mean(np.ravel(thesubreg[i,:,:]))
-        thestddevs[i]=np.std(np.ravel(thesubreg[i,:,:]))
-        themax[i]=np.max(np.ravel(thesubreg[i,:,:]))
-        themin[i]=np.min(np.ravel(thesubreg[i,:,:]))
-        thesnrs[i]=themeans[i]/thestddevs[i]
-    return(thesnrs)
-
-# get all the voxels from an roi and return a 2d (time by space) array
-def getroivoxels(theimage,theroi,zpos):
-    xstart=theroi[0][0]
-    xend=theroi[1][0]
-    ystart=theroi[0][1]
-    yend=theroi[1][1]
-    thesubreg=theimage[:,zpos,ystart:yend,xstart:xend]
-    theshape=thesubreg.shape
-    numtimepoints=theshape[0]
-    thevoxels=np.zeros((numtimepoints,theshape[1]*theshape[2]))
-    timeindex=np.arange(0,numtimepoints)
-    for i in timeindex:
-        thevoxels[i,:]=np.ravel(thesubreg[i,:,:])
-    return(thevoxels)
-
-# get a standard deviation timecourse from the voxels of an roi
-def getroistdtc(theimage,theroi,zpos):
-    xstart=theroi[0][0]
-    xend=theroi[1][0]
-    ystart=theroi[0][1]
-    yend=theroi[1][1]
-    thesubreg=theimage[:,zpos,ystart:yend,xstart:xend]
-    theshape=thesubreg.shape
-    numtimepoints=theshape[0]
-    thestds=np.zeros(numtimepoints)
-    timeindex=np.arange(0,numtimepoints)
-    for i in timeindex:
-        thestds[i]=np.std(np.ravel(thesubreg[i,:,:]))
-    return(thestds)
-
-# get an average timecourse from the voxels of an roi
-def getroimeantc(theimage,theroi,zpos):
-    xstart=theroi[0][0]
-    xend=theroi[1][0]
-    ystart=theroi[0][1]
-    yend=theroi[1][1]
-    thesubreg=theimage[:,zpos,ystart:yend,xstart:xend]
-    theshape=thesubreg.shape
-    numtimepoints=theshape[0]
-    themeans=np.zeros(numtimepoints)
-    timeindex=np.arange(0,numtimepoints)
-    for i in timeindex:
-        themeans[i]=np.mean(np.ravel(thesubreg[i,:,:]))
-    return(themeans)
-
-# get the average value from an roi in a 3D image
-def getroival(theimage,theroi,zpos):
-    xstart=theroi[0][0]
-    xend=theroi[1][0]
-    ystart=theroi[0][1]
-    yend=theroi[1][1]
-    theroival=np.mean(theimage[zpos,ystart:yend,xstart:xend])
-    return(theroival)
-
-# make a captioned image with statistics
-def makecaptionedimage(imagetitle,thestats,imagename,thewidth):
-    if(thestats==[]):
-        imcapstring = paratag(boldtag(imagetitle))
-    else:
-        imcapstring = paratag(boldtag(imagetitle) + breaktag(showstats(thestats)))
-    return(imcapstring + imagetag(imagename,thewidth))
 
 ########################################################################
 ########################################################################
@@ -499,7 +178,7 @@ varslice=np.var(selecteddata,0)
 ppslice=np.ptp(selecteddata,0)
 
 # calculate a mask from meanimage and find its center
-(threshguess,threshfrac) = findsepval(meanslice)
+(threshguess,threshfrac) = sf.findsepval(meanslice)
 print "Threshguess %2.2f, threshfrac %2.2f" % (threshguess, 100.0*threshfrac)
 initmask=sf.makemask(meanslice,threshfrac,0)
 threshmean=sf.getnzfracval(initmask*meanslice,0.02)
@@ -676,8 +355,8 @@ theprojstddevs=np.zeros(numrois)
 theprojcvs=np.zeros(numrois)
 thetimepoints=np.arange(0.0,tr*numtimepoints,tr)
 for i in roisizes:
-    theroi=setroilims(xcenter,ycenter,i)
-    thetimecourse=getroimeantc(selecteddata,theroi,zcenter)
+    theroi=sf.setroilims(xcenter,ycenter,i)
+    thetimecourse=sf.getroimeantc(selecteddata,theroi,zcenter)
     theweisskoffcoffs=np.polyfit(thetimepoints,thetimecourse,2)
     thefittc=sf.trendgen(thetimepoints,theweisskoffcoffs)
     thedetrendedweisskofftc=thetimecourse-thefittc
@@ -725,10 +404,10 @@ roislice=0.5*meanslice
 cornerroisize = 5
 cornerxpos=int(int(cornerroisize/2.0)+1)
 cornerypos=int(int(cornerroisize/2.0)+1)
-thecornerroi=setroilims(cornerxpos,cornerypos,cornerroisize)
+thecornerroi=sf.setroilims(cornerxpos,cornerypos,cornerroisize)
 if(isindividualcoil==0):
-    markroi(thecornerroi,zcenter,roislice,0.91*rawmeanmax)
-thecornertc=getroistdtc(selecteddata,thecornerroi,zcenter)
+    sf.markroi(thecornerroi,zcenter,roislice,0.91*rawmeanmax)
+thecornertc=sf.getroistdtc(selecteddata,thecornerroi,zcenter)
 cornermean=np.mean(thecornertc)
 
 #############################
@@ -741,14 +420,14 @@ centralroi_dtpplimits=((0,0.5),(0,0.6))
 centralroi_rawstddevlimits=((0,0.125),(0,0.15))
 centralroi_dtstddevlimits=((0,0.125),(0,0.15))
 centralroisize=10
-thecentralroi=setroilims(xcenter,ycenter,centralroisize)
+thecentralroi=sf.setroilims(xcenter,ycenter,centralroisize)
 if(isindividualcoil==0):
-    markroi(thecentralroi,zcenter,roislice,0.92*rawmeanmax)
-thecenttc=getroimeantc(selecteddata,thecentralroi,zcenter)
+    sf.markroi(thecentralroi,zcenter,roislice,0.92*rawmeanmax)
+thecenttc=sf.getroimeantc(selecteddata,thecentralroi,zcenter)
 thecentsnrvec=thecenttc/thecornertc
-thecentvoxels=getroivoxels(selecteddata,thecentralroi,zcenter)
+thecentvoxels=sf.getroivoxels(selecteddata,thecentralroi,zcenter)
 thecentsnr=np.mean(thecentsnrvec)
-thecentsfnr=getroival(sfnrslice,thecentralroi,zcenter)
+thecentsfnr=sf.getroival(sfnrslice,thecentralroi,zcenter)
 print "mean central snr,sfnr "+str(thecentsnr)+","+str(thecentsfnr)
 thetimepoints=np.arange(0.0,tr*numtimepoints,tr)
 thecentfitcoffs=np.polyfit(thetimepoints,thetimecourse,2)
@@ -823,13 +502,13 @@ if(isindividualcoil==1):
     maxloccenterx=int(round(elementmaxpos[0]))
     maxloccentery=int(round(elementmaxpos[1]))
     maxloccenterz=int(round(elementmaxpos[2]))
-    themaxlocroi=setroilims(maxloccenterx,maxloccentery,maxlocroisize)
-    markroi(themaxlocroi,maxloccenterz,roislice,0.92*rawmeanmax)
-    themaxloctc=getroimeantc(selecteddata,themaxlocroi,zcenter)
+    themaxlocroi=sf.setroilims(maxloccenterx,maxloccentery,maxlocroisize)
+    sf.markroi(themaxlocroi,maxloccenterz,roislice,0.92*rawmeanmax)
+    themaxloctc=sf.getroimeantc(selecteddata,themaxlocroi,zcenter)
     themaxlocsnrvec=themaxloctc/thecornertc
-    themaxlocvoxels=getroivoxels(selecteddata,themaxlocroi,zcenter)
+    themaxlocvoxels=sf.getroivoxels(selecteddata,themaxlocroi,zcenter)
     themaxlocsnr=np.mean(themaxlocsnrvec)
-    themaxlocsfnr=getroival(sfnrslice,themaxlocroi,zcenter)
+    themaxlocsfnr=sf.getroival(sfnrslice,themaxlocroi,zcenter)
     print "mean maxloc snr,sfnr "+str(themaxlocsnr)+","+str(themaxlocsfnr)
     thetimepoints=np.arange(0.0,tr*numtimepoints,tr)
     themaxlocfitcoffs=np.polyfit(thetimepoints,thetimecourse,2)
@@ -872,43 +551,43 @@ if(isindividualcoil==1):
 #
 print "Analyzing phased array ROIs..."
 
-coildata = \
-[[ 'H1' ,   32.2 , 29.9 , 13.7083425891 , 42.964948901 , 28.0100913861 , 22.9417612371 , 0.686342669504 , -0.143547282337 , 0.534641437457 ], \
- [ 'H2' ,   32.2 , 29.9 , 13.7083425891 , 37.4016170534 , 40.0389875195 , 25.2266763628 , 0.329400144891 , 0.551096968041 , 0.665197834262 ], \
- [ 'H3' ,   32.2 , 29.9 , 13.7083425891 , 43.6957159186 , 33.6969950084 , 26.15480836 , 0.664143251597 , 0.17892303095 , 0.705504191638 ], \
- [ 'H4' ,   32.2 , 29.9 , 13.7083425891 , 39.342511644 , 21.4716900377 , 26.4535954444 , 0.408581359381 , -0.518626182677 , 0.7350831935 ], \
- [ 'H5' ,   32.2 , 29.9 , 13.7083425891 , 28.5459466637 , 20.1905428172 , 26.7164612498 , -0.215855031737 , -0.574544271594 , 0.750606415082 ], \
- [ 'H6' ,   32.2 , 29.9 , 13.7083425891 , 23.2546980209 , 28.3256535192 , 25.9350485719 , -0.504637383003 , -0.0943597595371 , 0.702834443926 ], \
- [ 'H7' ,   32.2 , 29.9 , 13.7083425891 , 27.6210265294 , 35.977287542 , 25.2607177856 , -0.224100358067 , 0.316439931525 , 0.660225547255 ], \
- [ 'H8' ,   32.2 , 29.9 , 13.7083425891 , 38.4843581961 , 45.8973588485 , 20.57984148 , 0.363066912593 , 0.843334807426 , 0.38764496171 ], \
- [ 'H9' ,   32.2 , 29.9 , 13.7083425891 , 45.9251163156 , 40.984705969 , 19.1136264104 , 0.78716533336 , 0.542183643167 , 0.287741125976 ], \
- [ 'H10' ,  32.2 , 29.9 , 13.7083425891 , 48.9834153261 , 29.8642029302 , 20.3661341716 , 0.929188910642 , -0.0367319735672 , 0.359200955381 ], \
- [ 'H11' ,  32.2 , 29.9 , 13.7083425891 , 45.8034369362 , 19.9407813836 , 19.0872747851 , 0.757026293583 , -0.586929646958 , 0.27874667611 ], \
- [ 'H12' ,  32.2 , 29.9 , 13.7083425891 , 35.8661495329 , 13.0043690248 , 20.4367020402 , 0.194472924692 , -0.906785402977 , 0.362258329936 ], \
- [ 'H13' ,  32.2 , 29.9 , 13.7083425891 , 23.5995114328 , 15.1173719171 , 20.0598240878 , -0.508431587393 , -0.773156034202 , 0.349057659982 ], \
- [ 'H14' ,  32.2 , 29.9 , 13.7083425891 , 16.7668641226 , 21.6244127374 , 19.1025665617 , -0.8396244467 , -0.454997163282 , 0.287006658507 ], \
- [ 'H15' ,  32.2 , 29.9 , 13.7083425891 , 15.0575673462 , 31.6428114281 , 20.2198560277 , -0.92682121424 , 0.0949103241031 , 0.353099548259 ], \
- [ 'H16' ,  32.2 , 29.9 , 13.7083425891 , 20.152672608 , 42.5840922143 , 19.0117148923 , -0.64979307412 , 0.698135579607 , 0.291258872889 ], \
- [ 'H17' ,  32.2 , 29.9 , 13.7083425891 , 28.8123057976 , 47.5514803475 , 20.6258547932 , -0.15527645077 , 0.904234683939 , 0.392908991401 ], \
- [ 'H18' ,  32.2 , 29.9 , 13.7083425891 , 36.9193476743 , 46.6423682447 , 12.3135387543 , 0.301537943365 , 0.851712451111 , -0.0702748530681 ], \
- [ 'H19' ,  32.2 , 29.9 , 13.7083425891 , 50.5680421244 , 36.0475571125 , 12.8565693456 , 0.95718730761 , 0.274281135701 , -0.0339557259062 ], \
- [ 'H20' ,  32.2 , 29.9 , 13.7083425891 , 51.1123027103 , 24.8984550162 , 12.9983951787 , 0.953967068348 , -0.294732115662 , -0.0222483507792 ], \
- [ 'H21' ,  32.2 , 29.9 , 13.7083425891 , 42.9897279881 , 14.2187631383 , 12.7987799925 , 0.600246890071 , -0.796184902727 , -0.0329639248684 ], \
- [ 'H22' ,  32.2 , 29.9 , 13.7083425891 , 31.0853307034 , 13.3681516475 , 12.8478366965 , -0.0817298438145 , -0.989760146416 , -0.0273984930497 ], \
- [ 'H23' ,  32.2 , 29.9 , 13.7083425891 , 21.1624486687 , 14.3378945165 , 13.0668031136 , -0.631896347923 , -0.771970379824 , -0.0174681436609 ], \
- [ 'H24' ,  32.2 , 29.9 , 13.7083425891 , 12.4410656549 , 27.1218000635 , 12.8424860854 , -0.985547677503 , -0.154727937506 , -0.0335470290739 ], \
- [ 'H25' ,  32.2 , 29.9 , 13.7083425891 , 14.9558069749 , 38.3093946903 , 12.6730259116 , -0.886481739897 , 0.456950323494 , -0.0411898753107 ], \
- [ 'H26' ,  32.2 , 29.9 , 13.7083425891 , 24.388553153 , 47.4206495081 , 12.1140818206 , -0.405073084648 , 0.908230801413 , -0.0723320106235 ], \
- [ 'H27' ,  32.2 , 29.9 , 13.7083425891 , 48.909653207 , 31.3813336211 , 6.41880935329 , 0.919150132757 , 0.0393627617215 , -0.373128714066 ], \
- [ 'H28' ,  32.2 , 29.9 , 13.7083425891 , 45.9374501414 , 20.9978126842 , 6.85625931307 , 0.770545964052 , -0.52008435123 , -0.354460723764 ], \
- [ 'H29' ,  32.2 , 29.9 , 13.7083425891 , 39.9108607093 , 13.7648262199 , 9.75553405599 , 0.410816532572 , -0.868628737298 , -0.197864098767 ], \
- [ 'H30' ,  32.2 , 29.9 , 13.7083425891 , 25.4615393928 , 14.1787376984 , 8.51062106553 , -0.279532913232 , -0.873602338852 , -0.258031795216 ], \
- [ 'H31' ,  32.2 , 29.9 , 13.7083425891 , 16.891971643 , 22.1771607521 , 5.75521104587 , -0.815064663484 , -0.382622015372 , -0.408913118778 ], \
- [ 'H32' ,  32.2 , 29.9 , 13.7083425891 , 16.1416671821 , 32.9061734579 , 5.86933917773 , -0.893075950616 , 0.167898676664 , -0.401084216668 ], \
- [ 'H1P' ,  32.0 , 30.8 , 13.7040225613 , 39.3099248626 , 37.6563795847 , 16.3467547135 , 0.479931606088 , 0.384604308487 , 0.164586949593 ], \
- [ 'H2P' ,  32.0 , 30.8 , 13.7040225613 , 40.4912112885 , 39.5227617618 , 16.2696454637 , 0.545311566783 , 0.496448258246 , 0.167134718355 ], \
- [ 'H3P' ,  32.0 , 30.8 , 13.7040225613 , 43.8403017673 , 32.5545271047 , 16.1373848907 , 0.74505792762 , 0.0809980813256 , 0.190449585541 ], \
- [ 'H4P' ,  32.0 , 30.8 , 13.7040225613 , 40.9056354712 , 29.6925025343 , 15.7152747417 , 0.572279360204 , -0.075538193924 , 0.127866077223 ]] 
+coildata = sf.getphasedarrayelementdata()
+#[[ 'H1' ,   32.2 , 29.9 , 13.7083425891 , 42.964948901 , 28.0100913861 , 22.9417612371 , 0.686342669504 , -0.143547282337 , 0.534641437457 ], \
+ #[ 'H2' ,   32.2 , 29.9 , 13.7083425891 , 37.4016170534 , 40.0389875195 , 25.2266763628 , 0.329400144891 , 0.551096968041 , 0.665197834262 ], \
+ #[ 'H3' ,   32.2 , 29.9 , 13.7083425891 , 43.6957159186 , 33.6969950084 , 26.15480836 , 0.664143251597 , 0.17892303095 , 0.705504191638 ], \
+ #[ 'H4' ,   32.2 , 29.9 , 13.7083425891 , 39.342511644 , 21.4716900377 , 26.4535954444 , 0.408581359381 , -0.518626182677 , 0.7350831935 ], \
+ #[ 'H5' ,   32.2 , 29.9 , 13.7083425891 , 28.5459466637 , 20.1905428172 , 26.7164612498 , -0.215855031737 , -0.574544271594 , 0.750606415082 ], \
+ #[ 'H6' ,   32.2 , 29.9 , 13.7083425891 , 23.2546980209 , 28.3256535192 , 25.9350485719 , -0.504637383003 , -0.0943597595371 , 0.702834443926 ], \
+ #[ 'H7' ,   32.2 , 29.9 , 13.7083425891 , 27.6210265294 , 35.977287542 , 25.2607177856 , -0.224100358067 , 0.316439931525 , 0.660225547255 ], \
+ #[ 'H8' ,   32.2 , 29.9 , 13.7083425891 , 38.4843581961 , 45.8973588485 , 20.57984148 , 0.363066912593 , 0.843334807426 , 0.38764496171 ], \
+ #[ 'H9' ,   32.2 , 29.9 , 13.7083425891 , 45.9251163156 , 40.984705969 , 19.1136264104 , 0.78716533336 , 0.542183643167 , 0.287741125976 ], \
+ #[ 'H10' ,  32.2 , 29.9 , 13.7083425891 , 48.9834153261 , 29.8642029302 , 20.3661341716 , 0.929188910642 , -0.0367319735672 , 0.359200955381 ], \
+ #[ 'H11' ,  32.2 , 29.9 , 13.7083425891 , 45.8034369362 , 19.9407813836 , 19.0872747851 , 0.757026293583 , -0.586929646958 , 0.27874667611 ], \
+ #[ 'H12' ,  32.2 , 29.9 , 13.7083425891 , 35.8661495329 , 13.0043690248 , 20.4367020402 , 0.194472924692 , -0.906785402977 , 0.362258329936 ], \
+ #[ 'H13' ,  32.2 , 29.9 , 13.7083425891 , 23.5995114328 , 15.1173719171 , 20.0598240878 , -0.508431587393 , -0.773156034202 , 0.349057659982 ], \
+ #[ 'H14' ,  32.2 , 29.9 , 13.7083425891 , 16.7668641226 , 21.6244127374 , 19.1025665617 , -0.8396244467 , -0.454997163282 , 0.287006658507 ], \
+ #[ 'H15' ,  32.2 , 29.9 , 13.7083425891 , 15.0575673462 , 31.6428114281 , 20.2198560277 , -0.92682121424 , 0.0949103241031 , 0.353099548259 ], \
+ #[ 'H16' ,  32.2 , 29.9 , 13.7083425891 , 20.152672608 , 42.5840922143 , 19.0117148923 , -0.64979307412 , 0.698135579607 , 0.291258872889 ], \
+ #[ 'H17' ,  32.2 , 29.9 , 13.7083425891 , 28.8123057976 , 47.5514803475 , 20.6258547932 , -0.15527645077 , 0.904234683939 , 0.392908991401 ], \
+ #[ 'H18' ,  32.2 , 29.9 , 13.7083425891 , 36.9193476743 , 46.6423682447 , 12.3135387543 , 0.301537943365 , 0.851712451111 , -0.0702748530681 ], \
+ #[ 'H19' ,  32.2 , 29.9 , 13.7083425891 , 50.5680421244 , 36.0475571125 , 12.8565693456 , 0.95718730761 , 0.274281135701 , -0.0339557259062 ], \
+ #[ 'H20' ,  32.2 , 29.9 , 13.7083425891 , 51.1123027103 , 24.8984550162 , 12.9983951787 , 0.953967068348 , -0.294732115662 , -0.0222483507792 ], \
+ #[ 'H21' ,  32.2 , 29.9 , 13.7083425891 , 42.9897279881 , 14.2187631383 , 12.7987799925 , 0.600246890071 , -0.796184902727 , -0.0329639248684 ], \
+ #[ 'H22' ,  32.2 , 29.9 , 13.7083425891 , 31.0853307034 , 13.3681516475 , 12.8478366965 , -0.0817298438145 , -0.989760146416 , -0.0273984930497 ], \
+ #[ 'H23' ,  32.2 , 29.9 , 13.7083425891 , 21.1624486687 , 14.3378945165 , 13.0668031136 , -0.631896347923 , -0.771970379824 , -0.0174681436609 ], \
+ #[ 'H24' ,  32.2 , 29.9 , 13.7083425891 , 12.4410656549 , 27.1218000635 , 12.8424860854 , -0.985547677503 , -0.154727937506 , -0.0335470290739 ], \
+ #[ 'H25' ,  32.2 , 29.9 , 13.7083425891 , 14.9558069749 , 38.3093946903 , 12.6730259116 , -0.886481739897 , 0.456950323494 , -0.0411898753107 ], \
+ #[ 'H26' ,  32.2 , 29.9 , 13.7083425891 , 24.388553153 , 47.4206495081 , 12.1140818206 , -0.405073084648 , 0.908230801413 , -0.0723320106235 ], \
+ #[ 'H27' ,  32.2 , 29.9 , 13.7083425891 , 48.909653207 , 31.3813336211 , 6.41880935329 , 0.919150132757 , 0.0393627617215 , -0.373128714066 ], \
+ #[ 'H28' ,  32.2 , 29.9 , 13.7083425891 , 45.9374501414 , 20.9978126842 , 6.85625931307 , 0.770545964052 , -0.52008435123 , -0.354460723764 ], \
+ #[ 'H29' ,  32.2 , 29.9 , 13.7083425891 , 39.9108607093 , 13.7648262199 , 9.75553405599 , 0.410816532572 , -0.868628737298 , -0.197864098767 ], \
+ #[ 'H30' ,  32.2 , 29.9 , 13.7083425891 , 25.4615393928 , 14.1787376984 , 8.51062106553 , -0.279532913232 , -0.873602338852 , -0.258031795216 ], \
+ #[ 'H31' ,  32.2 , 29.9 , 13.7083425891 , 16.891971643 , 22.1771607521 , 5.75521104587 , -0.815064663484 , -0.382622015372 , -0.408913118778 ], \
+ #[ 'H32' ,  32.2 , 29.9 , 13.7083425891 , 16.1416671821 , 32.9061734579 , 5.86933917773 , -0.893075950616 , 0.167898676664 , -0.401084216668 ], \
+ #[ 'H1P' ,  32.0 , 30.8 , 13.7040225613 , 39.3099248626 , 37.6563795847 , 16.3467547135 , 0.479931606088 , 0.384604308487 , 0.164586949593 ], \
+ #[ 'H2P' ,  32.0 , 30.8 , 13.7040225613 , 40.4912112885 , 39.5227617618 , 16.2696454637 , 0.545311566783 , 0.496448258246 , 0.167134718355 ], \
+ #[ 'H3P' ,  32.0 , 30.8 , 13.7040225613 , 43.8403017673 , 32.5545271047 , 16.1373848907 , 0.74505792762 , 0.0809980813256 , 0.190449585541 ], \
+ #[ 'H4P' ,  32.0 , 30.8 , 13.7040225613 , 40.9056354712 , 29.6925025343 , 15.7152747417 , 0.572279360204 , -0.075538193924 , 0.127866077223 ]] 
 
 isphasedarray=0
 if coilname=='32Ch_Head':
@@ -961,14 +640,14 @@ if(isphasedarray==1):
         myxloc=round(therecord[4])
         myyloc=round(therecord[5])
         myzloc=round(therecord[6])
-        theroi=setroilims(myxloc,myyloc,phasedarraysize)
+        theroi=sf.setroilims(myxloc,myyloc,phasedarraysize)
         if(isindividualcoil==0):
-            markroi(theroi,myzloc,roislice,0.95*rawmeanmax)
-        thetimecourse=getroimeantc(selecteddata,theroi,zcenter)
+            sf.markroi(theroi,myzloc,roislice,0.95*rawmeanmax)
+        thetimecourse=sf.getroimeantc(selecteddata,theroi,zcenter)
         phasedarraytcs[i,:]=thetimecourse[:]
-        thesnrvec=getroisnr(selecteddata,theroi,myzloc)
+        thesnrvec=sf.getroisnr(selecteddata,theroi,myzloc)
         phasedarrayroisnrs[i]=np.mean(thesnrvec)
-        phasedarrayroisfnrs[i]=getroival(sfnrslice,theroi,myzloc)
+        phasedarrayroisfnrs[i]=sf.getroival(sfnrslice,theroi,myzloc)
         phasedarrayroimeans[i]=np.mean(thetimecourse)
         phasedarrayroistddevs[i]=np.std(thetimecourse)
         phasedarrayroimins[i]=np.min(thetimecourse)
@@ -1065,18 +744,18 @@ theavgperiphtc=thecenttc*0.0
 theavgperiphsnrvec=thecenttc*0.0
 theperiphvoxels=np.zeros((selecteddata.shape[0],voxperroi*numperiph))
 for i in periphindex:
-    theroi=setroilims(round(thexlocs[i]),round(theylocs[i]),peripheralroisize)
+    theroi=sf.setroilims(round(thexlocs[i]),round(theylocs[i]),peripheralroisize)
     if(isindividualcoil==0):
-        markroi(theroi,zcenter,roislice,0.95*rawmeanmax)
-    thetimecourse=getroimeantc(selecteddata,theroi,zcenter)
-    newvoxels=getroivoxels(selecteddata,theroi,zcenter)
+        sf.markroi(theroi,zcenter,roislice,0.95*rawmeanmax)
+    thetimecourse=sf.getroimeantc(selecteddata,theroi,zcenter)
+    newvoxels=sf.getroivoxels(selecteddata,theroi,zcenter)
     for j in range(0,voxperroi):
         theperiphvoxels[:,i*voxperroi+j]=newvoxels[:,j]
-    thesnrvec=getroisnr(selecteddata,theroi,zcenter)
+    thesnrvec=sf.getroisnr(selecteddata,theroi,zcenter)
     thesnr=np.mean(thesnrvec)
     theavgperiphtc=theavgperiphtc+thetimecourse/(1.0*numperiph)
     theavgperiphsnrvec=theavgperiphsnrvec+thesnrvec/(1.0*numperiph)
-    thesfnrval=getroival(sfnrslice,theroi,zcenter)
+    thesfnrval=sf.getroival(sfnrslice,theroi,zcenter)
     periphangmeans[i]=100.0*np.mean(thetimecourse)/centmean
     periphangsfnrs[i]=thesfnrval
     periphangsnrs[i]=thesnr
@@ -1145,14 +824,14 @@ ghostroisize = 4
 ghostevenxpos=int(int(xsize/2)+1)
 ghostoddxpos=int(xcenterf-objectradiusx+ghostroisize-1)
 ghostypos=int(1+ghostroisize/2.0)
-theevenghostroi=setroilims(ghostevenxpos,ghostypos,ghostroisize)
-theoddghostroi=setroilims(ghostoddxpos,ghostypos,ghostroisize)
+theevenghostroi=sf.setroilims(ghostevenxpos,ghostypos,ghostroisize)
+theoddghostroi=sf.setroilims(ghostoddxpos,ghostypos,ghostroisize)
 if(isindividualcoil==0):
-    markroi(theevenghostroi,zcenter,roislice,0.97*rawmeanmax)
-    markroi(theoddghostroi,zcenter,roislice,0.97*rawmeanmax)
+    sf.markroi(theevenghostroi,zcenter,roislice,0.97*rawmeanmax)
+    sf.markroi(theoddghostroi,zcenter,roislice,0.97*rawmeanmax)
 #print theghostroi
-theevenghosttc=getroimeantc(selecteddata,theevenghostroi,zcenter)
-theoddghosttc=getroimeantc(selecteddata,theoddghostroi,zcenter)
+theevenghosttc=sf.getroimeantc(selecteddata,theevenghostroi,zcenter)
+theoddghosttc=sf.getroimeantc(selecteddata,theoddghostroi,zcenter)
 #print theghosttc
 relevenghosttc=100.0*theevenghosttc/thecenttc
 reloddghosttc=100.0*theoddghosttc/thecenttc
@@ -1225,7 +904,7 @@ roimax=np.max(roislice)
 
 P.figure(figurenumber)
 figurenumber = figurenumber + 1
-weiskoffplot = showweisskoff(roiareas,theweissstddevs,theprojstddevs,"Weisskoff plot")
+weiskoffplot = sf.showweisskoff(roiareas,theweissstddevs,theprojstddevs,"Weisskoff plot")
 P.savefig( dirname+"/procresults/weisskoffplot.png", format='png' )
 
 if(isphasedarray==1):
@@ -1236,95 +915,95 @@ if(isphasedarray==1):
     print
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    coilccimage = showslice3(coilccmatrix,"Phased array element correlation matrix",0.0,1.0,0)
+    coilccimage = sf.showslice3(coilccmatrix,"Phased array element correlation matrix",0.0,1.0,0)
     P.savefig( dirname+"/procresults/coilccmatrix.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    phasedarraysnrplot = showtc(paindices,phasedarrayroisnrs,"Phased array SNR by element")
+    phasedarraysnrplot = sf.showtc(paindices,phasedarrayroisnrs,"Phased array SNR by element")
     P.savefig( dirname+"/procresults/phasedarrayroisnrplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    phasedarraysfnrplot = showtc(paindices,phasedarrayroisfnrs,"Phased array SFNR by element")
+    phasedarraysfnrplot = sf.showtc(paindices,phasedarrayroisfnrs,"Phased array SFNR by element")
     P.savefig( dirname+"/procresults/phasedarrayroisfnrplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    phasedarrayppplot = showtc(paindices,phasedarrayroipps_percent,"Phased array p-p% variation by element")
+    phasedarrayppplot = sf.showtc(paindices,phasedarrayroipps_percent,"Phased array p-p% variation by element")
     P.savefig( dirname+"/procresults/phasedarrayroippplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    phasedarrayppdtplot = showtc(paindices,phasedarrayroipps_dt_percent,"Phased array p-p% variation by element (after detrending)")
+    phasedarrayppdtplot = sf.showtc(paindices,phasedarrayroipps_dt_percent,"Phased array p-p% variation by element (after detrending)")
     P.savefig( dirname+"/procresults/phasedarrayroippdtplot.png", format='png' )
     
 if(isindividualcoil==0):
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    centtcplot = showtc2(thetimepoints,thecenttc,centmean_dt + thefittc,"Central ROI plot (%)")
+    centtcplot = sf.showtc2(thetimepoints,thecenttc,centmean_dt + thefittc,"Central ROI plot (%)")
     P.savefig( dirname+"/procresults/centroiplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    centtcplot = showtc2(thetimepoints,thecentsnrvec,0.0*thecentsnrvec + thecentsnr,"Central ROI SNR over time")
+    centtcplot = sf.showtc2(thetimepoints,thecentsnrvec,0.0*thecentsnrvec + thecentsnr,"Central ROI SNR over time")
     P.savefig( dirname+"/procresults/centroisnrplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    centtcplot = showtc(thetimepoints,thecenttc-thefittc,"Detrended central ROI plot (%)")
+    centtcplot = sf.showtc(thetimepoints,thecenttc-thefittc,"Detrended central ROI plot (%)")
     P.savefig( dirname+"/procresults/centroidtplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    periphintensityplot = showtc2(periphanglesd,periphangmeans,0.0*periphanglesd + meanangperiphval,"Relative peripheral image intensity (%)")
+    periphintensityplot = sf.showtc2(periphanglesd,periphangmeans,0.0*periphanglesd + meanangperiphval,"Relative peripheral image intensity (%)")
     P.savefig( dirname+"/procresults/periphroiplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    periphsfnrplot = showtc2(periphanglesd,periphangsfnrs,0.0*periphanglesd + meanangperiphsfnr,"Absolute peripheral SFNR")
+    periphsfnrplot = sf.showtc2(periphanglesd,periphangsfnrs,0.0*periphanglesd + meanangperiphsfnr,"Absolute peripheral SFNR")
     P.savefig( dirname+"/procresults/periphroisfnrplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    periphtcplot = showtc2(thetimepoints,theavgperiphtc,periphmean_dt + theperiphfittc,"Peripheral ROI plot (%)")
+    periphtcplot = sf.showtc2(thetimepoints,theavgperiphtc,periphmean_dt + theperiphfittc,"Peripheral ROI plot (%)")
     P.savefig( dirname+"/procresults/periphroitcplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    periphsnrplot = showtc2(thetimepoints,theavgperiphsnrvec,0.0*thetimepoints+meanangperiphsnr,"Peripheral ROI SNR over time")
+    periphsnrplot = sf.showtc2(thetimepoints,theavgperiphsnrvec,0.0*thetimepoints+meanangperiphsnr,"Peripheral ROI SNR over time")
     P.savefig( dirname+"/procresults/periphroisnrplot.png", format='png' )
 
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    periphdttcplot = showtc(thetimepoints,theavgperiphtc-theperiphfittc,"Detrended peripheral ROI plot (%)")
+    periphdttcplot = sf.showtc(thetimepoints,theavgperiphtc-theperiphfittc,"Detrended peripheral ROI plot (%)")
     P.savefig( dirname+"/procresults/periphroidttcplot.png", format='png' )
 
 else:
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    maxloctcplot = showtc2(thetimepoints,themaxloctc,maxlocmean_dt + thefittc,"Max sensitivity ROI plot (%)")
+    maxloctcplot = sf.showtc2(thetimepoints,themaxloctc,maxlocmean_dt + thefittc,"Max sensitivity ROI plot (%)")
     P.savefig( dirname+"/procresults/maxlocroiplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    maxloctcplot = showtc2(thetimepoints,themaxlocsnrvec,0.0*themaxlocsnrvec + themaxlocsnr,"Max sensitivity ROI SNR over time")
+    maxloctcplot = sf.showtc2(thetimepoints,themaxlocsnrvec,0.0*themaxlocsnrvec + themaxlocsnr,"Max sensitivity ROI SNR over time")
     P.savefig( dirname+"/procresults/maxlocroisnrplot.png", format='png' )
     
     P.figure(figurenumber)
     figurenumber = figurenumber + 1
-    maxloctcplot = showtc(thetimepoints,themaxloctc-thefittc,"Detrended max sensitivity ROI plot (%)")
+    maxloctcplot = sf.showtc(thetimepoints,themaxloctc-thefittc,"Detrended max sensitivity ROI plot (%)")
     P.savefig( dirname+"/procresults/maxlocroidtplot.png", format='png' )
     
 
 P.figure(figurenumber)
 figurenumber = figurenumber + 1
-oddghosttcplot = showtc2(thetimepoints,reloddghosttc,0.0*thetimepoints + oddghostmean,"Relative odd ghost ROI amplitude plot (%)")
+oddghosttcplot = sf.showtc2(thetimepoints,reloddghosttc,0.0*thetimepoints + oddghostmean,"Relative odd ghost ROI amplitude plot (%)")
 P.savefig( dirname+"/procresults/oddghostroiplot.png", format='png' )
 
 P.figure(figurenumber)
 figurenumber = figurenumber + 1
-evenghosttcplot = showtc2(thetimepoints,relevenghosttc,0.0*thetimepoints + evenghostmean,"Relative even ghost ROI amplitude plot (%)")
+evenghosttcplot = sf.showtc2(thetimepoints,relevenghosttc,0.0*thetimepoints + evenghostmean,"Relative even ghost ROI amplitude plot (%)")
 P.savefig( dirname+"/procresults/evenghostroiplot.png", format='png' )
 
 
@@ -1335,16 +1014,16 @@ P.savefig( dirname+"/procresults/evenghostroiplot.png", format='png' )
 calcimagehdrstr = hruletag()+headertag("Calculated images")
 myimwidth=500
 
-meanimagestr = makecaptionedimage("Mean over time:",meanstats,"meanimage.png",myimwidth)
-stddevimagestr = makecaptionedimage("Standard deviation over time:",stddevstats,"stddevimage.png",myimwidth)
-varianceimagestr = makecaptionedimage("Variance over time:",varstats,"varimage.png",myimwidth)
-normstdimagestr = makecaptionedimage("Normalized % stddev over time:",normstdstats,"normstdimage.png",myimwidth)
-sfnrimagestr = makecaptionedimage("SFNR:",sfnrstats,"sfnrimage.png",myimwidth)
-eoimagestr = makecaptionedimage("Even-odd difference:",eodiffstats,"eodiffimage.png",myimwidth)
-eopcimagestr = makecaptionedimage("Even-odd difference percent:",eodiffpcstats,"eodiffpcimage.png",myimwidth)
-ppimagestr = makecaptionedimage("Peak to peak:",ppstats,"ppimage.png",myimwidth)
-objectstr = makecaptionedimage("Object mask",[],"objectmaskimage.png",myimwidth)
-roistr = makecaptionedimage("ROI locations:",[],"roiimage.png",myimwidth)
+meanimagestr = sf.makecaptionedimage("Mean over time:",meanstats,"meanimage.png",myimwidth)
+stddevimagestr = sf.makecaptionedimage("Standard deviation over time:",stddevstats,"stddevimage.png",myimwidth)
+varianceimagestr = sf.makecaptionedimage("Variance over time:",varstats,"varimage.png",myimwidth)
+normstdimagestr = sf.makecaptionedimage("Normalized % stddev over time:",normstdstats,"normstdimage.png",myimwidth)
+sfnrimagestr = sf.makecaptionedimage("SFNR:",sfnrstats,"sfnrimage.png",myimwidth)
+eoimagestr = sf.makecaptionedimage("Even-odd difference:",eodiffstats,"eodiffimage.png",myimwidth)
+eopcimagestr = sf.makecaptionedimage("Even-odd difference percent:",eodiffpcstats,"eodiffpcimage.png",myimwidth)
+ppimagestr = sf.makecaptionedimage("Peak to peak:",ppstats,"ppimage.png",myimwidth)
+objectstr = sf.makecaptionedimage("Object mask",[],"objectmaskimage.png",myimwidth)
+roistr = sf.makecaptionedimage("ROI locations:",[],"roiimage.png",myimwidth)
 
 row1str = tablerowtag(tableentrytag(meanimagestr)+tableentrytag(stddevimagestr))
 row2str = tablerowtag(tableentrytag(varianceimagestr)+tableentrytag(sfnrimagestr))
@@ -1487,7 +1166,7 @@ FILE.writelines(tablepropstag(ghostroihdrstr+ghostroiparastr+row1str,500,"left")
 weisshdrstr = hruletag()+headertag("Weisskoff analysis")
 imcapstring = paratag(boldtag("Weisskoff plot"))
 weissimagestr = imagetag("weisskoffplot.png",myimwidth)
-weisstablestr = weisstable(roiareas,theweisscvs,theprojcvs)
+weisstablestr = sf.weisstable(roiareas,theweisscvs,theprojcvs)
 row1str = tablerowtag(tableentrytag(weissimagestr)+tableentrytag(weisstablestr))
 row2str = tablerowtag(tableentrytag(bigtag(boldtag("RDC="+str(theweissrdc)))))
 FILE.writelines(tablepropstag(weisshdrstr+row1str+row2str,500,"left"))
