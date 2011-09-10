@@ -3,13 +3,16 @@
 from distutils.core import setup
 
 setup(name='stabilitycalc',
-      description='DESCRIPTION',
-      long_description='LONG_DESCRIPTION',
-      url='URL',
-      download_url='DOWNLOAD_URL',
+      description='evaluate fMRI scanner stability',
+      long_description="""
+Command-line tools to calculate numerous fMRI scanner stability metrics, based
+on the FBIRN quality assurance test protocal. Any 4D volumetric timeseries
+image in NIfTI format is support input. Output is a rich HTML report.
+""",
+      url='https://github.com/bbfrederick/stabilitycalc',
       license='BSD',
-      author='AUTHOR',
-      author_email='AUTHOR_EMAIL',
+      author='Blaise Frederick',
+      author_email='blaise.frederick@gmail.com',
       version='0.1',
       py_modules   = ['stabilityfuncs',
                       'htmltagutils',],
