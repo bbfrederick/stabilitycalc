@@ -1,3 +1,32 @@
+Stabilitycalc is part of a suite of python tools we use to monitor the
+stability of our fMRI system.  We use a version of the fBIRN procedure
+to run daily phantom quality assurance tests on our research MR system.
+These phantom scans are then converted to NIFTI format and analyzed 
+with stabilitycalc to look for system instabilities that could degrade
+our fMRI data.
+
+The stabilitycalc package generates reports for individual scans, and
+tabulates performance over time, generating summary reports that put
+current performance into the context of normal operation.  We use this
+to quickly identify scanner problems, and the individual reports give
+a good indication of what sort of problem we are having, which in turn
+helps us troubleshoot much more effectively.
+
+The current release includes the stabilitycalc program itself, which
+generates reports for individual scans.  The goal for the final release
+is to include all of the tools that generate summary data.  Since this
+software sort of accreted over time (and started out partially as a way
+for me to learn python), there is a fair amount of redesign that needs 
+to be done to make the package more reliable and generalizable to other
+scanner manufacturers and workflows.  Another important part of this 
+development effort is to remove some rather ghastly kludges in the
+code.  I released the code in large measure to shame myself into
+improving it (and, if possible, provide a service for anybody else
+trying to set up a QA procedure).
+
+One of the design goals of the set of tools is to use pure python to
+minimize machine architecture and compilation headaches, and to avoid
+costly proprietary environments such as matlab.
 
 Inputs:
 
