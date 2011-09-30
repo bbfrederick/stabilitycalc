@@ -1,0 +1,24 @@
+Todo/roadmap
+
+This is the first step towards a (hopefully not to far off) goal of
+making an autonomous fMRI stability tracking server.  I'm basically
+trying to reimplement a system we have working in our lab, which is
+a dicom server that accepts stability datasets pushed from our scanner,
+ converts to NIFTI, calculates individual scan stability parameters,
+and maintains a webpage that summarizes current performance, and tracks
+performance over time.  The current system is a mishmash of python,
+csh scripts, cron jobs, and OSX dicom utilities, and part of freesurfer
+(mri_convert).  At some point in the future, I'd like to have a virtual
+Neurodebian box off in the ether somwhere that could be set up with
+just a few packages that would do the same thing.
+
+Step 1 (done): Pull the central element of the package, the actual
+stability processing program out and strip it of any McLean specific
+references to make it more configurable.  This can be cleaned up, but
+the goal was to get it out there so that people could play with it.
+
+Step 2: Do the same for "stabilitysummary", the program that generates
+the summary webpage.
+
+Step 3: Find a way to integrate all of this with some existing DICOM
+service - XNAT?  I'm open to suggestions here.
