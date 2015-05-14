@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# test to make sure nothing has changed.
+# numbers come out different on unix and mac so we
+# have separate baseline dirs
+
 ./stabilitycalc testdata epi_short.nii.gz 0
 echo ==================
 echo diff
