@@ -224,7 +224,7 @@ def getphasedarrayelementdata():
 
 
 def freqanalysis(thetimecourse):
-    thefftsignal = abs(fft(thetimecourse))
+    thefftsignal = abs(np.fft(thetimecourse))
     thelen = len(thefftsignal)
     thefftnoise = (thefftsignal[0:thelen - 2] + thefftsignal[2:thelen]) / 2.0
     return()
