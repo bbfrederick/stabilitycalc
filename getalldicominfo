@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2015/05/08 19:02:26 $
+#       $Id: getalldicominfo,v 1.4 2015/05/08 19:02:26 frederic Exp $
+#
+import sys
+import dicom
+
+
+def getsiemensmrheader(theplan):
+    datadict = {}
+    allheaderspresent = True
+    try:
+        SiemensCSAHeader = theplan[0x0029, 0x0010].value
+    except KeyError:
+        allheaderspresent = False
+
+    try:
+        SeriesHeader = theplan[0x0029, 0x1020].value
+        # print SeriesHeader
+    except KeyError:
+        allheaderspresent = False
+
+    try:
+        ImageHeader = theplan[0x0029, 0x1010].value
+        # print "############################ IMAGE ####################################"
+        # print ImageHeader
+    except KeyError:
+        allheaderspresent = False
+
+    try:
+        SiemensCSAHeader2 = theplan[0x0029, 0x1020].value
+    except KeyError:
+        allheaderspresent = False
+
+    if allheaderspresent:
+        startposition = SiemensCSAHeader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
+        endposition = SiemensCSAHeader2.find('### ASCCONV END ###')
+        InterestingSiemensHeader = SiemensCSAHeader2[startposition:endposition].splitlines()
+        for theline in InterestingSiemensHeader[1:]:
+            thepair = theline.split()
+            print(thepair)
+            datadict[thepair[0]] = thepair[2]
+
+    return datadict
+
+# read in the datafile
+if len(sys.argv) != 2:
+    print("usage: getdicominfo inputfile")
+    exit()
+filename = sys.argv[1]
+plan = dicom.read_file(filename)
+
+print('Metadata:')
+print(plan.file_meta)
+print()
+print()
+print()
+print('Dicom Header:')
+print(plan)
+timestr = float(plan.AcquisitionTime)
+thetr = float(plan.RepetitionTime)
+timeconv = 3600 * (int(timestr / 10000) % 100) + 60 * (int(timestr / 100) % 100) + timestr % 100 + (timestr - int(timestr))
+acqnum = plan.AcquisitionNumber
+thesiemensheader = getsiemensmrheader(plan)
+if thesiemensheader != {}:
+    slicethickness = thesiemensheader['sSliceArray.asSlice[0].dThickness']
+
+try:
+    transmotion = plan[0x0019, 0x1025].value
+except KeyError:
+    pass
+else:
+    print("Translation", transmotion)
+
+try:
+    rotmotion = plan[0x0019, 0x1026].value
+except KeyError:
+    pass
+else:
+    print("Rotation", rotmotion)
+
+try:
+    elementnumber = plan[0x0051, 0x100f].value
+except KeyError:
+    print(timestr, thetr, acqnum)
+else:
+    print(timestr, thetr, acqnum, elementnumber)
+

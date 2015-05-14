@@ -1,0 +1,17 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2011/09/01 19:27:50 $
+#	$Id: collectresults,v 1.2 2011/09/01 19:27:50 frederic Exp $
+#
+
+setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
+setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
+setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
+setenv outputdir	`stabilityparms OUTPUTDIR`
+setenv subjname		$1
+
+ls -1d $processedscandir/stability*/epi_pace/procresults/analysissummary.txt | tail -n 1 | awk '{print "cat "$1" | transpose | head -n 1 > $processedscandir/stabilitytable.txt"}' >/tmp/docollect
+ls -1d $processedscandir/stability*/epi_pace/procresults/analysissummary.txt | awk '{print "cat "$1" | transpose | tail -n 1 >> $processedscandir/stabilitytable.txt"}' >>/tmp/docollect
+source /tmp/docollect
+rm /tmp/docollect

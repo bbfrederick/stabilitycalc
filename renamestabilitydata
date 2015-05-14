@@ -1,0 +1,84 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2015/05/08 18:58:14 $
+#       $Id: renamestabilitydata,v 1.2 2015/05/08 18:58:14 frederic Exp $
+#
+import sys
+import re
+import os
+import time
+
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    while True:
+        line = a.readlines()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+# read in the datafile
+if len(sys.argv) != 3:
+    print("usage: renamestabilitydata datadirectory outputdirectory")
+    exit()
+datadirectory = sys.argv[1]
+outputdirectory = sys.argv[2]
+
+#
+# scan the data directory for stability scans which haven't been renamed
+#
+stabilitydirs = os.listdir(datadirectory)
+dirstorename = [examname for examname in stabilitydirs if not(examname.startswith("stability_"))]
+dirstorenamefilt = [examname for examname in dirstorename if not(examname.startswith("."))]
+
+# first rename files at the top level to get rid of spaces
+for dirname in dirstorenamefilt:
+    newname = re.sub(' ', '_', dirname)
+    os.rename(datadirectory + "/" + dirname, datadirectory + "/" + newname)
+
+stabilitydirs = os.listdir(datadirectory)
+dirstorenamefilt = [examname for examname in stabilitydirs if examname.startswith("dcmlstn")]
+print(dirstorenamefilt)
+
+for examname in dirstorenamefilt:
+    examdir = datadirectory + "/" + examname
+    print(examdir)
+    seriesnames = [protocolname for protocolname in os.listdir(examdir) if protocolname.startswith("QA")]
+    print(seriesnames)
+    for dirname in seriesnames:
+        newname = re.sub(' ', '_', dirname)
+        os.rename(examdir + "/" + dirname, examdir + "/" + newname)
+    seriesnames = [protocolname for protocolname in os.listdir(examdir)
+                   if protocolname.startswith("QA")]
+
+    seriesdir = examdir + "/" + seriesnames[0]
+    scannames = [subprotocolname for subprotocolname in os.listdir(seriesdir)
+                 if not(subprotocolname.startswith("."))]
+    scandir = seriesdir + "/" + scannames[0]
+    dicomnames = [filename for filename in os.listdir(scandir)
+                  if filename.endswith("0001.dcm")]
+    thestudyinfo = doashellcmd("studyinfo " + scandir + "/" + dicomnames[0])
+    studydate = re.sub('\n', '', re.sub('StudyDate: ', '', thestudyinfo[1]))
+    coil = re.sub('\n', '', re.sub('Coil: ', '', thestudyinfo[0]))
+    newtldirname = "stability_" + studydate + "_" + coil
+    os.rename(examdir, datadirectory + "/" + newtldirname)
+    examdir = datadirectory + "/" + newtldirname
+    seriesdir = examdir + "/" + seriesnames[0]
+    scannames = [subprotocolname for subprotocolname in os.listdir(seriesdir)
+                 if not(subprotocolname.startswith("."))]
+    for scandir in scannames:
+        os.rename(seriesdir + "/" + scandir, examdir + "/" + scandir)
+    remainingnames = [subprotocolname for subprotocolname in os.listdir(seriesdir)]
+    for rmfile in remainingnames:
+        os.remove(seriesdir + "/" + rmfile)
+    os.rmdir(seriesdir)
+
+    # now move into the output directory
+    os.rename(examdir, outputdirectory + "/" + newtldirname)
+
+    # and process it
+    doashellcmd("processstability " + newtldirname)

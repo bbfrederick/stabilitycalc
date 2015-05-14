@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2011/09/08 16:53:35 $
+#       $Id: stabilityparms,v 1.2 2011/09/08 16:53:35 frederic Exp $
+#
+import sys
+import os
+import time
+from htmltagutils import *
+import stabilityfuncs as sf
+
+
+def formatdate(thedate):
+    theyear = thedate[0:4]
+    themonth = thedate[4:6]
+    theday = thedate[6:8]
+    formatteddate = themonth + "/" + theday + "/" + theyear
+    return(formatteddate)
+
+
+def formattime(thetime):
+    thehour = thetime[0:2]
+    theminute = thetime[2:4]
+    thesecond = thetime[4:6]
+    formattedtime = thehour + ":" + theminute + ":" + thesecond
+    return(formattedtime)
+
+#
+# os utilities
+#
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    while True:
+        line = a.readline()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+
+def key_eval(keyname, thedictionary):
+    thevalue = ''
+    for theentry in thedictionary:
+        # see if this spec is tracked
+        try:
+            thevalue = thedictionary[keyname]
+        except KeyError:
+            pass
+
+    return(thevalue)
+
+########################################################################
+########################################################################
+#
+#
+#  Control flow starts here
+#
+#
+########################################################################
+#
+#       Initial setup
+#
+# read in the datafile
+if len(sys.argv) != 2:
+    print("usage: stabilityparms key")
+    exit()
+thekey = sys.argv[1]
+
+confdict = {}
+theconffile = open("configuration.txt")
+for line in theconffile:
+    thepair = line.split()
+    confdict[thepair[0]] = thepair[1]
+theconffile.close()
+
+thevalue = key_eval(thekey, confdict)
+print(thevalue)

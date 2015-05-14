@@ -1,0 +1,537 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2011/08/31 21:07:13 $
+#       $Id: stabilitysummary,v 1.24 2011/08/31 21:07:13 frederic Exp $
+#
+import sys
+import os
+import time
+from htmltagutils import *
+import stabilityfuncs as sf
+
+
+def formatdate(thedate):
+    theyear = thedate[0:4]
+    themonth = thedate[4:6]
+    theday = thedate[6:8]
+    formatteddate = themonth + "/" + theday + "/" + theyear
+    return(formatteddate)
+
+
+def formattime(thetime):
+    thehour = thetime[0:2]
+    theminute = thetime[2:4]
+    thesecond = thetime[4:6]
+    formattedtime = thehour + ":" + theminute + ":" + thesecond
+    return(formattedtime)
+
+#
+# os utilities
+#
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    while True:
+        line = a.readline()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+
+def stability_eval(specs, thedictionary):
+    stability_results = {}
+    for theentry in thedictionary:
+        # see if this spec is tracked
+        try:
+            entrydata = specs[theentry]
+            if entrydata[2][0] == 1:
+                stability_results[theentry] = {}
+                stability_results[theentry]['key'] = theentry
+                stability_results[theentry]['varname'] = entrydata[3]
+                stability_results[theentry]['value'] = thedictionary[theentry]
+                stability_results[theentry]['warnrange'] = entrydata[0]
+                stability_results[theentry]['failrange'] = entrydata[1]
+                stability_results[theentry]['quality'] = sf.limitcheck(thedictionary[theentry], specs[theentry])
+                if entrydata[2][1] == 1:
+                    stability_results[theentry]['critical'] = True
+                    # if stability_results[theentry]['quality']>0:
+                    # print entrydata[3],stability_results[theentry]['quality']
+                else:
+                    stability_results[theentry]['critical'] = False
+                stability_results[theentry]['symbol'] = entrydata[4]
+        except KeyError:
+            pass
+
+    return(stability_results)
+
+########################################################################
+########################################################################
+#
+#
+#  Control flow starts here
+#
+#
+########################################################################
+#
+#       Initial setup
+#
+# read in the datafile
+if len(sys.argv) != 4:
+    print("usage: stabilitysummary datadirectory outputdirectory whichscan")
+    exit()
+datadirectory = sys.argv[1]
+outputdirectory = sys.argv[2]
+whichscan = sys.argv[3]
+
+doBIRN = True
+
+if doBIRN:
+    print('called as stabilitysummary (BIRN)')
+    TargetisBIRNphantom = True
+else:
+    print('called as stabilitysummary_nonbirn (NONBIRN)')
+    TargetisBIRNphantom = False
+
+# initialize the outut directory if need be
+doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan)
+
+########################################################################
+#
+#
+# scan the data directory for stability scans
+#
+stabilitydirs = os.listdir(datadirectory)
+stabilitydirs = sorted([filename for filename in stabilitydirs if filename.startswith("stability_")])
+
+# print stabilitydirs
+
+#
+# pull all the data files into a dictionary array
+#
+datadict = {}
+filenumber_TARGET = 0
+num_cp_TARGET = 0
+num_12_TARGET = 0
+num_32_TARGET = 0
+for summaryfile in stabilitydirs:
+    print("Beginning processing for " + summaryfile)
+    datadict[filenumber_TARGET] = {}
+    try:
+        datadict[filenumber_TARGET]['datadir'] = summaryfile + "/" + whichscan + "/procresults"
+        try:
+            theanalysisfile = open(datadirectory + "/" + summaryfile + "/" + whichscan + "/procresults/analysissummary.txt")
+            for line in theanalysisfile:
+                thepair = line.split()
+                datadict[filenumber_TARGET][thepair[0]] = thepair[1]
+            theanalysisfile.close()
+            ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN_phantom')
+            if ObjectisBIRNphantom == TargetisBIRNphantom:
+                if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
+                    num_cp_TARGET = num_cp_TARGET + 1
+                if datadict[filenumber_TARGET]['Coil'] == '32Ch_Head':
+                    num_32_TARGET = num_32_TARGET + 1
+                if datadict[filenumber_TARGET]['Coil'] == 'HeadMatrix':
+                    num_12_TARGET = num_12_TARGET + 1
+                filenumber_TARGET = filenumber_TARGET + 1
+        except IOError:
+            pass
+    except KeyError:
+        pass
+if TargetisBIRNphantom:
+    print(str(num_cp_TARGET) + " CP coil runs (BIRN phantom)")
+    print(str(num_12_TARGET) + " 12 channel coil runs (BIRN phantom)")
+    print(str(num_32_TARGET) + " 32 channel coil runs (BIRN phantom)")
+else:
+    print(str(num_cp_TARGET) + " CP coil runs (NONBIRN phantom)")
+    print(str(num_12_TARGET) + " 12 channel coil runs (NONBIRN phantom)")
+    print(str(num_32_TARGET) + " 32 channel coil runs (NONBIRN phantom)")
+
+#######################################################################################
+#
+# sort the data up by coil and write to files
+#
+mostrecenttimes = {}
+for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
+    GRAPHFILE = open(outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt", "w")
+    for i in range(0, filenumber_TARGET):
+        if datadict[i]['Coil'] == targetcoil:
+            ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN_phantom')
+            if ObjectisBIRNphantom == TargetisBIRNphantom:
+                try:
+                    test = datadict[i]['central_roi_detrended_p-p%']
+                    if datadict[i]['Protocol'] != 'nothing':
+                        GRAPHFILE.writelines(datadict[i]['Coil'] + " " + datadict[i]['DateTime'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_detrended_p-p%'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['peripheral_roi_detrended_p-p%'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_SNR'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['peripheral_roi_SNR'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_SFNR'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['peripheral_roi_SFNR'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['odd_ghost_mean'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['odd_ghost_max'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['odd_ghost_min'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['even_ghost_mean'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['even_ghost_max'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['even_ghost_min'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['object_radius_mm'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['object_shape'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['center_of_mass_x'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['center_of_mass_y'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['center_of_mass_z'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_detrended_mean'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_drift%'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['peripheral_roi_drift%'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['weissrdc'] + " ")
+                        GRAPHFILE.writelines(datadict[i]['central_roi_detrended_mean'] + " ")
+                        GRAPHFILE.writelines("\n")
+                        mostrecenttimes[targetcoil] = datadict[i]['DateTime']
+                except KeyError:
+                    pass
+    GRAPHFILE.close()
+
+#######################################################################################
+# generate plot control files to graph all interesting stability parameters
+#
+# central and peripheral SNR and SFNR
+#
+pointsize = 'ps 2'
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:800]\n")
+PLOTCMDFILE.writelines("set title \"Absolute SNR and SFNR\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:5 title 'Central ROI SNR' with points " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:6 title 'Peripheral ROI SNR' with points " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:7 title 'Central ROI SFNR' with points " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:8 title 'Peripheral ROI SFNR' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# central and peripheral stability
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_roistab", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:1.0]\n")
+PLOTCMDFILE.writelines("set title \"ROI stability: p-p variation in percent\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:3 title 'Central ROI' with points " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:4 title 'Peripheral ROI' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# central and peripheral drift
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_roidrift", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:1.0]\n")
+PLOTCMDFILE.writelines("set title \"ROI linear and quadratic drift: p-p amplitude in percent\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:21 title 'Central ROI' with points " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:22 title 'Peripheral ROI' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# ghosts
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_ghost", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:15.0]\n")
+PLOTCMDFILE.writelines("set title \"Ghost percentage\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Ghost amplitude (%)\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:9:11:10 title 'Odd ghost' with yerrorbars ps 1 pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:12:14:13 title 'Even ghost' with yerrorbars ps 1 pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# object radius
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_objradius", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [75.0:90.0]\n")
+PLOTCMDFILE.writelines("set title \"Phantom radius\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Phantom radius (mm)\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:15 title 'Object radius in mm' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.close()
+
+#
+# object shape
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_objshape", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0.9:1.1]\n")
+PLOTCMDFILE.writelines("set title \"Phantom shape (y/x)\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Phantom shape (y/x)\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:16 title 'Object shape (y/x)' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.close()
+
+#
+# weisskoff
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_weissrdc", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:12.0]\n")
+PLOTCMDFILE.writelines("set title \"Weisskoff Radius of decorrelation\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Weisskoff RDC\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:23 title 'Weisskoff RDC' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.close()
+
+#
+# central mean signal intensity
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_centralsignal", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:2000.0]\n")
+PLOTCMDFILE.writelines("set title \"Detrended mean central signal intensity\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Mean signal intensity\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:24 title 'Mean central signal intensity' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.close()
+
+for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
+    doashellcmd("cp " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt " + outputdirectory + "/" + whichscan + "/graphtemp")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_snrsfnr.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roistab > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roistab.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roidrift > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roidrift.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_ghost > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_ghost.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_objradius > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_objradius.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_objshape > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_objshape.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_weissrdc > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_weissrdc.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_centralsignal > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_centralsignal.jpg")
+
+#######################################################################################
+# generate a report file
+#
+thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
+REPORTFILE = open(outputdirectory + "/" + whichscan + "/" + "stabilityreport.html", "w")
+
+REPORTFILE.writelines("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\n")
+
+REPORTFILE.writelines("<head>\n")
+REPORTFILE.writelines("<script type=\"text/javascript\" language=\"javascript1.5\">\n")
+REPORTFILE.writelines("    <!-- Hide script from old browsers\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("        window.onload = theClock\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("        function theClock() {\n")
+REPORTFILE.writelines("            var one_minute=1000*60;\n")
+REPORTFILE.writelines("            var one_hour=one_minute*60;\n")
+REPORTFILE.writelines("            var one_day=one_hour*24;\n")
+date32 = mostrecenttimes['32Ch_Head']
+date12 = mostrecenttimes['HeadMatrix']
+datecp = mostrecenttimes['TxRx_Head']
+args32 = date32[0:4] + "," + str(int(date32[4:6]) - 1) + "," + date32[6:8] + "," + date32[9:11] + "," + date32[11:13] + "," + date32[13:15]
+args12 = date12[0:4] + "," + str(int(date12[4:6]) - 1) + "," + date12[6:8] + "," + date12[9:11] + "," + date12[11:13] + "," + date12[13:15]
+argscp = datecp[0:4] + "," + str(int(datecp[4:6]) - 1) + "," + datecp[6:8] + "," + datecp[9:11] + "," + datecp[11:13] + "," + datecp[13:15]
+REPORTFILE.writelines("            head32time = new Date(" + args32 + ");\n")
+REPORTFILE.writelines("            head12time = new Date(" + args12 + ");\n")
+REPORTFILE.writelines("            headcptime = new Date(" + argscp + ");\n")
+REPORTFILE.writelines("            now = new Date();\n")
+REPORTFILE.writelines("            var time32=now-head32time;\n")
+REPORTFILE.writelines("            var time12=now-head12time;\n")
+REPORTFILE.writelines("            var timecp=now-headcptime;\n")
+REPORTFILE.writelines("            var days32=Math.floor(time32/one_day);\n")
+REPORTFILE.writelines("            var days12=Math.floor(time12/one_day);\n")
+REPORTFILE.writelines("            var dayscp=Math.floor(timecp/one_day);\n")
+REPORTFILE.writelines("            var hours32=Math.floor((time32-days32*one_day)/one_hour);\n")
+REPORTFILE.writelines("            var hours12=Math.floor((time12-days12*one_day)/one_hour);\n")
+REPORTFILE.writelines("            var hourscp=Math.floor((timecp-dayscp*one_day)/one_hour);\n")
+REPORTFILE.writelines("            var minutes32=Math.floor((time32-days32*one_day-hours32*one_hour)/one_minute);\n")
+REPORTFILE.writelines("            var minutes12=Math.floor((time12-days12*one_day-hours12*one_hour)/one_minute);\n")
+REPORTFILE.writelines("            var minutescp=Math.floor((timecp-dayscp*one_day-hourscp*one_hour)/one_minute);\n")
+REPORTFILE.writelines("            var mindays=Math.min(dayscp,days12,days32);\n")
+REPORTFILE.writelines("\n")
+#REPORTFILE.writelines("            theTime = ((now.getHours() > 0 && now.getHours() < 13)) ? now.getHours() : (now.getHours() == 0) ? 12 : now.getHours()-12;\n")
+#REPORTFILE.writelines("            theTime += (now.getMinutes() > 9) ? \":\" + now.getMinutes() : \":0\" + now.getMinutes();\n")
+#REPORTFILE.writelines("            theTime += (now.getSeconds() > 9) ? \":\" + now.getSeconds() : \":0\" + now.getSeconds();\n")
+#REPORTFILE.writelines("            theTime += (now.getHours() < 12) ? \" am\" : \" pm\";\n")
+# REPORTFILE.writelines("\n")
+#REPORTFILE.writelines("            clockSpan = document.getElementById(\"myClock\");\n")
+#REPORTFILE.writelines("            clockSpan.replaceChild(document.createTextNode(theTime), clockSpan.firstChild);\n")
+# REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            fmttime32=days32+\"d \"+hours32+\"h \"+minutes32+\"m\";\n")
+REPORTFILE.writelines("            fmttime12=days12+\"d \"+hours12+\"h \"+minutes12+\"m\";\n")
+REPORTFILE.writelines("            fmttimecp=dayscp+\"d \"+hourscp+\"h \"+minutescp+\"m\";\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            if(mindays>4)\n")
+REPORTFILE.writelines("                {\n")
+REPORTFILE.writelines("                document.body.style.backgroundColor=\'#ffaaaa\';\n")
+REPORTFILE.writelines("                }\n")
+REPORTFILE.writelines("            else\n")
+REPORTFILE.writelines("                {\n")
+REPORTFILE.writelines("                document.body.style.backgroundColor=\'#cccccc\';\n")
+REPORTFILE.writelines("                }\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            time32Span = document.getElementById(\"formtime32\");\n")
+REPORTFILE.writelines("            time32Span.replaceChild(document.createTextNode(fmttime32), time32Span.firstChild);\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            time12Span = document.getElementById(\"formtime12\");\n")
+REPORTFILE.writelines("            time12Span.replaceChild(document.createTextNode(fmttime12), time12Span.firstChild);\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            timecpSpan = document.getElementById(\"formtimecp\");\n")
+REPORTFILE.writelines("            timecpSpan.replaceChild(document.createTextNode(fmttimecp), timecpSpan.firstChild);\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("            setTimeout(\"theClock()\",1000);\n")
+REPORTFILE.writelines("        }\n")
+REPORTFILE.writelines("\n")
+REPORTFILE.writelines("    // End hiding script from old browsers -->\n")
+REPORTFILE.writelines("</script>\n")
+
+REPORTFILE.writelines("<title>Stability summary generated on " + thisdate + "</title>\n")
+REPORTFILE.writelines("<style type=\"text/css\">\n")
+REPORTFILE.writelines("<meta http-equiv=\"Refresh\" content=\"600\">\n")
+REPORTFILE.writelines("h1 {font-family:courier new;text-decoration:underline;}\n")
+REPORTFILE.writelines("h2 {font-family:courier new;color: teal; text-decoration:underline;}\n")
+REPORTFILE.writelines("h3 {font-family:courier new;color: maroon; text-decoration:none;}\n")
+REPORTFILE.writelines("h4 {font-family:courier new;text-decoration:none;}\n")
+REPORTFILE.writelines("p {font-family:courier new;color:black; font-size:16px;text-decoration:none;}\n")
+REPORTFILE.writelines("td {font-family:courier new;color:black; font-size:12px;text-decoration:none;}\n")
+REPORTFILE.writelines("</style>\n")
+REPORTFILE.writelines("</head>\n\n")
+
+REPORTFILE.writelines("<body>\n")
+
+# Compose the image table
+myimwidth = 400
+if TargetisBIRNphantom:
+    #imagehdrstr = bigheadertag("BIRN phantom stability tests"+whitetag("   WARNING: DATA IS STALE"))+headertag("Summary images")
+    imagehdrstr = bigheadertag("BIRN phantom stability tests") + headertag("Summary images")
+else:
+    #imagehdrstr = bigheadertag("NONBIRN phantom stability tests"+whitetag("   WARNING: DATA IS STALE"))+headertag("Summary images")
+    imagehdrstr = bigheadertag("NONBIRN phantom stability tests") + headertag("Summary images")
+
+ROIstab_headerstr = headertag("ROI p-p% variation:")
+ROIdrift_headerstr = headertag("ROI lin-quad drift % amplitude:")
+snrsfnr_headerstr = headertag("SNR, SFNR:")
+ghostamp_headerstr = headertag("Ghost amplitude:")
+objradius_headerstr = headertag("Object radius:")
+objshape_headerstr = headertag("Object shape:")
+weissrdc_headerstr = headertag("Weisskoff RDC:")
+centralsignal_headerstr = headertag("Mean central signal intensity:")
+
+thecpinfostring = bigheadertag("CP TxRx") + headertag("most recent scan: " + breaktag("<span id=\"formtimecp\">?</span>\n"))
+thecproi_imagestr = imagetag("TxRx_Head_roistab.jpg", myimwidth)
+thecproidrift_imagestr = imagetag("TxRx_Head_roidrift.jpg", myimwidth)
+thecpsnrsfnr_imagestr = imagetag("TxRx_Head_snrsfnr.jpg", myimwidth)
+thecpghost_imagestr = imagetag("TxRx_Head_ghost.jpg", myimwidth)
+thecpobjradius_imagestr = imagetag("TxRx_Head_objradius.jpg", myimwidth)
+thecpobjshape_imagestr = imagetag("TxRx_Head_objshape.jpg", myimwidth)
+thecpweissrdc_imagestr = imagetag("TxRx_Head_weissrdc.jpg", myimwidth)
+thecpcentralsignal_imagestr = imagetag("TxRx_Head_centralsignal.jpg", myimwidth)
+
+the12chinfostring = bigheadertag("12 channel PA") + headertag("most recent scan: " + breaktag("<span id=\"formtime12\">?</span>\n"))
+the12chroi_imagestr = imagetag("HeadMatrix_roistab.jpg", myimwidth)
+the12chroidrift_imagestr = imagetag("HeadMatrix_roidrift.jpg", myimwidth)
+the12chsnrsfnr_imagestr = imagetag("HeadMatrix_snrsfnr.jpg", myimwidth)
+the12chghost_imagestr = imagetag("HeadMatrix_ghost.jpg", myimwidth)
+the12chobjradius_imagestr = imagetag("HeadMatrix_objradius.jpg", myimwidth)
+the12chobjshape_imagestr = imagetag("HeadMatrix_objshape.jpg", myimwidth)
+the12chweissrdc_imagestr = imagetag("HeadMatrix_weissrdc.jpg", myimwidth)
+the12chcentralsignal_imagestr = imagetag("HeadMatrix_centralsignal.jpg", myimwidth)
+
+the32chinfostring = bigheadertag("32 channel PA") + headertag("most recent scan: " + breaktag("<span id=\"formtime32\">?</span>\n"))
+the32chroi_imagestr = imagetag("32Ch_Head_roistab.jpg", myimwidth)
+the32chroidrift_imagestr = imagetag("32Ch_Head_roidrift.jpg", myimwidth)
+the32chsnrsfnr_imagestr = imagetag("32Ch_Head_snrsfnr.jpg", myimwidth)
+the32chghost_imagestr = imagetag("32Ch_Head_ghost.jpg", myimwidth)
+the32chobjradius_imagestr = imagetag("32Ch_Head_objradius.jpg", myimwidth)
+the32chobjshape_imagestr = imagetag("32Ch_Head_objshape.jpg", myimwidth)
+the32chweissrdc_imagestr = imagetag("32Ch_Head_weissrdc.jpg", myimwidth)
+the32chcentralsignal_imagestr = imagetag("32Ch_Head_centralsignal.jpg", myimwidth)
+
+row0str = tablerowtag(tableentrytag("") + tableentrytag(thecpinfostring) + tableentrytag(the12chinfostring) + tableentrytag(the32chinfostring))
+row1str = tablerowtag(tableentrytag(ROIstab_headerstr) + tableentrytag(thecproi_imagestr) + tableentrytag(the12chroi_imagestr) + tableentrytag(the32chroi_imagestr))
+row2str = tablerowtag(tableentrytag(ROIdrift_headerstr) + tableentrytag(thecproidrift_imagestr) + tableentrytag(the12chroidrift_imagestr) + tableentrytag(the32chroidrift_imagestr))
+row3str = tablerowtag(tableentrytag(snrsfnr_headerstr) + tableentrytag(thecpsnrsfnr_imagestr) + tableentrytag(the12chsnrsfnr_imagestr) + tableentrytag(the32chsnrsfnr_imagestr))
+row4str = tablerowtag(tableentrytag(ghostamp_headerstr) + tableentrytag(thecpghost_imagestr) + tableentrytag(the12chghost_imagestr) + tableentrytag(the32chghost_imagestr))
+row5str = tablerowtag(tableentrytag(objradius_headerstr) + tableentrytag(thecpobjradius_imagestr) + tableentrytag(the12chobjradius_imagestr) + tableentrytag(the32chobjradius_imagestr))
+row6str = tablerowtag(tableentrytag(objshape_headerstr) + tableentrytag(thecpobjshape_imagestr) + tableentrytag(the12chobjshape_imagestr) + tableentrytag(the32chobjshape_imagestr))
+row7str = tablerowtag(tableentrytag(weissrdc_headerstr) + tableentrytag(thecpweissrdc_imagestr) + tableentrytag(the12chweissrdc_imagestr) + tableentrytag(the32chweissrdc_imagestr))
+row8str = tablerowtag(tableentrytag(centralsignal_headerstr) + tableentrytag(thecpcentralsignal_imagestr) + tableentrytag(the12chcentralsignal_imagestr) + tableentrytag(the32chcentralsignal_imagestr))
+REPORTFILE.writelines(tablepropstag(imagehdrstr + row0str + row1str + row2str + row3str + row4str + row5str + row6str + row7str + row8str, int(3.5 * myimwidth), "left"))
+
+# put in a key to help interpret notations on the individual entries
+specs = sf.setlimits('TxRx_Head')
+row0 = headertag("Key:")
+row1 = tableentrytag(yellowtag("Warning, ") + redtag("Out of spec")) + tableentrytag("")
+keyrows = ""
+for theentry in specs:
+    entrydata = specs[theentry]
+    if entrydata[2][1] == 1:
+        keyrows = keyrows + tablerowtag(tableentrytag(entrydata[4]) + tableentrytag(entrydata[3]))
+REPORTFILE.writelines(tablepropstag(bigtag(row0 + row1 + keyrows), int(1.0 * myimwidth), "left"))
+
+# copy and link to individual reports
+REPORTFILE.writelines(headertag("Links to individual reports"))
+
+REPORTFILE.writelines(tablepropsstarttag(int(3.5 * myimwidth), "left"))
+REPORTFILE.writelines(tablerowstarttag())
+REPORTFILE.writelines(tableentryopttag('', widthopt(14.44444)))
+
+for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
+    specs = sf.setlimits(targetcoil)
+    coildirlist = bigtag(smallheadertag(targetcoil))
+    for i in range(filenumber_TARGET - 1, -1, -1):
+        if datadict[i]['Coil'] == targetcoil:
+            # copy the individual scan data if necessary
+            if(os.path.exists(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])):
+                copypreamble = outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'] + " exists..."
+                desttime = os.path.getmtime(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                sourcetime = os.path.getmtime(datadirectory + "/" + datadict[i]['datadir'])
+                if(sourcetime >= desttime):
+                    print(copypreamble, "and is modified - copying")
+                    print(datadirectory + "/" + datadict[i]['datadir'])
+                    print("time difference=", desttime - sourcetime)
+                    doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                    doashellcmd("touch " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                else:
+                    print(copypreamble, "and is current - not copying")
+            else:
+                print(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'], " does not already exist... copying")
+                doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                doashellcmd("touch " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+
+            # check the data quality
+            thedataquality = stability_eval(specs, datadict[i])
+            themarker = ""
+            if thedataquality != {}:
+                flag = 0
+                for theentry in thedataquality:
+                    if thedataquality[theentry]['critical']:
+                        if thedataquality[theentry]['quality'] > flag:
+                            flag = thedataquality[theentry]['quality']
+                            # print "flag set to ",str(flag), " for ",thedataquality[theentry]['varname']," = ",str(thedataquality[theentry]['value'])
+                            # print "           ",thedataquality[theentry]['warnrange'],thedataquality[theentry]['failrange']
+                        if thedataquality[theentry]['quality'] > 0:
+                            themarker = themarker + sf.qualitytag(thedataquality[theentry]['symbol'], flag)
+                        else:
+                            themarker = themarker + " "
+
+            # generate the output line
+            coildirlist = coildirlist + "<p><a href=" + datadict[i]['datadir'] + "/output.html>" + datadict[i]['Date'] + " " + datadict[i]['Time'] + "</a> " + themarker + "</p>\n"
+    REPORTFILE.writelines(tableentryopttag(coildirlist, widthopt(28.88888) + valignopt("baseline")))
+REPORTFILE.writelines(tablerowendtag())
+REPORTFILE.writelines(tablepropsendtag())
+
+#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/graphtemp")
+#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/plotcmds")
+REPORTFILE.writelines("</body>\n")

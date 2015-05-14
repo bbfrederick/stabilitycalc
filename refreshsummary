@@ -1,0 +1,14 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2011/09/01 19:27:51 $
+#	$Id: refreshsummary,v 1.3 2011/09/01 19:27:51 frederic Exp $
+#
+
+setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
+setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
+setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
+setenv outputdir	`stabilityparms OUTPUTDIR`
+stabilitysummary $processedscandir $outputdir/3T/birn epi_pace &
+stabilitysummary $processedscandir $outputdir/3T/birn epi_singleslice &
+stabilitysummary $processedscandir $outputdir/3T/birn epi_bold &

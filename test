@@ -1,0 +1,7 @@
+#!/bin/bash
+./stabilitycalc testdata epi_short.nii.gz 0
+echo ==================
+echo diff
+echo ==================
+diff <(sort testdata/procresults/dataquality.txt) <(sort testdata.orig.$(uname)/procresults/dataquality.txt)
+diff <(sort testdata/procresults/analysissummary.txt) <(sort testdata.orig.$(uname)/procresults/analysissummary.txt)

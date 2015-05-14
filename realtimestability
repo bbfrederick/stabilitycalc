@@ -1,0 +1,871 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2010/10/13 16:18:59 $
+#       $Id: realtimestability,v 1.1 2010/10/13 16:18:59 frederic Exp $
+#
+import os
+import string
+import time
+import matplotlib
+matplotlib.use('TkAgg')
+import numpy as np
+import scipy as sp
+import pylab as P
+from nifti import *
+
+# calculate the mean of the non-zero voxels
+
+
+def nzmean(thearray):
+    flatarray = np.ravel(thearray)
+    nzindices = np.nonzero(flatarray)
+    return(np.mean(flatarray[nzindices]))
+
+# calculate the sum of an array across space
+
+
+def arrayspatialsum(thearray):
+    flatcumarray = np.cumsum(np.ravel(thearray))
+    return(flatcumarray[-1])
+
+# show a 2D slice from a dataset in greyscale
+
+
+def updateimage(thedata, theimptr):
+    theshape = thedata.shape
+    numslices = theshape[0]
+    ysize = theshape[1]
+    xsize = theshape[2]
+    slicesqrt = int(np.ceil(np.sqrt(numslices)))
+    theslice = np.zeros((ysize * slicesqrt, xsize * slicesqrt))
+    for i in range(0, numslices):
+        ypos = int(i / slicesqrt) * ysize
+        xpos = int(i % slicesqrt) * xsize
+        theslice[ypos:ypos + ysize, xpos:xpos + xsize] = thedata[i, :, :]
+    theimptr.set_array(theslice)
+    return()
+
+# initialize and show a 2D slice from a dataset in greyscale
+
+
+def datatoimage(thedata, thesubplot, thelabel):
+    theshape = thedata.shape
+    numslices = theshape[0]
+    ysize = theshape[1]
+    xsize = theshape[2]
+    slicesqrt = int(np.ceil(np.sqrt(numslices)))
+    theslice = np.zeros((ysize * slicesqrt, xsize * slicesqrt))
+    for i in range(0, numslices):
+        ypos = int(i / slicesqrt) * ysize
+        xpos = int(i % slicesqrt) * xsize
+        theslice[ypos:ypos + ysize, xpos:xpos + xsize] = thedata[i, :, :]
+    thesubplot.axis('off')
+    thesubplot.axis('equal')
+    theimptr = thesubplot.imshow(theslice, interpolation='nearest', label=thelabel, aspect='equal', cmap=P.cm.gray)
+    # P.colorbar()
+    return(theimptr)
+
+# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
+
+
+def getfracval(datamat, thefrac):
+    themax = datamat.max()
+    (meanhist, bins) = np.histogram(datamat, bins=100, range=(themax / 50.0, themax))
+    cummeanhist = np.cumsum(meanhist)
+    target = cummeanhist[99] * thefrac
+    for i in range(0, 100):
+        if cummeanhist[i] >= target:
+            return(bins[i])
+    return(0.0)
+
+# find the center of mass of a 2D or 3D image
+
+
+def findCOM(datamat):
+    Mx = 0.0
+    My = 0.0
+    Mz = 0.0
+    mass = 0.0
+    val = 0.0
+    arrdims = np.shape(datamat)
+
+    if datamat.ndim == 2:
+        for i in range(0, arrdims[0]):
+            for j in range(0, arrdims[1]):
+                val = datamat[i, j]
+                My += (i * val)
+                Mx += (j * val)
+                mass += val
+        COM = (Mx / mass, My / mass, 0.0)
+    if datamat.ndim == 3:
+        for i in range(0, arrdims[0]):
+            for j in range(0, arrdims[1]):
+                for k in range(0, arrdims[2]):
+                    val = datamat[i, j, k]
+                    Mz += (i * val)
+                    My += (j * val)
+                    Mx += (k * val)
+                    mass += val
+        COM = (Mx / mass, My / mass, Mz / mass)
+    return COM
+
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    while True:
+        line = a.readline()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+# calculate a mask from an image
+
+
+def maskfromimage(theimage):
+    thethreshval = getfracval(theimage, 0.25)
+    phantommask = sp.where(theimage > thethreshval, 1.0, 0.0)
+    return(phantommask)
+
+
+def getprojlims(theproj, theCOM):
+    thethresh = 0.25
+    lowerlim = 0
+    upperlim = theproj.shape[0] - 1
+    themean = np.mean(theproj)
+    while (lowerlim <= theCOM) and (theproj[lowerlim] < thethresh * themean):
+        lowerlim = lowerlim + 1
+    while (upperlim >= theCOM) and (theproj[upperlim] < thethresh * themean):
+        upperlim = upperlim - 1
+    return(lowerlim, upperlim)
+
+
+def getsubjectparms(thesubjectimage):
+    slicecenter = findCOM(thesubjectimage)
+    xpos = int(round(slicecenter[0]))
+    ypos = int(round(slicecenter[1]))
+    zpos = int(round(slicecenter[2]))
+    if thesubjectimage.ndim == 2:
+        meanovery = np.mean(thesubjectimage, 0)
+        meanoverx = np.mean(thesubjectimage, 1)
+        xproj = np.mean(meanovery, 0)
+        yproj = np.mean(meanoverx, 1)
+        xlims = getprojlims(xproj, xpos)
+        ylims = getprojlims(yproj, ypos)
+        zlims = (0, 0)
+    if thesubjectimage.ndim == 3:
+        meanoverz = np.mean(thesubjectimage, 0)
+        meanoverx = np.mean(thesubjectimage, 2)
+        xproj = np.mean(meanoverz, 0)
+        yproj = np.mean(meanoverz, 1)
+        zproj = np.mean(meanoverx, 1)
+        xlims = getprojlims(xproj, xpos)
+        ylims = getprojlims(yproj, ypos)
+        zlims = getprojlims(zproj, zpos)
+    return((xpos, ypos, zpos, xlims, ylims, zlims))
+
+# find the most recently modified file in a directory
+
+
+def getmostrecentdir(searchdir):
+    mostrecentfile = doashellcmd("ls -1tr " + searchdir + " | tail -n 1")
+    return(mostrecentfile)
+
+# find the path to the currently active realtime directory
+
+
+def getcurrentrtdir(rtrootdir):
+    mostrecentexam = getmostrecentdir(rtrootdir)
+    mostrecentseries = getmostrecentdir(rtrootdir + "/" + mostrecentexam)
+    return(rtrootdir + "/" + mostrecentexam + "/" + mostrecentseries)
+
+# construct the name of a given volume image
+
+
+def formatrtname(timepoint):
+    return('Analyze%(thetp)05d' % {"thetp": timepoint} + ".hdr")
+
+
+def datatobitmap(thedataarray):
+    theshape = thedataarray.shape
+    height = thedataarray[0]
+    width = thedataarray[1]
+    array = numpy.zeros((height, width, 3), 'uint8')
+    array[:, :, ] = colour
+    image = wx.EmptyImage(width, height)
+    image.SetData(array.tostring())
+    return image.ConvertToBitmap()  # wx.BitmapFromImage(image)
+
+# given a location and a size, define the corners of an roi
+
+
+def setroilims(xpos, ypos, size):
+    if (size % 2) == 0:
+        halfsize = size / 2
+        return(((int(round(xpos - halfsize)), int(round(ypos - halfsize))),
+                (int(round(xpos + halfsize)), int(round(ypos + halfsize)))))
+    else:
+        halfsize = (size - 1) / 2
+        return(((int(round(xpos - halfsize)), int(round(ypos - halfsize))),
+                (int(round(xpos + halfsize + 1)), int(round(ypos + halfsize + 1)))))
+
+# get an average timecourse from the voxels of an roi
+
+
+def getroitc(theimage, theroi, zpos):
+    xstart = theroi[0][0]
+    xend = theroi[1][0]
+    ystart = theroi[0][1]
+    yend = theroi[1][1]
+    thetimecourse = np.mean(np.mean(theimage[:, zpos, ystart:yend, xstart:xend], 3), 2)
+    return(thetimecourse)
+
+# get the average value from an roi in a 3D image
+
+
+def getroival_corners(theimage, theroi, zpos):
+    xstart = theroi[0][0]
+    xend = theroi[1][0]
+    ystart = theroi[0][1]
+    yend = theroi[1][1]
+    theroival = np.mean(theimage[zpos, ystart:yend, xstart:xend])
+    return(theroival)
+
+# set the voxels of an roi to a certain value
+
+
+def setroival(theimage, theroi, zpos, theval):
+    xstart = theroi[0][0]
+    xend = theroi[1][0]
+    ystart = theroi[0][1]
+    yend = theroi[1][1]
+    theimage[zpos, ystart:yend, xstart:xend] = theval
+    return
+
+# figure out where the subject is, how big it is, and what it is
+
+
+def findsubjectparms(inittimepoint, thedims, thesizes):
+    # first find the location of the center of mass
+    slicecenter = findCOM(inittimepoint)
+    xpos = int(round(slicecenter[0]))
+    ypos = int(round(slicecenter[1]))
+    zpos = int(round(slicecenter[2]))
+
+    # now find out how big the thing is
+    themask = maskfromimage(inittimepoint)
+    (xpos, ypos, zpos, xlims, ylims, zlims) = getsubjectparms(themask * inittimepoint)
+    print(xpos, xlims)
+    print(ypos, ylims)
+    print(zpos, zlims)
+    subjectradius_x = int(round((xlims[1] - xlims[0]) / 2))
+    subjectradius_y = int(round((ylims[1] - ylims[0]) / 2))
+    subjectradius_x_cm = thesizes[0] * subjectradius_x / 10.0
+    subjectradius_y_cm = thesizes[1] * subjectradius_y / 10.0
+    print("subject radius in voxels=", subjectradius_x, subjectradius_y, ", in cm=", subjectradius_x_cm, subjectradius_y_cm)
+    # finally, figure out if it is an fBIRN phantom (0), a real head (1), or something else (2)
+    subjecttype = 2
+
+    # check for the fBIRN protocol
+    if (thedims[1] == 64) and (thedims[2] == 64) and (thedims[3] == 28) and (thesizes[0] == 3.4375) and (thesizes[1] == 3.4375) and (thesizes[2] == 5.0):
+        subjecttype = 0
+        print("fBIRN QA protocol detected")
+
+    # check for a head
+
+    return((xpos, ypos, zpos, subjectradius_x, subjectradius_y, subjecttype))
+
+
+def updateperipheralrois(timepoint, newtimepoint, theroilims, zpos, thecumsum, peripheralangles):
+    for i in range(0, peripheralangles):
+        newroitimepoint = getroival_corners(newtimepoint, theroilims[i], zpos)
+        thecumsum[i] = thecumsum[i] + newroitimepoint
+    return()
+
+
+def updateroitc(timepoint, newtimepoint, theroilims, zpos, tc, thecumsum):
+    newroitimepoint = getroival_corners(newtimepoint, theroilims, zpos)
+    tc[timepoint - 1] = newroitimepoint
+    thecumsum = thecumsum + newroitimepoint
+    return(thecumsum)
+
+
+def detrendtc(thetimeaxis, tc, detrendedtc, trendtc, thetimepoint):
+    polycoeffs = sp.polyfit(thetimeaxis[0:thetimepoint], tc[0:thetimepoint], 2)
+    trendtc[0:thetimepoint] = sp.polyval((polycoeffs[0], polycoeffs[1], 0.0), thetimeaxis[0:thetimepoint])
+    detrendedtc[0:thetimepoint] = tc[0:thetimepoint] - trendtc[0:thetimepoint]
+    return(polycoeffs)
+
+
+def updateroistats(tc, thecumsum, demeantc, trendtc, vartc, thetimeaxis, thetimepoint):
+    polycoeffs = detrendtc(thetimeaxis, tc, demeantc, trendtc, thetimepoint)
+    if thetimepoint > 2:
+        themax = np.max(demeantc[0:thetimepoint])
+        themin = np.min(demeantc[0:thetimepoint])
+        sqrdiff = np.square(demeantc[0:thetimepoint])
+        thevar = np.var(demeantc[0:thetimepoint])
+        thestddev = 100.0 * (np.std(demeantc[0:thetimepoint])) / polycoeffs[2]
+        ppval = 100.0 * ((themax - themin) / polycoeffs[2])
+    else:
+        themax = tc[0]
+        themin = tc[0]
+        thevar = 0.0
+        thestddev = 0.0
+        ppval = 0.0
+    vartc[timepoint - 1] = thevar
+    return((polycoeffs, polycoeffs[2], themax, themin, thevar, thestddev, ppval))
+
+##########################################################################################
+##########################################################################################
+#
+# control flow starts here
+#
+##########################################################################################
+##########################################################################################
+
+# definitions
+rtrootdir = '/Volumes/Disk_C/RealTimeData/Local'
+rtrootdir = '/Users/rtfmri/Documents/MR_data/realtime'
+outputdatadir = '/Users/rtfmri/Documents/rtqa'
+if not os.path.exists(rtrootdir):
+    rtrootdir = '/Users/frederic/Documents/MR_data/realtime'
+    outputdatadir = '/Users/frederic/Documents/MR_data/rtqa'
+if not os.path.exists(outputdatadir):
+    temp = doashellcmd("mkdir -p " + outputdatadir)
+currentrtdirectory = ''
+windowsinitialized = False
+runinitialized = True
+finished = False
+lasttime = time.time()
+
+# configurable parameters
+slidingwinsize = 100
+maxdatasize = 800
+firstdatapoint = 10
+slicetype = 0
+centralroisize = 10
+peripheralroisize = 3
+ghostroisize = 4
+peripheralangles = 32
+timeout = 10.0
+calcimagestats = False
+showimagestats = False
+showroiplots = True
+calcmotionstats = True
+showmotionstats = False
+intrinsiccalcs = False
+ppthresh_central = 0.5
+maxpercent_ghost = 20.0
+ppthresh_periph = 25.0
+
+# main event loop
+while True:
+    activedirectory = getcurrentrtdir(rtrootdir)
+    if activedirectory != currentrtdirectory:  # Directory has changed - set up
+        timepoint = 1
+        runinitialized = False
+        finished = False
+        currentrtdirectory = activedirectory
+        print("realtime directory set to ", currentrtdirectory)
+        print("Waiting to start")
+        lasttrtime = time.time()
+    else:					# Directory is unchanged - check files
+        targetfile = currentrtdirectory + "/" + formatrtname(timepoint + firstdatapoint)
+        if os.path.exists(targetfile):
+            procstarttime = time.time()
+            lasttime = procstarttime
+            lasttrtime = lasttime
+
+            # motion correct
+            if runinitialized and calcmotionstats:
+                temp = doashellcmd("mcflirt -in " + targetfile + " -r " + motionreffile + " -o /tmp/moco -plots")
+                file = open("/tmp/moco.par", "r")
+                line = file.read()
+                mocoparms[timepoint - 1] = string.split(line)
+                # print mocoparms[timepoint-1]
+                file.close
+            now = time.time()
+            mocotime = now - lasttime
+            lasttime = now
+
+            nim = NiftiImage(targetfile)
+            inittimepoint = nim.data[0, :, :, :]
+            if not runinitialized:
+                print("initializing...")
+
+                motionreffile = targetfile
+
+                runstart = time.strftime("%Y%m%dT%H%M%S", time.localtime())
+
+                # figure out image parameters
+                thedims = nim.header['dim']
+                thesizes = nim.pixdim
+                xsize = thedims[1]
+                ysize = thedims[2]
+                numslices = thedims[3]
+                tr = thesizes[3]
+                print(thedims)
+                print(thesizes)
+                print("xsize, ysize, numslices", xsize, ysize, numslices)
+                print("xpix, ypix, slt, tr", thesizes[0], thesizes[1], thesizes[2], thesizes[3])
+
+                # figure out subject parameters
+                (xpos, ypos, zpos, subjectradius_x, subjectradius_y, subjecttype) = findsubjectparms(inittimepoint, thedims, thesizes)
+
+                # pull out the subset of the slices we're going to use
+                if slicetype == 0:
+                    startslice = 0
+                    endslice = numslices
+                if slicetype == 1:
+                    numslices = 1
+                    startslice = zpos
+                    endslice = startslice + 1
+                    zpos = 0
+                newtimepoint = inittimepoint[startslice:endslice, :, :]
+
+                # allocate the data arrays
+                cumsumimage = 0.0 * newtimepoint
+                newtimepoint4D = np.reshape(newtimepoint, (1, numslices, ysize, xsize))
+                if calcmotionstats:
+                    mocoparms = np.zeros((maxdatasize, 6))
+                dataarray = np.zeros((maxdatasize, numslices, ysize, xsize))
+                vararray = np.zeros((maxdatasize, numslices, ysize, xsize))
+                demeanarray = np.zeros((maxdatasize, numslices, ysize, xsize))
+                workarray = np.zeros((slidingwinsize, numslices, ysize, xsize))
+
+                timeaxis = np.arange(0, maxdatasize, tr)
+                anglestep = 360.0 / float(peripheralangles)
+                angleaxis = np.arange(0, peripheralangles)
+                angleaxis[:] = angleaxis[:] * anglestep
+                cumsum_centroi = 0.0
+                tc_centroi = np.zeros((maxdatasize))
+                vartc_centroi = np.zeros((maxdatasize))
+                demeantc_centroi = np.zeros((maxdatasize))
+                trendtc_centroi = np.zeros((maxdatasize))
+                cumsum_ghostroi = 0.0
+                tc_ghostroi = np.zeros((maxdatasize))
+                vartc_ghostroi = np.zeros((maxdatasize))
+                demeantc_ghostroi = np.zeros((maxdatasize))
+                trendtc_ghostroi = np.zeros((maxdatasize))
+                #tc_ghosttocentroi = np.zeros((maxdatasize))
+                # max_ghosttocentroi=-1000.0
+                # min_ghosttocentroi=1000.0
+                cumsum_peripheralrois = np.zeros((peripheralangles))
+
+                # place all the rois
+                centralroi = setroilims(xpos, ypos, centralroisize)
+                peripheralradius_x = int(0.8 * subjectradius_x)
+                peripheralradius_y = int(0.8 * subjectradius_y)
+                ghostroi = setroilims(xpos + subjectradius_x - ghostroisize - 1, 1 + ghostroisize / 2.0, ghostroisize)
+                tempval = setroilims(
+                    xpos + peripheralradius_x * np.sin(0.0),
+                    ypos + peripheralradius_y * np.cos(0.0),
+                    peripheralroisize)
+                peripheralrois = np.reshape(tempval, (1, 2, 2))
+                for i in range(1, peripheralangles):
+                    tempval = setroilims(
+                        xpos + peripheralradius_x * np.sin(6.283 * i / peripheralangles),
+                        ypos + peripheralradius_y * np.cos(6.283 * i / peripheralangles),
+                        peripheralroisize)
+                    reshapearray = np.reshape(tempval, (1, 2, 2))
+                    peripheralrois = np.concatenate((peripheralrois, reshapearray), 0)
+
+                # define plot windows
+                if not windowsinitialized:
+                    if calcimagestats and showimagestats:
+                        statimages = P.figure()
+                    if showroiplots:
+                        roiplot = P.figure()
+                        roiplot.subplots_adjust(hspace=0.35)
+                    if calcmotionstats:
+                        motionplot = P.figure()
+                    windowsinitialized = True
+                if calcimagestats:
+                    roiim = statimages.add_subplot(221)
+                    meanim = statimages.add_subplot(222)
+                    varim = statimages.add_subplot(223)
+                    stddevim = statimages.add_subplot(224)
+                    #sfnrim = statimages.add_subplot(234)
+                    #eodiffim = statimages.add_subplot(235)
+                if showroiplots:
+                    cent_roiax = roiplot.add_subplot(311)
+                    ghost_roiax = roiplot.add_subplot(312)
+                    #ghosttocent_roiax = roiplot.add_subplot(413)
+                    peripheral_roiax = roiplot.add_subplot(313)
+                if calcmotionstats:
+                    motion_xax = motionplot.add_subplot(321)
+                    motion_yax = motionplot.add_subplot(323)
+                    motion_zax = motionplot.add_subplot(325)
+                    motion_xrotax = motionplot.add_subplot(322)
+                    motion_yrotax = motionplot.add_subplot(324)
+                    motion_zrotax = motionplot.add_subplot(326)
+
+                # make a figure of the roi locations
+                if calcimagestats:
+                    themask = maskfromimage(newtimepoint)
+                    imagemean = nzmean(newtimepoint * themask)
+                    centralroival = imagemean * 0.75
+                    ghostroival = imagemean * 0.625
+                    peripheralroival = imagemean * 0.50
+                    roilocimage = newtimepoint * themask
+                    setroival(roilocimage, centralroi, zpos, centralroival)
+                    setroival(roilocimage, ghostroi, zpos, ghostroival)
+                    for i in range(0, peripheralangles):
+                        setroival(roilocimage, peripheralrois[i], zpos, peripheralroival)
+
+                # done with initialization
+                runinitialized = True
+            else:
+                newtimepoint = inittimepoint[startslice:endslice, :, :]
+            # print "processing...", timepoint
+            newtimepoint4D = np.reshape(newtimepoint, (1, numslices, ysize, xsize))
+            dataarray[timepoint - 1, :, :, :] = newtimepoint
+            cumsumimage = cumsumimage + newtimepoint
+            now = time.time()
+            datacopytime = now - lasttime
+            lasttime = now
+
+            # calculate the incremental mean, variance and std deviation
+            meanslice = cumsumimage[:, :, :] / float(timepoint)
+            if calcimagestats:
+                lowerlim = max((0, timepoint - slidingwinsize))
+                numelements = timepoint - lowerlim
+                workarray[0:numelements] = dataarray[lowerlim:timepoint, :, :, :]
+                if timepoint > 1:
+                    if intrinsiccalcs:
+                        stddevslice = np.std(workarray, 0)
+                        varslice = np.var(workarray, 0)
+                    else:
+                        demeanarray[lowerlim:timepoint, :, :, :] = workarray[0:numelements, :, :, :] - meanslice
+                        sqrdiffarray = np.square(demeanarray[lowerlim:timepoint - 1, :, :, :])
+                        varslice = np.mean(sqrdiffarray, 0)
+                        stddevslice = np.sqrt(varslice)
+                else:
+                    varslice = 0.0 * meanslice[:, :, :]
+                    stddevslice = 0.0 * meanslice[:, :, :]
+                vararray[timepoint - 1, :, :, :] = varslice[:, :, :]
+                # sfnrslice=np.nan_to_num(meanslice/stddevslice)
+            now = time.time()
+            imagecalctime = now - lasttime
+            lasttime = now
+
+            # extract the roi data
+            cumsum_centroi = updateroitc(timepoint, newtimepoint, centralroi, zpos, tc_centroi, cumsum_centroi)
+            cumsum_ghostroi = updateroitc(timepoint, newtimepoint, ghostroi, zpos, tc_ghostroi, cumsum_ghostroi)
+            updateperipheralrois(timepoint, newtimepoint, peripheralrois, zpos, cumsum_peripheralrois, peripheralangles)
+
+            # do some stats on the roi timecourses
+            (polycoeffs_centroi, mean_centroi, max_centroi, min_centroi, var_centroi, stddev_centroi, ppval_centroi) = updateroistats(
+                tc_centroi, cumsum_centroi, demeantc_centroi, trendtc_centroi, vartc_centroi, timeaxis, timepoint)
+            (polycoeffs_ghostroi, mean_ghostroi, max_ghostroi, min_ghostroi, var_ghostroi, stddev_ghostroi, ppval_ghostroi) = updateroistats(
+                tc_ghostroi, cumsum_ghostroi, demeantc_ghostroi, trendtc_ghostroi, vartc_ghostroi, timeaxis, timepoint)
+            # tc_ghosttocentroi[timepoint-1]=100.0*tc_ghostroi[timepoint-1]/tc_centroi[timepoint-1]
+            # if tc_ghosttocentroi[timepoint-1]<min_ghosttocentroi:
+            #	min_ghosttocentroi=tc_ghosttocentroi[timepoint-1]
+            # if tc_ghosttocentroi[timepoint-1]>max_ghosttocentroi:
+            #	max_ghosttocentroi=tc_ghosttocentroi[timepoint-1]
+            mean_peripheralrois = 100.0 * cumsum_peripheralrois[:] / (mean_centroi * float(timepoint))
+            max_peripheralrois = np.max(mean_peripheralrois)
+            min_peripheralrois = np.min(mean_peripheralrois)
+            now = time.time()
+            roicalctime = now - lasttime
+            lasttime = now
+
+            # generate figures
+            if showroiplots:
+                if timepoint == 1:
+                    # cent_roifit=demeantc_centroi[0:1]*0.0
+                    cent_roiline, = cent_roiax.plot(timeaxis[0:1], 100.0 * demeantc_centroi[0:1] / mean_centroi, 'g-')
+                    cent_roiline.axes.set_title("Central ROI timecourse")
+                    ghost_roiline, = ghost_roiax.plot(timeaxis[0:1], 100.0 * tc_ghostroi[0:1] / mean_centroi)
+                    ghost_roiline.axes.set_title("Ghost percentage timecourse")
+                    peripheral_roiline, = peripheral_roiax.plot(angleaxis, mean_peripheralrois)
+                    peripheral_roiline.axes.set_title("Peripheral ROI amplitude")
+                else:
+                    #cent_roifit=sp.polyval(polycoeffs_centroi, timeaxis[0:timepoint-1])
+                    cent_roiline.set_data(timeaxis[0:timepoint - 1], 100.0 * demeantc_centroi[0:timepoint - 1] / mean_centroi - 100.0)
+                    # timeaxis[0:timepoint-1],100.0*cent_roifit[0:timepoint-1]/mean_centroi-100.0)
+                    if ppval_centroi > ppthresh_central:
+                        cent_roiline.set_color('red')
+                    else:
+                        cent_roiline.set_color('green')
+                    cent_roiline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    cent_roiline.axes.set_ybound(lower=100.0 * min_centroi / mean_centroi - 100.0, upper=100.0 * max_centroi / mean_centroi - 100.0)
+
+                    ghost_roiline.set_data(timeaxis[0:timepoint - 1], 100.0 * tc_ghostroi[0:timepoint - 1] / mean_centroi)
+                    if 100.0 * max_ghostroi / mean_centroi > maxpercent_ghost:
+                        ghost_roiline.set_color('red')
+                    else:
+                        ghost_roiline.set_color('green')
+                    ghost_roiline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    ghost_roiline.axes.set_ybound(lower=0.0, upper=100.0 * max_ghostroi / mean_centroi)
+
+                    peripheral_roiline.set_data(angleaxis, mean_peripheralrois)
+                    if (max_peripheralrois - min_peripheralrois) > ppthresh_periph:
+                        peripheral_roiline.set_color('red')
+                    else:
+                        peripheral_roiline.set_color('green')
+                    peripheral_roiline.axes.set_ybound(lower=min_peripheralrois, upper=max_peripheralrois)
+                    roiplot.canvas.draw()
+                    roiplot.show()
+            now = time.time()
+            roidisplaytime = now - lasttime
+            lasttime = now
+
+            if calcmotionstats and showmotionstats:
+                if timepoint == 1:
+                    motion_xline, = motion_xax.plot(timeaxis[0:1], mocoparms[0:1, 0], 'r-')
+                    motion_yline, = motion_yax.plot(timeaxis[0:1], mocoparms[0:1, 1], 'g-')
+                    motion_zline, = motion_zax.plot(timeaxis[0:1], mocoparms[0:1, 2], 'b-')
+                    motion_xrotline, = motion_xrotax.plot(timeaxis[0:1], mocoparms[0:1, 3], 'r-')
+                    motion_yrotline, = motion_yrotax.plot(timeaxis[0:1], mocoparms[0:1, 4], 'g-')
+                    motion_zrotline, = motion_zrotax.plot(timeaxis[0:1], mocoparms[0:1, 5], 'b-')
+                else:
+                    minmotval = np.min(mocoparms)
+                    maxmotval = np.max(mocoparms)
+                    motion_xline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 0])
+                    motion_xline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_xline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motion_yline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 1])
+                    motion_yline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_yline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motion_zline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 2])
+                    motion_zline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_zline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motion_xrotline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 3])
+                    motion_xrotline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_xrotline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motion_yrotline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 4])
+                    motion_yrotline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_yrotline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motion_zrotline.set_data(timeaxis[0:timepoint - 1], mocoparms[0:timepoint - 1, 5])
+                    motion_zrotline.axes.set_xbound(lower=0.0, upper=timeaxis[timepoint - 1])
+                    motion_zrotline.axes.set_ybound(lower=minmotval, upper=maxmotval)
+                    motionplot.canvas.draw()
+                    motionplot.show()
+            now = time.time()
+            motiondisplaytime = now - lasttime
+            lasttime = now
+
+            if calcimagestats and showimagestats:
+                if timepoint == 1:
+                    roiimptr = datatoimage(roilocimage, roiim, "roi locations")
+                    meanimptr = datatoimage(meanslice, meanim, "Mean image")
+                    varimptr = datatoimage(varslice, varim, "Variance")
+                    stddevimptr = datatoimage(stddevslice, stddevim, "Std dev")
+                    #sfnrptr = datatoimage(sfnrslice,sfnrim,"SFNR")
+                    #eodiffptr = datatoimage(eodiffslice,eodiffim,"Even-Odd diff")
+                else:
+                    updateimage(roilocimage, roiimptr)
+                    updateimage(meanslice, meanimptr)
+                    updateimage(varslice, varimptr)
+                    updateimage(stddevslice, stddevimptr)
+                    statimages.canvas.draw()
+                    # updateimage(sfnrslice,sfnrimptr)
+                    # updateimage(eodiffslice,eodiffimptr)
+                statimages.canvas.draw()
+                statimages.show()
+            now = time.time()
+            imagedisplaytime = now - lasttime
+            lasttime = now
+
+            # output parameters of interest
+            procstoptime = time.time()
+            proctime = procstoptime - procstarttime
+            trtime = procstarttime - lasttrtime
+            lasttrtime = procstarttime
+            print("processing time for run ", runstart, " timepoint ", timepoint)
+            print("  motion correct: ", mocotime)
+            print("  data copy:      ", datacopytime)
+            print("  image calc:     ", imagecalctime)
+            print("  roi processing: ", roicalctime)
+            print("  roi display:    ", roidisplaytime)
+            print("  motion display: ", motiondisplaytime)
+            print("  image display:  ", imagedisplaytime)
+            print("  total proctime: ", proctime)
+            print("  trtime:         ", trtime)
+
+            # display parameters of interest
+            print("Central ROI mean, min, max, var, stddev, pp% = ", mean_centroi, min_centroi, max_centroi, var_centroi, stddev_centroi, ppval_centroi)
+            print("Ghost ROI mean, min, max, var, stddev, pp% = ", mean_ghostroi, min_ghostroi, max_ghostroi, var_ghostroi, stddev_ghostroi, ppval_ghostroi)
+            timepoint = timepoint + 1
+
+            # if timepoint==150:
+            #	outnim=NiftiImage(vararray[0:timepoint,:,:,:])
+            #	outnim.save('testmeans.nii.gz')
+
+            #    wait polling interval
+        else:
+            now = time.time()
+            watchdogtime = now - lasttime
+            if runinitialized and (not finished) and (watchdogtime > timeout):
+                # finish analysis of this run
+                print("Analysis of " + currentrtdirectory + " finished")
+
+                # dump the image data to file
+                print("writing data for final analysis...")
+                nim2 = NiftiImage(dataarray[:timepoint - 1], nim.header)
+                nim2.save('tmpfile.nii')
+                print("done")
+
+                # call final stability calculation
+                print()
+                print()
+                finished = True
+
+
+#################################
+# old code below this point
+
+# while roisize<=20:
+        #startxpos = int(xpos - (roisize + 1)/ 2)
+        #startypos = int(ypos - (roisize + 1)/ 2)
+
+thedims = nim.header['dim']
+thesizes = nim.pixdim
+numdisdaqs = 10
+xsize = thedims[1]
+ysize = thedims[2]
+numslices = thedims[3]
+temp = thedims[4]
+tr = thesizes[4]
+
+numtimepoints = temp - numdisdaqs
+freqstep = 2.0 * tr / numtimepoints
+starttime = numdisdaqs
+mcplotwidth = 500
+roiplotwidth = 500
+slicerwidth = 500
+
+# make empty results directory
+print("initializing output directory...")
+temp = doashellcmd("rm -r procresults")
+temp = doashellcmd("mkdir procresults")
+
+# initialize the output file
+outputfile = "procresults/output.html"
+FILE = open(outputfile, "w")
+
+FILE.writelines("<TITLE>Stability report</TITLE></HEAD><BODY>\n")
+FILE.writelines("<h2>Stability analysis of " + filename + "</h2>\n")
+FILE.writelines("<!--prestatspsstart-->\n")
+
+#############################
+#
+#       Data extraction
+#
+numregions = 0
+
+# extract the center slice
+print("extracting center slice...")
+firstvol = nim.data[0, :, :, :]
+slicecenter = findCOM(firstvol)
+zpos = int(round(slicecenter[2]))
+# print "z center is " , zpos , "\n"
+numslices = 1
+centerslicedata = nim.data[starttime:, zpos, :, :]
+
+# calculate the mean, stddev, and variance images
+print("calculating mean, stddev, and variance...")
+meanslice = np.mean(centerslicedata, 0)
+stddevslice = np.std(centerslicedata, 0)
+varslice = np.var(centerslicedata, 0)
+
+# calculate a mask from meanimage and find its center
+print("calculating phantom mask...")
+thethreshval = getfracval(meanslice, 0.25)
+phantommask = sp.where(meanslice > thethreshval, 1.0, 0.0)
+slicecenter = findCOM(phantommask)
+xpos = int(round(slicecenter[0]))
+ypos = int(round(slicecenter[1]))
+zpos = int(round(slicecenter[2]))
+# print "x,y,z center is "+str(xpos)+" "+str(ypos)+" "+str(zpos)+"\n"
+
+# calculate the sfnr image
+print("calculating sfnr...")
+sfnrslice = phantommask * np.nan_to_num(meanslice / stddevslice)
+
+# find the phantom radius
+print("calculating phantom radius...")
+phantomarea = arrayspatialsum(phantommask)
+subjectradius = np.sqrt(phantomarea / 3.1415926)
+print("phantom radius ", subjectradius)
+
+#############################
+#
+#       Odd-even SNR
+#
+print("calculating even/odd snr...")
+evenims = centerslicedata[0:-1:2]
+oddims = centerslicedata[1:-1:2]
+evenlength = evenims.shape[0]
+oddlength = oddims.shape[0]
+if oddlength < evenlength:
+    evenims = evenims[:evenlength - 1]
+    evenlength = evenims.shape[0]
+eodiffpairs = oddims - evenims
+eodiffimage = eodiffpairs.mean(0)
+
+# measure some quantities from the overall images
+imagemean = nzmean(meanslice * phantommask)
+stddevmean = nzmean(stddevslice * phantommask)
+sfnrmean = sfnrslice.mean()
+sfnrstddev = sfnrslice.std()
+varmean = nzmean(varslice * phantommask)
+eodiffmean = (phantommask * eodiffimage).mean()
+
+# generate the figures
+figurenumber = 1
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+meanimage = showslice(meanslice)
+P.savefig("procresults/meanimage.png", format='png')
+
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+stdimage = showslice(stddevslice)
+P.savefig("procresults/stddevimage.png", format='png')
+
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+varimage = showslice(varslice)
+P.savefig("procresults/varimage.png", format='png')
+
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+phantommaskimage = showslice(phantommask)
+P.savefig("procresults/phantommaskimage.png", format='png')
+
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+sfnrimage = showslice(sfnrslice)
+P.savefig("procresults/sfnrimage.png", format='png')
+
+P.figure(figurenumber)
+figurenumber = figurenumber + 1
+eoimage = showslice(eodiffimage)
+P.savefig("procresults/eodiffimage.png", format='png')
+
+
+FILE.writelines("\n<hr><h3>Calculated images</h3>\n")
+
+FILE.writelines("<p>Mean image (over time) from slice " +
+                str(zpos) + " of " + str(numslices) + ": mean = " +
+                str(imagemean) + " stddev = " + str(stddevmean) + "</p>\n")
+FILE.writelines("<p><IMG BORDER=0 SRC=meanimage.png></p>\n")
+
+FILE.writelines("<p>Standard deviation image (over time) from center slice</p>\n")
+FILE.writelines("<p><IMG BORDER=0 SRC=stddevimage.png></p>\n")
+
+FILE.writelines("<p>Variance image (over time) from center slice</p>\n")
+FILE.writelines("<p><IMG BORDER=0 SRC=varimage.png></p>\n")
+
+FILE.writelines("<p>SFNR image from center slice: mean = " +
+                str(sfnrmean) + ", stddev = " + str(sfnrstddev) + "</p>\n")
+FILE.writelines("<p><IMG BORDER=0 SRC=sfnrimage.png></p>\n")
+
+FILE.writelines("<p>Even-odd image from center slice: mean = " + str(eodiffmean) + "</p>\n")
+FILE.writelines("<p><IMG BORDER=0 SRC=eodiffimage.png></p>\n")
