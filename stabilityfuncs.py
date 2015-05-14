@@ -607,7 +607,7 @@ def smooth(x, window_len=11, window='hanning'):
     s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
     # print(len(s))
     if window == 'flat':  # moving average
-        w = ones(window_len, 'd')
+        w = np.ones(window_len, 'd')
     else:
         w = eval('np.' + window + '(window_len)')
 
