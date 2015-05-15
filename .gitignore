@@ -1,4 +1,5 @@
 *.pyc
-/bigtestdata
+/stability_tracking_raw
+/stability_tracking
 /testdata*
 /.idea
