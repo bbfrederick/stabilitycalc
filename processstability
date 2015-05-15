@@ -5,16 +5,15 @@
 #	$Id: processstability,v 1.13 2012/11/13 15:25:46 frederic Exp $
 #
 
-# $1 is the subject name
+# $session is the subject name
 # $2 is the element number
 setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
 setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
 setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
 setenv outputdir	`stabilityparms OUTPUTDIR`
-setenv subjname		$1
-setenv funcremap	'x -y z'
+setenv session		$1
 
-pushd $sorteddicomdir/$1
+pushd $sorteddicomdir/$session
 setenv boldname `'ls' -1d ep2d_bold_normalize_* | egrep -v adaptive | tail -n 1`
 setenv pacename `'ls' -1d ep2d_pace_normalize_* | egrep -v adaptive | tail -n 1`
 setenv multiflip10name `'ls' -1d ep2d_multiflip_10_* | tail -n 1`
@@ -24,61 +23,64 @@ popd
 
 if( $pacename != '' ) then
     echo 'PACE name: ' $pacename
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $pacename epi_pace "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_pace/studyinfo'
-    stabilitycalc $processedscandir/$subjname/epi_pace epi_pace.nii.gz 10
-    chmod -R a+r $processedscandir/$subjname/epi_pace
+    dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_pace
+    studyinfo $sorteddicomdir'/'$session'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_pace/studyinfo'
+    stabilitycalc $processedscandir/$session/epi_pace epi_pace.nii.gz 10
+    chmod -R a+r $processedscandir/$session/epi_pace
 
-    pushd $sorteddicomdir/$1
-    setenv com_x	`cat $processedscandir/$subjname/epi_pace/procresults/analysissummary.txt | grep center_of_mass_x | awk '{print $2}'`
-    setenv com_y	`cat $processedscandir/$subjname/epi_pace/procresults/analysissummary.txt | grep center_of_mass_y | awk '{print $2}'`
-    setenv com_z	`cat $processedscandir/$subjname/epi_pace/procresults/analysissummary.txt | grep center_of_mass_z | awk '{print $2}'`
+    setenv com_x	`grep center_of_mass_x $processedscandir/$session/epi_pace/procresults/analysissummary.txt | awk '{print $2}'`
+    setenv com_y	`grep center_of_mass_y $processedscandir/$session/epi_pace/procresults/analysissummary.txt | awk '{print $2}'`
+    setenv com_z	`grep center_of_mass_z $processedscandir/$session/epi_pace/procresults/analysissummary.txt | awk '{print $2}'`
     echo $com_x' '$com_y' '$com_z
-    'ls' -1d uncombined* | sed 's/uncombined//g' | sed 's/_/ /g' | awk '{print "processonestability mysubjname uncombined"$1"_"$2" element "$1" mycom"}' | sed 's/mysubjname/'$subjname'/g' | sed 's/mycom/'$com_x' '$com_y' '$com_z'/g' > $sorteddicomdir/$subjname/elementlist
-    source $sorteddicomdir/$subjname/elementlist
-    popd
+
+    foreach unc ( $sorteddicomdir/$session/uncombined* )
+        setenv ele `basename $unc | sed 's/uncombined\(H.*\)_.*/\1/'`
+        echo processonestability $session `basename $unc` element $ele $com_x $com_y $com_z >> $sorteddicomdir/$session/elementlist
+    end
+
+    source $sorteddicomdir/$session/elementlist
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_pace &
-    stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace &
+    #stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace &
 endif
 
 if( $singleslicename != '' ) then
     echo 'SS name: ' $singleslicename
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $singleslicename epi_singleslice "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_singleslice/studyinfo'
-    stabilitycalc $processedscandir/$subjname/epi_singleslice epi_singleslice.nii.gz 10
-    chmod -R a+r $processedscandir/$subjname/epi_singleslice
+    dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_singleslice
+    studyinfo $sorteddicomdir'/'$session'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_singleslice/studyinfo'
+    stabilitycalc $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
+    chmod -R a+r $processedscandir/$session/epi_singleslice
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_singleslice &
     stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_singleslice &
 endif
 
 if( $multiflip77name != '' ) then
     echo 'Multiflip_77 name: ' $multiflip77name
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $multiflip77name epi_multiflip77 "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip77/studyinfo'
-    stabilitycalc $processedscandir/$subjname/epi_multiflip77 epi_multiflip77.nii.gz 10
-    chmod -R a+r $processedscandir/$subjname/epi_multiflip77 
+    dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip77
+    studyinfo $sorteddicomdir'/'$session'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip77/studyinfo'
+    stabilitycalc $processedscandir/$session/epi_multiflip77 epi_multiflip77.nii.gz 10
+    chmod -R a+r $processedscandir/$session/epi_multiflip77 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip77 &
     stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
 endif
 
 if( $multiflip10name != '' ) then
     echo 'Multiflip_10 name: ' $multiflip10name
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $multiflip10name epi_multiflip10 "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip10/studyinfo'
-    stabilitycalc $processedscandir/$subjname/epi_multiflip10 epi_multiflip10.nii.gz 10
-    chmod -R a+r $processedscandir/$subjname/epi_multiflip10 
+    dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip10
+    studyinfo $sorteddicomdir'/'$session'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip10/studyinfo'
+    stabilitycalc $processedscandir/$session/epi_multiflip10 epi_multiflip10.nii.gz 10
+    chmod -R a+r $processedscandir/$session/epi_multiflip10 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip10 &
     stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
 endif
 
 if( $boldname != '' ) then
     echo 'BOLD name: ' $boldname
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $boldname epi_bold "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_bold/studyinfo'
-    stabilitycalc $processedscandir/$subjname/epi_bold epi_bold.nii.gz 10
-    chmod -R a+r $processedscandir/$subjname/epi_bold 
+    dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_bold
+    studyinfo $sorteddicomdir'/'$session'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$session'/epi_bold/studyinfo'
+    stabilitycalc $processedscandir/$session/epi_bold epi_bold.nii.gz 10
+    chmod -R a+r $processedscandir/$session/epi_bold 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_bold &
     stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_bold &
 endif
 
-touch $processedscandir/$subjname
+touch $processedscandir/$session
