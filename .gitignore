@@ -1,5 +1,3 @@
 *.pyc
-/stability_tracking_raw
-/stability_tracking
-/testdata*
+/data
 /.idea

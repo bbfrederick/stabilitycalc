@@ -1,5 +1,5 @@
-BINDIR			/Users/frederic/bin/fmristability
-RAWDICOMDIR		/Volumes/StabilityBackup/stability_export
-SORTEDDICOMDIR		/Volumes/StabilityBackup/stability_tracking_raw
-PROCESSEDSCANDIR	/Volumes/StabilityBackup/stability_tracking
-OUTPUTDIR		/Volumes/stability
+BINDIR			.
+RAWDICOMDIR		./data/stability_export
+SORTEDDICOMDIR		./data/stability_tracking_raw
+PROCESSEDSCANDIR	./data/stability_tracking
+OUTPUTDIR		./data/stability

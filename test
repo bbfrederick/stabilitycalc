@@ -4,9 +4,9 @@
 # numbers come out different on unix and mac so we
 # have separate baseline dirs
 
-./stabilitycalc testdata epi_short.nii.gz 0
+./stabilitycalc data/testdata epi_short.nii.gz 0
 echo ==================
 echo diff
 echo ==================
-diff <(sort testdata/procresults/dataquality.txt) <(sort testdata.orig.$(uname)/procresults/dataquality.txt)
-diff <(sort testdata/procresults/analysissummary.txt) <(sort testdata.orig.$(uname)/procresults/analysissummary.txt)
+diff <(sort data/testdata/procresults/dataquality.txt) <(sort data/testdata.orig.$(uname)/procresults/dataquality.txt)
+diff <(sort data/testdata/procresults/analysissummary.txt) <(sort data/testdata.orig.$(uname)/procresults/analysissummary.txt)
