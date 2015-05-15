@@ -10,7 +10,7 @@ setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
 setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
 setenv outputdir	`stabilityparms OUTPUTDIR`
 
-setenv subjname		$1
+setenv session		$1
 setenv elementinname	$2
 setenv elementoutbase	$3
 setenv elementoutsuffix	$4
@@ -18,11 +18,9 @@ setenv com_x		$5
 setenv com_y		$6
 setenv com_z		$7
 setenv funcremap	'x -y z'
-
-if( -e $sorteddicomdir'/'$subjname'/'$elementinname ) then
-    newprocfuncs $sorteddicomdir $processedscandir $subjname $elementinname $elementoutbase'_'$elementoutsuffix "$funcremap"
-    studyinfo $sorteddicomdir'/'$subjname'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$subjname'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
-    stabilitycalc $processedscandir/$subjname/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
+if( -e $sorteddicomdir'/'$session'/'$elementinname ) then
+    dicom2nifti $sorteddicomdir/$session/$elementinname $processedscandir/$session $elementoutbase'_'$elementoutsuffix 
+    studyinfo $sorteddicomdir'/'$session'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$session'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
+    stabilitycalc $processedscandir/$session/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
 endif
 
-#stabilitysummary $processedscandir $outputdir'/3T/birn' epi_coilelements

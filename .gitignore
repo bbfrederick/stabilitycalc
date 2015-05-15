@@ -1,4 +1,3 @@
 *.pyc
-/bigtestdata
-/testdata*
+/data
 /.idea
