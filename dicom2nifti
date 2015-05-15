@@ -16,8 +16,8 @@ if($debug == 'y') then
     echo "Destination name >"$3"<"
     endif
 
+rm -rf $2/$3
 mkdir -p $2/$3
-
 dcm2nii -d n -g y -o $2/$3 $1
 mv $2/$3/*nii.gz $2/$3/$3.nii.gz
 ./studyinfo $1/IM*0001.dcm > $2/$3/studyinfo
