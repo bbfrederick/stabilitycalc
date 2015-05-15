@@ -1,8 +1,0 @@
-#!/bin/csh -f
-rm -r testdata/procresults
-stabilitycalc testdata epi_short.nii.gz 10
-echo
-echo
-echo
-echo "Looking for differences between stability output and target values"
-diff testdata/procresults/analysissummary.txt testdata/target_analysissummary.txt
