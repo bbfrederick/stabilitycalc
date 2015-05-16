@@ -8,10 +8,21 @@ if [ -z "$DATA" ]; then
     # out of an abundance of caution because of next line
     exit 1
 fi
-rm -rf $DATA/testdata/procresults
-./stabilitycalc $DATA/testdata epi_short.nii.gz 0
-echo ==================
-echo diff
-echo ==================
-diff <(sort $DATA/testdata/procresults/dataquality.txt) <(sort $DATA/testdata.orig.$(uname)/procresults/dataquality.txt)
-diff <(sort $DATA/testdata/procresults/analysissummary.txt) <(sort $DATA/testdata.orig.$(uname)/procresults/analysissummary.txt)
+for COIL in TxRx 32Ch; do
+    rm -rf $DATA/test$COIL/procresults
+done
+./stabilitycalc $DATA/test32Ch epi_pace.nii.gz 0
+./stabilitycalc $DATA/testTxRx epi_short.nii.gz 0
+for COIL in TxRx 32Ch; do
+    echo ==================
+    echo diff $COIL
+    echo ==================
+    diff <(sort $DATA/test$COIL/procresults/dataquality.txt) <(sort $DATA/test$COIL.orig/procresults/dataquality.txt)
+    diff <(sort $DATA/test$COIL/procresults/analysissummary.txt) <(sort $DATA/test$COIL.orig/procresults/analysissummary.txt)
+    echo 
+    echo
+    echo =============
+    echo done with $COIL
+
+done
+
