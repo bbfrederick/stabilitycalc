@@ -469,7 +469,7 @@ row8str = tablerowtag(tableentrytag(centralsignal_headerstr) + tableentrytag(the
 REPORTFILE.writelines(tablepropstag(imagehdrstr + row0str + row1str + row2str + row3str + row4str + row5str + row6str + row7str + row8str, int(3.5 * myimwidth), "left"))
 
 # put in a key to help interpret notations on the individual entries
-specs = sf.setlimits('TxRx_Head')
+specs = sf.getlimits('TxRx_Head')
 row0 = headertag("Key:")
 row1 = tableentrytag(yellowtag("Warning, ") + redtag("Out of spec")) + tableentrytag("")
 keyrows = ""
@@ -487,7 +487,7 @@ REPORTFILE.writelines(tablerowstarttag())
 REPORTFILE.writelines(tableentryopttag('', widthopt(14.44444)))
 
 for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
-    specs = sf.setlimits(targetcoil)
+    specs = sf.getlimits(targetcoil)
     coildirlist = bigtag(smallheadertag(targetcoil))
     for i in range(filenumber_TARGET - 1, -1, -1):
         if datadict[i]['Coil'] == targetcoil:

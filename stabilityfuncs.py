@@ -24,7 +24,7 @@ import csv
 ########################################################################
 
 
-def setlimits(coil):
+def getlimits(coil):
     def get_lim_csv(coil):
         d = {}
         try:
@@ -38,7 +38,7 @@ def setlimits(coil):
                         r['description'],
                         r['flag'])
         except IOError:
-            print("setlimit: coil not recognized!")
+            print("getlimits: coil not recognized!")
             exit(1)
         return d
 

@@ -294,7 +294,7 @@ if (isindividualcoil == 1):
 print("Center of mass of mask: %d (%2.2f), %d (%2.2f), %d (%2.2f)" % (xcenter, xcenterf, ycenter, ycenterf, zcenter, zcenterf))
 
 # define the canonical limits
-thelimitdict = sf.setlimits(coilname)
+thelimitdict = sf.getlimits(coilname)
 
 # Try to figure out what we're looking at
 unknown = 0
