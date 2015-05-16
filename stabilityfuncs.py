@@ -14,6 +14,7 @@ import pylab as P
 from htmltagutils import *
 from pylab import plot, legend, show, hold
 import csv
+from collections import OrderedDict
 
 ########################################################################
 #
@@ -49,7 +50,17 @@ def getlimits(coil):
     return limitdict
 
 
-
+def getphasedarraydata(coil):
+    d = OrderedDict()
+    try:
+        with open('config/{}_coildata.csv'.format(coil)) as csvfile:
+            reader = csv.DictReader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
+            for r in reader:
+                d[r['element']] = r
+        return d
+    except IOError:
+        print("getphasedarraydata: Not a phased array.")
+        return False
 
 
 def makemask(inputim, inputthresh, useabs):

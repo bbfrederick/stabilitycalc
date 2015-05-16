@@ -565,22 +565,14 @@ if(isindividualcoil == 1):
 #
 print("Analyzing phased array ROIs...")
 
-coildata = json.load(open('config/coildata.txt'))
-
 isphasedarray = False
 
+thiscoildata = sf.getphasedarraydata(coilname)
+if thiscoildata and numslices > 1:
+    isphasedarray = True
+    numphasedarray = len(thiscoildata)
 
-if coilname == '32Ch_Head':
-    thiscoildata = coildata[coilname]
-    numphasedarray = len(thiscoildata)
-    isphasedarray = True
-if coilname == 'HeadMatrix':
-    thiscoildata = coildata[coilname]
-    numphasedarray = len(thiscoildata)
-    isphasedarray = True
-if numslices == 1:
-    isphasedarray = 0
-if(isphasedarray):
+if isphasedarray:
     paindices = np.arange(0.0, numphasedarray, 1.0)
     phasedarrayroi_rawpplimits = ((0, 0.5), (0, 0.6))
     phasedarrayroi_dtpplimits = ((0, 0.5), (0, 0.6))
@@ -593,7 +585,6 @@ if(isphasedarray):
     print("phasedarrayradius set to %2.2f, %2.2f" % (phasedarrayradiusx, phasedarrayradiusy))
 
     thephasedarraystddevs = np.zeros(numphasedarray)
-    phasedarrayindex = np.arange(0, numphasedarray)
     phasedarrayroimeans = np.zeros(numphasedarray)
     phasedarrayroistddevs = np.zeros(numphasedarray)
     phasedarrayroimins = np.zeros(numphasedarray)
@@ -615,11 +606,11 @@ if(isphasedarray):
     phasedarraydttcs_demeaned = np.zeros((numphasedarray, len(thetimepoints)), dtype=float)
     phasedarraytc_summary = []
     phasedarraytc_dt_summary = []
-    for i in phasedarrayindex:
-        therecord = thiscoildata[i]
-        myxloc = round(therecord[4])
-        myyloc = round(therecord[5])
-        myzloc = round(therecord[6])
+    for i, elementkey in enumerate (thiscoildata):
+        therecord = thiscoildata[elementkey]
+        myxloc = round(therecord['xloc'])
+        myyloc = round(therecord['yloc'])
+        myzloc = round(therecord['zloc'])
         theroi = sf.setroilims(myxloc, myyloc, phasedarraysize)
         if(isindividualcoil == 0):
             sf.markroi(theroi, myzloc, roislice, 0.95 * rawmeanmax)
@@ -642,7 +633,7 @@ if(isphasedarray):
         phasedarrayroimins_dt[i] = np.min(phasedarraydttcs[i, :])
         phasedarrayroimaxs_dt[i] = np.max(phasedarraydttcs[i, :])
         phasedarrayroipps_dt[i] = np.ptp(phasedarraydttcs[i, :])
-        print("Element ", therecord[0], ": loc=", myxloc, myyloc, myzloc, ", SNR=", phasedarrayroisnrs[i], ", SFNR=", phasedarrayroisfnrs[i], ", mean=", phasedarrayroimeans[i], \
+        print("Element ", elementkey, ": loc=", myxloc, myyloc, myzloc, ", SNR=", phasedarrayroisnrs[i], ", SFNR=", phasedarrayroisfnrs[i], ", mean=", phasedarrayroimeans[i], \
             ", p-p%=", 100.0 * phasedarrayroipps[i] / phasedarrayroimeans[i], \
             ", detrended p-p%=", 100.0 * phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i])
 
