@@ -660,8 +660,8 @@ if isphasedarray:
         stddevquality = sf.limitcheck(phasedarrayroistddevs[i] / phasedarrayroimeans[i] * 100.0,
                                       phasedarrayroi_rawstddevlimits)
         phasedarraystddevstr = "stddev=%4.4f " % (phasedarrayroistddevs[i]) + boldtag(qualitytag("(%4.4f%%)",
-                                                                                                 stddevquality) % (
-                                                                                          phasedarrayroistddevs[i] /
+                                                                                      stddevquality) % (
+                                                                                      phasedarrayroistddevs[i] /
                                                                                           phasedarrayroimeans[
                                                                                               i] * 100.0))
         ppquality = sf.limitcheck(phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0, phasedarrayroi_rawpplimits)
