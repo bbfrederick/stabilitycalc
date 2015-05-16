@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2013/09/09 13:40:42 $
-#       $Id: stabilityfuncs.py,v 1.10 2013/09/09 13:40:42 frederic Exp $
-#
+
+"""stabilityfuncs.py: provides general helper functions, especially for stabilitycalc"""
+
 import os
 import numpy as np
 import scipy as sp
@@ -13,14 +11,6 @@ import matplotlib.colors as colors
 from htmltagutils import *
 import csv
 from collections import OrderedDict
-
-########################################################################
-#
-#
-#  Subroutine definitions
-#
-#
-########################################################################
 
 
 def getlimits(coil):
@@ -64,9 +54,7 @@ def getphasedarraydata(coil):
 
 def makemask(inputim, inputthresh, useabs):
     if useabs < 1:
-        # print "using relative threshold"
         thethreshval = getfracval(inputim, inputthresh)
-        # print "%2.2f percent threshold at %2.2f" % (100.0*inputthresh,thethreshval)
     else:
         thethreshval = inputthresh
     themask = sp.where(inputim > thethreshval, 1.0, 0.0)
@@ -75,9 +63,6 @@ def makemask(inputim, inputthresh, useabs):
 
 def vecnorm(thevec):
     return np.sqrt(np.square(thevec).sum())
-
-
-# format limits
 
 
 def formatlimits(thelimits):
@@ -89,23 +74,18 @@ def formatlimits(thelimits):
     return "\"" + limitdesc + "\"," + failmin + "," + warnmin + "," + warnmax + "," + failmax
 
 
-# check to see if a parameter falls within preset limits.
-
-
 def limitcheck(thenumber, thelimits):
+    # check to see if a parameter falls within preset limits.
     retval = 2  # start with the assumption that the data is bad
     if (float(thenumber) >= float(thelimits[1][0])) and (float(thenumber) <= float(thelimits[1][1])):
         retval = 1  # number falls within the warning limits
     if (float(thenumber) >= float(thelimits[0][0])) and (float(thenumber) <= float(thelimits[0][1])):
         retval = 0  # number falls within the good limits
-    # print thelimits[1][0],thelimits[0][0],thenumber,thelimits[0][1],thelimits[1][1],"--->",retval
     return retval
 
 
-# generate a table of weisskoff data
-
-
 def weisstable(roiareas, weisscvs, projcvs):
+    # generate a table of weisskoff data
     theshape = roiareas.shape
     numareas = theshape[0]
 
@@ -124,10 +104,8 @@ def weisstable(roiareas, weisscvs, projcvs):
     return smalltag(tablepropstag(tablestring, 300, "center"))
 
 
-# generate the polynomial fit timecourse from the coefficients
-
-
 def trendgen(thexvals, thefitcoffs):
+    # generate the polynomial fit timecourse from the coefficients
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
     # print "fitting to order "+str(order)
@@ -141,28 +119,22 @@ def trendgen(thexvals, thefitcoffs):
     return thefit
 
 
-# calculate the robust range of the all voxels
-
-
 def completerobust(thearray):
+    # calculate the robust range of the all voxels
     themin = getfracval(thearray, 0.02)
     themax = getfracval(thearray, 0.98)
     return [themin, themax]
 
 
-# calculate the robust range of the non-zero voxels
-
-
 def nzrobust(thearray):
+    # calculate the robust range of the non-zero voxels
     themin = getnzfracval(thearray, 0.02)
     themax = getnzfracval(thearray, 0.98)
     return [themin, themax]
 
 
-# calculate the min and max of the non-zero voxels
-
-
 def nzminmax(thearray):
+    # calculate the min and max of the non-zero voxels
     flatarray = np.ravel(thearray)
     nzindices = np.nonzero(flatarray)
     theflatarray = flatarray[nzindices]
@@ -171,10 +143,8 @@ def nzminmax(thearray):
     return [themin, themax]
 
 
-# calculate the stats of the non-zero voxels
-
-
 def completestats(thearray):
+    # calculate the stats of the non-zero voxels
     themean = np.mean(thearray)
     thestddev = np.std(thearray)
     thevar = np.var(thearray)
@@ -184,10 +154,8 @@ def completestats(thearray):
     return [themean, thestddev, thevar, themax, themin, theptp]
 
 
-# calculate the stats of the non-zero voxels
-
-
 def nzstats(thearray):
+    # calculate the stats of the non-zero voxels
     flatarray = np.ravel(thearray)
     nzindices = np.nonzero(flatarray)
     theflatarray = flatarray[nzindices]
@@ -206,26 +174,20 @@ def showstats(thestats):
     return formatstring % interpstring
 
 
-# calculate the mean of the non-zero voxels
-
-
 def nzmean(thearray):
+    # calculate the mean of the non-zero voxels
     flatarray = np.ravel(thearray)
     nzindices = np.nonzero(flatarray)
     return np.mean(flatarray[nzindices])
 
 
-# calculate the sum of an array across space
-
-
 def arrayspatialsum(thearray):
+    # calculate the sum of an array across space
     return np.sum(thearray)
 
 
-# show an roi timecourse plot
-
-
 def showtc(thexvals, theyvals, thelabel):
+    # show an roi timecourse plot
     w, h = plt.figaspect(0.25)
     roiplot = plt.figure(figsize=(w, h))
     roisubplot = roiplot.add_subplot(111)
@@ -240,10 +202,8 @@ def showtc(thexvals, theyvals, thelabel):
     return
 
 
-# show an roi timecourse plot and a fit line
-
-
 def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
+    # show an roi timecourse plot and a fit line
     numxs = len(xvecs)
     numys = len(yvecs)
     numlegends = len(legendvec)
@@ -304,10 +264,8 @@ def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
     return
 
 
-# show an roi timecourse plot and a fit line
-
-
 def showtc2(thexvals, theyvals, thefitvals, thelabel):
+    # show an roi timecourse plot and a fit line
     w, h = plt.figaspect(0.25)
     roiplot = plt.figure(figsize=(w, h))
     roisubplot = roiplot.add_subplot(111)
@@ -322,10 +280,8 @@ def showtc2(thexvals, theyvals, thefitvals, thelabel):
     return
 
 
-# initialize and show a loglog Weiskoff plot
-
-
 def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
+    # initialize and show a loglog Weiskoff plot
     print("Generating plot for {}".format(thelabel))
     w, h = plt.figaspect(1.0)
     roiplot = plt.figure(figsize=(w, h))
@@ -337,10 +293,8 @@ def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
     return
 
 
-# initialize and show a 2D slice from a dataset in greyscale
-
-
 def showslice2(thedata, thelabel, minval, maxval, colormap):
+    # initialize and show a 2D slice from a dataset in greyscale
     theshape = thedata.shape
     numslices = theshape[0]
     ysize = theshape[1]
@@ -371,10 +325,8 @@ def showslice2(thedata, thelabel, minval, maxval, colormap):
     return
 
 
-# initialize and show a 2D slice from a dataset in greyscale
-
-
 def showslice3(thedata, thelabel, minval, maxval, colormap):
+    # initialize and show a 2D slice from a dataset in greyscale
     theshape = thedata.shape
     ysize = theshape[0]
     xsize = theshape[1]
@@ -398,10 +350,8 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
     return
 
 
-# show a 2D slice from a dataset in greyscale
-
-
 def showslice(theslice):
+    # show a 2D slice from a dataset in greyscale
     if plt.isinteractive():
         plt.ioff()
     plt.axis('off')
@@ -467,10 +417,8 @@ def smooth(x, window_len=11, window='hanning'):
     return y[window_len - 1:-window_len + 1]
 
 
-# Find the image intensity value that cleanly separates background from image
-
-
 def findsepval(datamat):
+    # Find the image intensity value that cleanly separates background from image
     numbins = 200
     themax = datamat.max()
     themin = datamat.min()
@@ -488,10 +436,8 @@ def findsepval(datamat):
     return [sepval, cumfrac]
 
 
-# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-
-
 def getfracval(datamat, thefrac):
+    # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
     numbins = 200
     themax = datamat.max()
     themin = datamat.min()
@@ -504,10 +450,8 @@ def getfracval(datamat, thefrac):
     return 0.0
 
 
-# Find the image intensity value which thefrac of the non-zero voxels in the image exceed
-
-
 def getnzfracval(datamat, thefrac):
+    # Find the image intensity value which thefrac of the non-zero voxels in the image exceed
     numbins = 200
     (themin, themax) = nzminmax(datamat)
     (meanhist, bins) = np.histogram(datamat, bins=numbins, range=(themin, themax))
@@ -519,11 +463,9 @@ def getnzfracval(datamat, thefrac):
     return 0.0
 
 
-# find the center of mass of a 2D or 3D image
-
-
 # noinspection PyPep8Naming,PyUnresolvedReferences
 def findCOM(datamat):
+    # find the center of mass of a 2D or 3D image
     Mx = 0.0
     My = 0.0
     Mz = 0.0
@@ -551,10 +493,8 @@ def findCOM(datamat):
     return COM
 
 
-# given an roi and a position, mark an roi
-
-
 def markroi(theinputroi, zpos, roislice, theval):
+    # given an roi and a position, mark an roi
     xstart = theinputroi[0][0]
     xend = theinputroi[1][0]
     ystart = theinputroi[0][1]
@@ -563,10 +503,8 @@ def markroi(theinputroi, zpos, roislice, theval):
     return
 
 
-# given a location and a size, define the corners of an roi
-
-
 def setroilims(xpos, ypos, size):
+    # given a location and a size, define the corners of an roi
     if (size % 2) == 0:
         halfsize = size / 2
         return (((int(round(xpos - halfsize)), int(round(ypos - halfsize))),
@@ -577,10 +515,8 @@ def setroilims(xpos, ypos, size):
                  (int(round(xpos + halfsize + 1)), int(round(ypos + halfsize + 1)))))
 
 
-# get an snr timecourse from the voxels of an roi
-
-
 def getroisnr(theimage, theroi, zpos):
+    # get an snr timecourse from the voxels of an roi
     xstart = theroi[0][0]
     xend = theroi[1][0]
     ystart = theroi[0][1]
@@ -603,10 +539,8 @@ def getroisnr(theimage, theroi, zpos):
     return thesnrs
 
 
-# get all the voxels from an roi and return a 2d (time by space) array
-
-
 def getroivoxels(theimage, theroi, zpos):
+    # get all the voxels from an roi and return a 2d (time by space) array
     xstart = theroi[0][0]
     xend = theroi[1][0]
     ystart = theroi[0][1]
@@ -621,10 +555,8 @@ def getroivoxels(theimage, theroi, zpos):
     return thevoxels
 
 
-# get a standard deviation timecourse from the voxels of an roi
-
-
 def getroistdtc(theimage, theroi, zpos):
+    # get a standard deviation timecourse from the voxels of an roi
     xstart = theroi[0][0]
     xend = theroi[1][0]
     ystart = theroi[0][1]
@@ -639,10 +571,8 @@ def getroistdtc(theimage, theroi, zpos):
     return thestds
 
 
-# get an average timecourse from the voxels of an roi
-
-
 def getroimeantc(theimage, theroi, zpos):
+    # get an average timecourse from the voxels of an roi
     xstart = theroi[0][0]
     xend = theroi[1][0]
     ystart = theroi[0][1]
@@ -657,10 +587,8 @@ def getroimeantc(theimage, theroi, zpos):
     return themeans
 
 
-# get the average value from an roi in a 3D image
-
-
 def getroival(theimage, theroi, zpos):
+    # get the average value from an roi in a 3D image
     xstart = theroi[0][0]
     xend = theroi[1][0]
     ystart = theroi[0][1]
@@ -669,10 +597,8 @@ def getroival(theimage, theroi, zpos):
     return theroival
 
 
-# make a captioned image with statistics
-
-
 def makecaptionedimage(imagetitle, thestats, imagename, thewidth):
+    # make a captioned image with statistics
     if not thestats:
         imcapstring = paratag(boldtag(imagetitle))
     else:
@@ -680,10 +606,8 @@ def makecaptionedimage(imagetitle, thestats, imagename, thewidth):
     return imcapstring + imagetag(imagename, thewidth)
 
 
-# send a command to the shell
-
-
 def doashellcmd(cmd):
+    # send a command to the shell
     a = os.popen(cmd)
     while True:
         line = a.readline()
