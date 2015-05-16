@@ -3,10 +3,15 @@
 # test to make sure nothing has changed.
 # numbers come out different on unix and mac so we
 # have separate baseline dirs
-
-./stabilitycalc data/testdata epi_short.nii.gz 0
+DATA=/Users/dmd/mcldata
+if [ -z "$DATA" ]; then
+    # out of an abundance of caution because of next line
+    exit 1
+fi
+rm -rf $DATA/testdata/procresults
+./stabilitycalc $DATA/testdata epi_short.nii.gz 0
 echo ==================
 echo diff
 echo ==================
-diff <(sort data/testdata/procresults/dataquality.txt) <(sort data/testdata.orig.$(uname)/procresults/dataquality.txt)
-diff <(sort data/testdata/procresults/analysissummary.txt) <(sort data/testdata.orig.$(uname)/procresults/analysissummary.txt)
+diff <(sort $DATA/testdata/procresults/dataquality.txt) <(sort $DATA/testdata.orig.$(uname)/procresults/dataquality.txt)
+diff <(sort $DATA/testdata/procresults/analysissummary.txt) <(sort $DATA/testdata.orig.$(uname)/procresults/analysissummary.txt)
