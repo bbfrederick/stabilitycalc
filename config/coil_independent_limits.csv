@@ -1,0 +1,4 @@
+"var","good_min","good_max","warn_min","warn_max","description","flag"
+"center_of_mass_y",28.0140073333838,32.9638687728109,27.1890304268127,33.788845679382,"Center of mass y",""
+"center_of_mass_x",30.0528824213927,34.071011383917,29.383194260972,34.7406995443377,"Center of mass x",""
+"center_of_mass_z",12.8178829000925,14.5672481911823,12.5263220182442,14.8588090730306,"Center of mass z",""

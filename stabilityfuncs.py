@@ -13,6 +13,7 @@ import scipy as sp
 import pylab as P
 from htmltagutils import *
 from pylab import plot, legend, show, hold
+import csv
 
 ########################################################################
 #
@@ -24,162 +25,29 @@ from pylab import plot, legend, show, hold
 
 
 def setlimits(coil):
-    #
-    #
-    # This is a kludge.  There should be separate dictionaries for phantom characteristics and coil characteristics, and all values
-    # should be read in from configuration files.
-    #
-    #
-    limitdict = {}
+    def get_lim_csv(coil):
+        d = {}
+        try:
+            with open('config/{}_limits.csv'.format(coil)) as csvfile:
+                reader = csv.DictReader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
+                for r in reader:
+                    d[r['var']] = (
+                        (r['good_min'], r['good_max']),
+                        (r['warn_min'], r['warn_max']),
+                        (0, 0),
+                        r['description'],
+                        r['flag'])
+        except IOError:
+            print("setlimit: coil not recognized!")
+            exit(1)
+        return d
 
-    # sample dependant quantities
-    limitdict['DopedWaterPhantom_rad'] = ((82.0, 84.5), (81.0, 86.5), (0, 0), "Doped water phantom radius", "")
-    limitdict['DopedWaterPhantom_shape'] = ((0.97, 1.03), (0.95, 1.05), (0, 0), "Doped water phantom shape", "")
-    limitdict['DopedWaterPhantom_snr'] = ((0.97, 1.03), (0.95, 1.05), (0, 0), "Doped water phantom SNR", "")  # do not yet have normative limits
+    limitdict = get_lim_csv('coil_independent')
+    limitdict.update(get_lim_csv('sample'))
+    limitdict.update(get_lim_csv(coil))
 
-    limitdict['BIRNphantom_rad'] = ((80.9209448163338, 86.6421984038845), (79.967402551742, 87.5957406684762), (0, 0), "BIRN phantom radius", "")
-    limitdict['BIRNphantom_shape'] = ((0.941427953309648, 1.05175367332324), (0.923040333307383, 1.07014129332551), (0, 0), "BIRN phantom shape", "")
-    limitdict['BIRNphantom_snr'] = ((0.97, 1.03), (0.95, 1.05), (0, 0), "BIRN phantom SNR", "")  # do not yet have normative limits
+    return limitdict
 
-    limitdict['head_rad'] = ((60.0, 70.0), (50.0, 80.0), (0, 0), "Head radius", "")  # do not yet have normative limits
-    limitdict['head_shape'] = ((1.4, 1.5), (1.2, 1.7), (0, 0), "Head shape", "")  # do not yet have normative limits
-    limitdict['head_snr'] = ((1.4, 1.5), (1.2, 1.7), (0, 0), "Head SNR", "")  # do not yet have normative limits
-
-    # coil independent quantities
-    limitdict['center_of_mass_x'] = ((30.0528824213927, 34.071011383917), (29.383194260972, 34.7406995443377), (1, 0), "Center of mass x", "")
-    limitdict['center_of_mass_y'] = ((28.0140073333838, 32.9638687728109), (27.1890304268127, 33.788845679382), (1, 0), "Center of mass y", "")
-    limitdict['center_of_mass_z'] = ((12.8178829000925, 14.5672481911823), (12.5263220182442, 14.8588090730306), (0, 0), "Center of mass z", "")
-
-    # coil dependent quantities
-    coilrecognized = 0
-    if (coil == '32Ch_Head'):
-        coilrecognized = 1
-        limitdict['peripheral_angle_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle intensity p-p %", "")
-        limitdict['peripheral_angle_SFNR_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle SFNR p-p %", "")
-
-        limitdict['central_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Central ROI mean", "")
-        limitdict['central_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Central ROI raw p-p %", "")
-        limitdict['central_roi_raw_std%'] = ((0.0, 0.15), (0.0, 0.25), (0, 0), "Central ROI raw stddev %", "")
-        limitdict['central_roi_detrended_mean'] = ((600.0, 900.0), (500.0, 1200.0), (1, 1), "Central ROI detrended mean", "M")
-        limitdict['central_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Central ROI detrended p-p %", "P")
-        limitdict['central_roi_detrended_std%'] = ((0.0, 0.15), (0.0, 0.25), (1, 0), "Central ROI detrended stddev %", "")
-        limitdict['central_roi_SNR'] = ((100.0, 100000.0), (75.0, 100000.0), (1, 1), "Central ROI SNR", "S")
-        limitdict['central_roi_SFNR'] = ((238.754898030312, 365.602121158555), (217.613694175605, 386.743325013262), (0, 0), "Central ROI SFNR", "F")
-        limitdict['central_roi_polyfit_lin'] = ((-0.00306061155726304, 0.00338754176512665), (-0.00413530377766132, 0.00446223398552493), (0, 0), "Central ROI polyfit linear term", "")
-        limitdict['central_roi_polyfit_quad'] = ((-5.21634333271468E-06, 5.54843534508463E-06), (-7.0104731123479E-06, 7.34256512471785E-06), (0, 0), "Central ROI polyfit quadratic term", "")
-        limitdict['central_roi_drift%'] = ((0.0, 0.536), (0.0, 0.688), (1, 0), "Central ROI drift %", "D")
-
-        limitdict['peripheral_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI mean", "")
-        limitdict['peripheral_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Peripheral ROI raw p-p %", "")
-        limitdict['peripheral_roi_raw_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI raw stddev %", "")
-        limitdict['peripheral_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Peripheral ROI detrended p-p %", "p")
-        limitdict['peripheral_roi_detrended_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI detrended stddev %", "")
-        limitdict['peripheral_roi_SNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SNR", "")
-        limitdict['peripheral_roi_SFNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SFNR", "")
-        limitdict['peripheral_roi_polyfit_lin'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit linear term", "")
-        limitdict['peripheral_roi_polyfit_quad'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit quadratic term", "")
-        limitdict['peripheral_roi_drift%'] = ((0.0, 0.397), (0.0, 0.507), (1, 0), "Peripheral ROI drift %", "d")
-
-        limitdict['odd_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost mean", "")
-        limitdict['odd_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost stddev", "")
-        limitdict['odd_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost min", "")
-        limitdict['odd_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost max", "")
-        limitdict['odd_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost p-p", "")
-        limitdict['odd_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Odd ghost p-p %", "")
-        limitdict['even_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost mean", "")
-        limitdict['even_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost stddev", "")
-        limitdict['even_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost min", "")
-        limitdict['even_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost max", "")
-        limitdict['even_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost p-p", "")
-        limitdict['even_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Even ghost p-p %", "")
-        limitdict['weissrdc'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Weisskoff radius of decorrelation", "W")
-    if (coil == 'HeadMatrix'):
-        coilrecognized = 1
-        limitdict['peripheral_angle_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle intensity p-p %", "")
-        limitdict['peripheral_angle_SFNR_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle SFNR p-p %", "")
-
-        limitdict['central_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Central ROI mean", "")
-        limitdict['central_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Central ROI raw p-p %", "")
-        limitdict['central_roi_raw_std%'] = ((0.0, 0.15), (0.0, 0.25), (0, 0), "Central ROI raw stddev %", "")
-        limitdict['central_roi_detrended_mean'] = ((1100.0, 1600.0), (900.0, 1800.0), (1, 1), "Central ROI detrended mean", "M")
-        limitdict['central_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Central ROI detrended p-p %", "P")
-        limitdict['central_roi_detrended_std%'] = ((0.0, 0.15), (0.0, 0.25), (1, 0), "Central ROI detrended stddev %", "")
-        limitdict['central_roi_SNR'] = ((250.0, 100000.0), (200.0, 100000.0), (1, 1), "Central ROI SNR", "S")
-        limitdict['central_roi_SFNR'] = ((238.754898030312, 365.602121158555), (217.613694175605, 386.743325013262), (0, 0), "Central ROI SFNR", "F")
-        limitdict['central_roi_polyfit_lin'] = ((-0.00306061155726304, 0.00338754176512665), (-0.00413530377766132, 0.00446223398552493), (0, 0), "Central ROI polyfit linear term", "")
-        limitdict['central_roi_polyfit_quad'] = ((-5.21634333271468E-06, 5.54843534508463E-06), (-7.0104731123479E-06, 7.34256512471785E-06), (0, 0), "Central ROI polyfit quadratic term", "")
-        limitdict['central_roi_drift%'] = ((0.0, 0.536), (0.0, 0.688), (1, 0), "Central ROI drift %", "D")
-
-        limitdict['peripheral_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI mean", "")
-        limitdict['peripheral_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Peripheral ROI raw p-p %", "")
-        limitdict['peripheral_roi_raw_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI raw stddev %", "")
-        limitdict['peripheral_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Peripheral ROI detrended p-p %", "p")
-        limitdict['peripheral_roi_detrended_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI detrended stddev %", "")
-        limitdict['peripheral_roi_SNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SNR", "")
-        limitdict['peripheral_roi_SFNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SFNR", "")
-        limitdict['peripheral_roi_polyfit_lin'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit linear term", "")
-        limitdict['peripheral_roi_polyfit_quad'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit quadratic term", "")
-        limitdict['peripheral_roi_drift%'] = ((0.0, 0.397), (0.0, 0.507), (1, 0), "Peripheral ROI drift %", "d")
-
-        limitdict['odd_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost mean", "")
-        limitdict['odd_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost stddev", "")
-        limitdict['odd_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost min", "")
-        limitdict['odd_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost max", "")
-        limitdict['odd_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost p-p", "")
-        limitdict['odd_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Odd ghost p-p %", "O")
-        limitdict['even_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost mean", "")
-        limitdict['even_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost stddev", "")
-        limitdict['even_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost min", "")
-        limitdict['even_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost max", "")
-        limitdict['even_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost p-p", "")
-        limitdict['even_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Even ghost p-p %", "E")
-        limitdict['weissrdc'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Weisskoff radius of decorrelation", "W")
-    if (coil == 'TxRx_Head'):
-        coilrecognized = 1
-        limitdict['peripheral_angle_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle intensity p-p %", "")
-        limitdict['peripheral_angle_SFNR_p-p%'] = ((0, 10.0), (0, 10.0), (0, 0), "Peripheral angle SFNR p-p %", "")
-
-        limitdict['central_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Central ROI mean", "")
-        limitdict['central_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Central ROI raw p-p %", "")
-        limitdict['central_roi_raw_std%'] = ((0.0, 0.15), (0.0, 0.25), (0, 0), "Central ROI raw stddev %", "")
-        limitdict['central_roi_detrended_mean'] = ((1200.0, 1750.0), (1000.0, 2000.0), (1, 1), "Central ROI detrended mean", "M")
-        limitdict['central_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Central ROI detrended p-p %", "P")
-        limitdict['central_roi_detrended_std%'] = ((0.0, 0.15), (0.0, 0.25), (1, 0), "Central ROI detrended stddev %", "")
-        limitdict['central_roi_SNR'] = ((300.0, 100000.0), (250.0, 100000.0), (1, 1), "Central ROI SNR", "S")
-        limitdict['central_roi_SFNR'] = ((238.754898030312, 365.602121158555), (217.613694175605, 386.743325013262), (0, 0), "Central ROI SFNR", "F")
-        limitdict['central_roi_polyfit_lin'] = ((-0.00306061155726304, 0.00338754176512665), (-0.00413530377766132, 0.00446223398552493), (0, 0), "Central ROI polyfit linear term", "")
-        limitdict['central_roi_polyfit_quad'] = ((-5.21634333271468E-06, 5.54843534508463E-06), (-7.0104731123479E-06, 7.34256512471785E-06), (0, 0), "Central ROI polyfit quadratic term", "")
-        limitdict['central_roi_drift%'] = ((0.0, 0.536), (0.0, 0.688), (1, 0), "Central ROI drift %", "D")
-
-        limitdict['peripheral_roi_mean'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI mean", "")
-        limitdict['peripheral_roi_raw_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (0, 0), "Peripheral ROI raw p-p %", "")
-        limitdict['peripheral_roi_raw_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI raw stddev %", "")
-        limitdict['peripheral_roi_detrended_p-p%'] = ((0.0, 0.5), (0.0, 0.6), (1, 1), "Peripheral ROI detrended p-p %", "p")
-        limitdict['peripheral_roi_detrended_std%'] = ((0, 0.125), (0, 0.15), (0, 0), "Peripheral ROI detrended stddev %", "")
-        limitdict['peripheral_roi_SNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SNR", "s")
-        limitdict['peripheral_roi_SFNR'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI SFNR", "f")
-        limitdict['peripheral_roi_polyfit_lin'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit linear term", "")
-        limitdict['peripheral_roi_polyfit_quad'] = ((100.0, 200.0), (50.0, 300.0), (0, 0), "Peripheral ROI polyfit quadratic term", "")
-        limitdict['peripheral_roi_drift%'] = ((0.0, 0.397), (0.0, 0.507), (1, 0), "Peripheral ROI drift %", "d")
-
-        limitdict['odd_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost mean", "")
-        limitdict['odd_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost stddev", "")
-        limitdict['odd_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost min", "")
-        limitdict['odd_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost max", "")
-        limitdict['odd_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Odd ghost p-p", "")
-        limitdict['odd_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Odd ghost p-p %", "O")
-        limitdict['even_ghost_mean'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost mean", "")
-        limitdict['even_ghost_std'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost stddev", "")
-        limitdict['even_ghost_min'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost min", "")
-        limitdict['even_ghost_max'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost max", "")
-        limitdict['even_ghost_p-p'] = ((0.0, 5.0), (0.0, 10.0), (0, 0), "Even ghost p-p", "")
-        limitdict['even_ghost_p-p%'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Even ghost p-p %", "E")
-        limitdict['weissrdc'] = ((0.0, 5.0), (0.0, 10.0), (1, 0), "Weisskoff radius of decorrelation", "W")
-    if (coilrecognized != 1):
-        print("setlimit: coil not recognized!")
-        exit(1)
-
-    return(limitdict)
 
 
 def getphasedarrayelementdata():
