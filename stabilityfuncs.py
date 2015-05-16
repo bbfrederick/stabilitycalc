@@ -10,9 +10,8 @@ import time
 import matplotlib
 import numpy as np
 import scipy as sp
-import pylab as P
+import matplotlib.pyplot as plt
 from htmltagutils import *
-from pylab import plot, legend, show, hold
 import csv
 from collections import OrderedDict
 
@@ -215,8 +214,8 @@ def arrayspatialsum(thearray):
 
 
 def showtc(thexvals, theyvals, thelabel):
-    w, h = P.figaspect(0.25)
-    roiplot = P.figure(figsize=(w, h))
+    w, h = plt.figaspect(0.25)
+    roiplot = plt.figure(figsize=(w, h))
     roisubplot = roiplot.add_subplot(111)
     roisubplot.plot(thexvals, theyvals, 'b')
     roisubplot.grid(True)
@@ -239,45 +238,45 @@ def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
     if (numxs != numys) or (numxs != numlegends) or (numxs != numspecvals):
         print("dimensions do not match")
         exit(1)
-    w, h = P.figaspect(0.50)
-    roiplot = P.figure(figsize=(w, h))
+    w, h = plt.figaspect(0.50)
+    roiplot = plt.figure(figsize=(w, h))
     roisubplot = roiplot.add_subplot(111)
     if numys == 1:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     if numys == 2:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     if numys == 3:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2], specvals[2])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     if numys == 4:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2], specvals[2], xvecs[3], yvecs[3], specvals[3])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     if numys == 5:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2], specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     if numys == 6:
         roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2], specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4], xvecs[5], yvecs[5], specvals[5])
-        hold(True)
+        plt.hold(True)
         if dolegend:
-            legend(legendvec)
-        hold(False)
+            plt.legend(legendvec)
+        plt.hold(False)
     roisubplot.grid(True)
     for tick in roisubplot.xaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
@@ -290,8 +289,8 @@ def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
 
 
 def showtc2(thexvals, theyvals, thefitvals, thelabel):
-    w, h = P.figaspect(0.25)
-    roiplot = P.figure(figsize=(w, h))
+    w, h = plt.figaspect(0.25)
+    roiplot = plt.figure(figsize=(w, h))
     roisubplot = roiplot.add_subplot(111)
     roisubplot.plot(thexvals, theyvals, 'b', thexvals, thefitvals, 'g')
     roisubplot.grid(True)
@@ -307,8 +306,8 @@ def showtc2(thexvals, theyvals, thefitvals, thelabel):
 
 
 def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
-    w, h = P.figaspect(1.0)
-    roiplot = P.figure(figsize=(w, h))
+    w, h = plt.figaspect(1.0)
+    roiplot = plt.figure(figsize=(w, h))
     roiplot.subplots_adjust(hspace=0.35)
     roisubplot = roiplot.add_subplot(111)
     thestddevs = thestddevs + 0.00000001
@@ -331,23 +330,23 @@ def showslice2(thedata, thelabel, minval, maxval, colormap):
         ypos = int(i / slicesqrt) * ysize
         xpos = int(i % slicesqrt) * xsize
         theslice[ypos:ypos + ysize, xpos:xpos + xsize] = thedata[i, :, :]
-    if P.isinteractive():
-        P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.subplots_adjust(hspace=0.0)
-    P.axes([0, 0, 1, 1], frameon=False)
+    if plt.isinteractive():
+        plt.ioff()
+    plt.axis('off')
+    plt.axis('equal')
+    plt.subplots_adjust(hspace=0.0)
+    plt.axes([0, 0, 1, 1], frameon=False)
     if (colormap == 0):
-        thecmap = P.cm.gray
+        thecmap = plt.cm.gray
     else:
         mycmdata1 = {
             'red':  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 1., 1.)),
             'green':  ((0., 0., 0.), (0.5, 1.0, 1.0), (1., 0., 0.)),
             'blue':  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 0., 0.))
         }
-        thecmap = P.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
+        thecmap = plt.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
         # thecmap=P.cm.spectral
-    theimptr = P.imshow(theslice, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
+    theimptr = plt.imshow(theslice, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
     # P.colorbar()
     return()
 
@@ -359,23 +358,23 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
     ysize = theshape[0]
     xsize = theshape[1]
     theslice = np.zeros((ysize, xsize))
-    if P.isinteractive():
-        P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.subplots_adjust(hspace=0.0)
-    P.axes([0, 0, 1, 1], frameon=False)
+    if plt.isinteractive():
+        plt.ioff()
+    plt.axis('off')
+    plt.axis('equal')
+    plt.subplots_adjust(hspace=0.0)
+    plt.axes([0, 0, 1, 1], frameon=False)
     if (colormap == 0):
-        thecmap = P.cm.gray
+        thecmap = plt.cm.gray
     else:
         mycmdata1 = {
             'red':  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 1., 1.)),
             'green':  ((0., 0., 0.), (0.5, 1.0, 1.0), (1., 0., 0.)),
             'blue':  ((0., 0., 0.), (0.5, 1.0, 0.0), (1., 0., 0.))
         }
-        thecmap = P.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
+        thecmap = plt.matplotlib.colors.LinearSegmentedColormap('mycm', mycmdata1)
         # thecmap=P.cm.spectral
-    theimptr = P.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
+    theimptr = plt.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
     # P.colorbar()
     return()
 
@@ -383,13 +382,13 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
 
 
 def showslice(theslice):
-    if P.isinteractive():
-        P.ioff()
-    P.axis('off')
-    P.axis('equal')
-    P.axis('tight')
-    P.imshow(theslice, interpolation='nearest', aspect='equal', cmap=P.cm.gray)
-    P.colorbar()
+    if plt.isinteractive():
+        plt.ioff()
+    plt.axis('off')
+    plt.axis('equal')
+    plt.axis('tight')
+    plt.imshow(theslice, interpolation='nearest', aspect='equal', cmap=plt.cm.gray)
+    plt.colorbar()
     return()
 
 

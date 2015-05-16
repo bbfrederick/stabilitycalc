@@ -6,11 +6,8 @@
 #
 import sys
 import os
-import time
 import numpy as np
-import scipy as sp
 import matplotlib.mlab as mlab
-import pylab as P
 from nifti import *
 
 ########################################################################

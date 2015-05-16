@@ -10,11 +10,9 @@ import time
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-import scipy as sp
-import pylab as P
+import matplotlib.pyplot as plt
 from htmltagutils import *
 import stabilityfuncs as sf
-import json
 
 import nibabel as nib
 
@@ -41,11 +39,11 @@ def usage():
 
 
 def slicepic(figurenumber, w, h, inputslice, thecaption, themin, themax, dirname, outputname, colormap):
-    P.figure(figurenumber, figsize=(w, h))
+    plt.figure(figurenumber, figsize=(w, h))
     figurenumber = figurenumber + 1
     theimage = sf.showslice2(inputslice, thecaption, themin, themax, colormap)
-    P.savefig(dirname + outputname, format='png')
-    P.close()
+    plt.savefig(dirname + outputname, format='png')
+    plt.close()
     return(figurenumber, theimage)
 
 ########################################################################
@@ -845,7 +843,7 @@ if isBIRNprotocol == 1:
 
 
 # statistical images section
-w, h = P.figaspect(1.0)
+w, h = plt.figaspect(1.0)
 figurenumber = 1
 
 roimin = np.min(roislice)
@@ -861,11 +859,11 @@ roimax = np.max(roislice)
 (figurenumber, eopcimage) = slicepic(figurenumber, w, h, np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin, eodiffpcmax, dirname, "/procresults/eodiffpcimage.png", 0)
 (figurenumber, ppimage) = slicepic(figurenumber, w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "/procresults/ppimage.png", 0)
 
-P.figure(figurenumber)
+plt.figure(figurenumber)
 figurenumber = figurenumber + 1
 weiskoffplot = sf.showweisskoff(roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")
-P.savefig(dirname + "/procresults/weisskoffplot.png", format='png')
-P.close()
+plt.savefig(dirname + "/procresults/weisskoffplot.png", format='png')
+plt.close()
 
 if(isphasedarray):
     print()
@@ -873,116 +871,116 @@ if(isphasedarray):
     print("outputting phased array figures")
     print()
     print()
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     coilccimage = sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
-    P.savefig(dirname + "/procresults/coilccmatrix.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/coilccmatrix.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     phasedarraysnrplot = sf.showtc(paindices, phasedarrayroisnrs, "Phased array SNR by element")
-    P.savefig(dirname + "/procresults/phasedarrayroisnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/phasedarrayroisnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     phasedarraysfnrplot = sf.showtc(paindices, phasedarrayroisfnrs, "Phased array SFNR by element")
-    P.savefig(dirname + "/procresults/phasedarrayroisfnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/phasedarrayroisfnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     phasedarrayppplot = sf.showtc(paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")
-    P.savefig(dirname + "/procresults/phasedarrayroippplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/phasedarrayroippplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     phasedarrayppdtplot = sf.showtc(paindices, phasedarrayroipps_dt_percent, "Phased array p-p% variation by element (after detrending)")
-    P.savefig(dirname + "/procresults/phasedarrayroippdtplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/phasedarrayroippdtplot.png", format='png')
+    plt.close()
 
 if(isindividualcoil == 0):
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     centtcplot = sf.showtc2(thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")
-    P.savefig(dirname + "/procresults/centroiplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/centroiplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     centtcplot = sf.showtc2(thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")
-    P.savefig(dirname + "/procresults/centroisnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/centroisnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     centtcplot = sf.showtc(thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")
-    P.savefig(dirname + "/procresults/centroidtplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/centroidtplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     periphintensityplot = sf.showtc2(periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval, "Relative peripheral image intensity (%)")
-    P.savefig(dirname + "/procresults/periphroiplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/periphroiplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     periphsfnrplot = sf.showtc2(periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr, "Absolute peripheral SFNR")
-    P.savefig(dirname + "/procresults/periphroisfnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/periphroisfnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     periphtcplot = sf.showtc2(thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")
-    P.savefig(dirname + "/procresults/periphroitcplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/periphroitcplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     periphsnrplot = sf.showtc2(thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr, "Peripheral ROI SNR over time")
-    P.savefig(dirname + "/procresults/periphroisnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/periphroisnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     periphdttcplot = sf.showtc(thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")
-    P.savefig(dirname + "/procresults/periphroidttcplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/periphroidttcplot.png", format='png')
+    plt.close()
 
 else:
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     maxloctcplot = sf.showtc2(thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")
-    P.savefig(dirname + "/procresults/maxlocroiplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/maxlocroiplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     maxloctcplot = sf.showtc2(thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr, "Max sensitivity ROI SNR over time")
-    P.savefig(dirname + "/procresults/maxlocroisnrplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/maxlocroisnrplot.png", format='png')
+    plt.close()
 
-    P.figure(figurenumber)
+    plt.figure(figurenumber)
     figurenumber = figurenumber + 1
     maxloctcplot = sf.showtc(thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")
-    P.savefig(dirname + "/procresults/maxlocroidtplot.png", format='png')
-    P.close()
+    plt.savefig(dirname + "/procresults/maxlocroidtplot.png", format='png')
+    plt.close()
 
 
-P.figure(figurenumber)
+plt.figure(figurenumber)
 figurenumber = figurenumber + 1
 oddghosttcplot = sf.showtc2(thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean, "Relative odd ghost ROI amplitude plot (%)")
-P.savefig(dirname + "/procresults/oddghostroiplot.png", format='png')
-P.close()
+plt.savefig(dirname + "/procresults/oddghostroiplot.png", format='png')
+plt.close()
 
-P.figure(figurenumber)
+plt.figure(figurenumber)
 figurenumber = figurenumber + 1
 evenghosttcplot = sf.showtc2(thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean, "Relative even ghost ROI amplitude plot (%)")
-P.savefig(dirname + "/procresults/evenghostroiplot.png", format='png')
-P.close()
+plt.savefig(dirname + "/procresults/evenghostroiplot.png", format='png')
+plt.close()
 
 
 ########################################################
