@@ -173,7 +173,7 @@ sfnr_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
 pos_12 = 0
 pos_32 = 0
 elementnum = np.zeros(len(elementnames))
-for i in range(0, filenumber):
+for i in range(filenumber):
     whichcol = elementnames.index(datadict[i]['Element:'])
     if datadict[i]['Object:'] == 'BIRN_phantom':
         if datadict[i]['Protocol:'] != 'nothing':
@@ -193,7 +193,7 @@ for i in range(0, filenumber):
             sfnr_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_SFNR:'])
             elementnum[whichcol] = elementnum[whichcol] + 1
 
-for i in range(0, len(elementnames)):
+for i in range(len(elementnames)):
     print("[", "'" + elementnames[i] + "'", ",",\
         "[", np.mean(com_x_vals[i, 0:elementnum[i]]), ",",\
         np.mean(com_y_vals[i, 0:elementnum[i]]), ",",\
@@ -305,7 +305,7 @@ REPORTFILE.writelines(tablepropstag(imagehdrstr + row1str + row2str + row3str, 5
 REPORTFILE.writelines(headertag("Links to individual reports"))
 
 REPORTFILE.writelines(smallheadertag("CP Head Coil"))
-for i in range(0, filenumber):
+for i in range(filenumber):
     if datadict[i]['Coil:'] == 'TxRx_Head':
         doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
         doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
@@ -313,7 +313,7 @@ for i in range(0, filenumber):
         REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
 
 REPORTFILE.writelines(smallheadertag("12 channel head matrix"))
-for i in range(0, filenumber):
+for i in range(filenumber):
     if datadict[i]['Coil:'] == 'HeadMatrix':
         doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
         doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
@@ -321,7 +321,7 @@ for i in range(0, filenumber):
         REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
 
 REPORTFILE.writelines(smallheadertag("32 channel head coil"))
-for i in range(0, filenumber):
+for i in range(filenumber):
     if datadict[i]['Coil:'] == '32Ch_Head':
         doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
         doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])

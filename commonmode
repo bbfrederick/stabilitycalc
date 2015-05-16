@@ -62,18 +62,18 @@ for thedir in individualcoildirs:
     print("processing ", thedir)
     nim = NiftiImage(thedir + "/" + thedir)
     tcdata[:, :, j] = np.sum(np.sum(nim.data, axis=3), axis=2)
-    for theslice in range(0, numslices):
+    for theslice in range(numslices):
         tcdata[:, theslice, j] = tcdata[:, theslice, j] - np.mean(tcdata[:, theslice, j])
     j = j + 1
 
 slicetcs = np.sum(tcdata, axis=2)
-for theslice in range(0, numslices):
+for theslice in range(numslices):
     [Pcomponents, Trans, fracVar] = mlab.prepca(np.transpose(tcdata[:, theslice, :]))
     slicetcs[:, theslice] = Pcomponents[0, :]
     print(theslice, np.shape(Pcomponents), fracVar[0])
 
-for theslice in range(0, numslices):
-    for thetime in range(0, timepoints):
+for theslice in range(numslices):
+    for thetime in range(timepoints):
         evarr[thetime, theslice, :, :] = slicetcs[thetime, theslice]
     allcoilccmatrices[0, theslice, :, :] = np.corrcoef(np.transpose(tcdata[:, theslice, :]))
 

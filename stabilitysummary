@@ -157,7 +157,7 @@ else:
 mostrecenttimes = {}
 for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
     GRAPHFILE = open(outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt", "w")
-    for i in range(0, filenumber_TARGET):
+    for i in range(filenumber_TARGET):
         if datadict[i]['Coil'] == targetcoil:
             ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN_phantom')
             if ObjectisBIRNphantom == TargetisBIRNphantom:

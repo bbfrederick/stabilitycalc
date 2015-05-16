@@ -268,13 +268,13 @@ if isindividualcoil == 1:
     zcenterf = initzcenter
     maskshape = objectmask.shape
     print(maskshape)
-    for i in range(0, xsize):
+    for i in range(xsize):
         ival = ((float(i) - xcenterf) * xdim)
         isq = ival * ival
-        for j in range(0, ysize):
+        for j in range(ysize):
             jval = ((float(j) - xcenterf) * ydim)
             jsq = jval * jval
-            for k in range(0, numslices):
+            for k in range(numslices):
                 kval = ((float(k) - zcenterf) * slicethickness)
                 ksq = kval * kval
                 if np.sqrt(isq + jsq + ksq) <= objectradiusx_mm:
@@ -736,7 +736,7 @@ print("peripheralradius set to %2.2f, %2.2f" % (peripheralradiusx, peripheralrad
 numperiph = 32
 
 theperiphstddevs = np.zeros(numperiph)
-periphindex = np.arange(0, numperiph)
+periphindex = np.arange(numperiph)
 periphangles = (6.283 * periphindex) / numperiph
 periphanglesd = (360.0 * periphindex) / numperiph
 thexlocs = xcenterf + peripheralradiusx * np.sin(periphangles)
@@ -753,7 +753,7 @@ for i in periphindex:
         sf.markroi(theroi, zcenter, roislice, 0.95 * rawmeanmax)
     thetimecourse = sf.getroimeantc(selecteddata, theroi, zcenter)
     newvoxels = sf.getroivoxels(selecteddata, theroi, zcenter)
-    for j in range(0, voxperroi):
+    for j in range(voxperroi):
         theperiphvoxels[:, i * voxperroi + j] = newvoxels[:, j]
     thesnrvec = sf.getroisnr(selecteddata, theroi, zcenter)
     thesnr = np.mean(thesnrvec)

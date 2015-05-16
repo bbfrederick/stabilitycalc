@@ -20,9 +20,9 @@ for COIL in TxRx 32Ch; do
     diff <(sort $DATA/test$COIL/procresults/dataquality.txt) <(sort $DATA/test$COIL.orig/procresults/dataquality.txt)
     diff <(sort $DATA/test$COIL/procresults/analysissummary.txt) <(sort $DATA/test$COIL.orig/procresults/analysissummary.txt)
     echo 
-    echo
-    echo =============
-    echo done with $COIL
-
+    echo Image diffs:
+    for IMAGE in $DATA/test$COIL/procresults/*png; do
+        gm compare -metric mse $IMAGE $DATA/test$COIL.orig/procresults/$(basename $IMAGE) | grep Total | grep -v "Total: 0.0000000000        0.0"
+    done
 done
 

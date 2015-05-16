@@ -1,2 +1,2 @@
 convert prints to logger
-if (parens):
+turn poundsign labels before functions into """ within
