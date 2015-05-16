@@ -21,12 +21,7 @@ def getlimits(coil):
             with open('config/{}_limits.csv'.format(coil)) as csvfile:
                 reader = csv.DictReader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
                 for r in reader:
-                    d[r['var']] = (
-                        (r['good_min'], r['good_max']),
-                        (r['warn_min'], r['warn_max']),
-                        (0, 0),
-                        r['description'],
-                        r['flag'])
+                    d[r['var']] = r
         except IOError:
             print("getlimits: coil not recognized!")
             exit(1)
@@ -65,21 +60,20 @@ def vecnorm(thevec):
     return np.sqrt(np.square(thevec).sum())
 
 
-def formatlimits(thelimits):
-    limitdesc = thelimits[3]
-    warnmin = str(thelimits[0][0])
-    warnmax = str(thelimits[0][1])
-    failmin = str(thelimits[1][0])
-    failmax = str(thelimits[1][1])
-    return "\"" + limitdesc + "\"," + failmin + "," + warnmin + "," + warnmax + "," + failmax
+def formatlimits(lim):
+    return '"{}",{},{},{},{}'.format(lim['description'],
+                                     lim['warn_min'],
+                                     lim['good_min'],
+                                     lim['good_max'],
+                                     lim['warn_max'])
 
 
-def limitcheck(thenumber, thelimits):
+def limitcheck(n, lim):
     # check to see if a parameter falls within preset limits.
     retval = 2  # start with the assumption that the data is bad
-    if (float(thenumber) >= float(thelimits[1][0])) and (float(thenumber) <= float(thelimits[1][1])):
+    if (float(n) >= float(lim['warn_min'])) and (float(n) <= float(lim['warn_max'])):
         retval = 1  # number falls within the warning limits
-    if (float(thenumber) >= float(thelimits[0][0])) and (float(thenumber) <= float(thelimits[0][1])):
+    if (float(n) >= float(lim['good_min'])) and (float(n) <= float(lim['good_max'])):
         retval = 0  # number falls within the good limits
     return retval
 

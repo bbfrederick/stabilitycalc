@@ -591,10 +591,11 @@ if thiscoildata and numslices > 1:
 
 if isphasedarray:
     paindices = np.arange(0.0, numphasedarray, 1.0)
-    phasedarrayroi_rawpplimits = ((0, 0.5), (0, 0.6))
-    phasedarrayroi_dtpplimits = ((0, 0.5), (0, 0.6))
-    phasedarrayroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
-    phasedarrayroi_dtstddevlimits = ((0, 0.125), (0, 0.15))
+    # TODO move these into a config file
+    phasedarrayroi_rawpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
+    phasedarrayroi_dtpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
+    phasedarrayroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
+    phasedarrayroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
     phasedarraysize = 5
     voxperroi = phasedarraysize * phasedarraysize
     phasedarrayradiusx = 0.8 * objectradiusx
@@ -684,8 +685,8 @@ if isphasedarray:
     meanroiphasedarrayval = np.mean(phasedarrayroimeans)
     meanroiphasedarraysfnr = np.mean(phasedarrayroisfnrs)
     meanroiphasedarraysnr = np.mean(phasedarrayroisnrs)
-
-    phasedarrayroiintensity_pplimits = ((0, 10.0), (0, 10.0))
+    # TODO move to config
+    phasedarrayroiintensity_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
     ptproiphasedarrayval = np.ptp(phasedarrayroimeans)
     phasedarrayroiintensitymeanstr = "mean=%4.4f" % meanroiphasedarrayval
     phasedarrayroiintensityppquality = sf.limitcheck(ptproiphasedarrayval / meanroiphasedarrayval * 100.0,
@@ -697,8 +698,8 @@ if isphasedarray:
 
     phasedarrayroipps_percent = 100.0 * phasedarrayroipps / phasedarrayroimeans
     phasedarrayroipps_dt_percent = 100.0 * phasedarrayroipps_dt / phasedarrayroimeans_dt
-
-    phasedarrayroi_sfnr_pplimits = ((0, 10.0), (0, 10.0))
+    # TODO move to config
+    phasedarrayroi_sfnr_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
     phasedarrayroi_sfnr_ptp = np.ptp(phasedarrayroisfnrs)
     phasedarrayroi_sfnr_meanstr = "mean=%4.4f" % meanroiphasedarraysfnr
     phasedarrayroi_sfnr_ppquality = sf.limitcheck((phasedarrayroi_sfnr_ptp / meanroiphasedarraysfnr) * 100.0,
@@ -725,10 +726,11 @@ if isphasedarray:
 peripheralroisize = 3
 peripheralradfrac = 0.8
 print("Analyzing peripheral ROIs...")
-peripheralroi_rawpplimits = ((0, 0.5), (0, 0.6))
-peripheralroi_dtpplimits = ((0, 0.5), (0, 0.6))
-peripheralroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
-peripheralroi_dtstddevlimits = ((0, 0.125), (0, 0.15))
+# TODO move to config
+peripheralroi_rawpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
+peripheralroi_dtpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
+peripheralroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
+peripheralroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
 voxperroi = peripheralroisize * peripheralroisize
 peripheralradiusx = peripheralradfrac * objectradiusx
 peripheralradiusy = peripheralradfrac * objectradiusy
@@ -807,7 +809,8 @@ meanangperiphval = np.mean(periphangmeans)
 meanangperiphsfnr = np.mean(periphangsfnrs)
 meanangperiphsnr = np.mean(theavgperiphsnrvec)
 
-periphangintensity_pplimits = ((0, 10.0), (0, 10.0))
+# TODO move to config
+periphangintensity_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
 ptpangperiphval = np.ptp(periphangmeans)
 periphangintensitymeanstr = "mean=%4.4f" % meanangperiphval
 periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0,
@@ -816,7 +819,8 @@ ptpangperiphvalstr = "p-p=%4.4f " % ptpangperiphval + boldtag(
     qualitytag("(%4.4f%%)", periphangintensityppquality) % (ptpangperiphval / meanangperiphval * 100.0))
 periphangintensity_summary = periphangintensitymeanstr + breaktag(ptpangperiphvalstr)
 
-periphang_sfnr_pplimits = ((0, 10.0), (0, 10.0))
+# TODO move to config
+periphang_sfnr_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
 periphang_sfnr_ptp = np.ptp(periphangsfnrs)
 periphang_sfnr_meanstr = "mean=%4.4f" % meanangperiphsfnr
 periphang_sfnr_ppquality = sf.limitcheck((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0,
