@@ -1,2 +1,0 @@
-convert prints to logger
-turn poundsign labels before functions into """ within
