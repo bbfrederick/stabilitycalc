@@ -1,18 +1,20 @@
 #!/usr/bin/env python
-#
+
+"""legacy thing for scripts to read paths from the config.json file"""
 
 import sys
+import json
+import logging
 
 if len(sys.argv) != 2:
-    print("usage: stabilityparms key")
-    exit()
-thekey = sys.argv[1]
+    logging.critical('usage: stabilityparms key')
+    exit(1)
+key = sys.argv[1]
 
-confdict = {}
-theconffile = open("configuration.txt")
-for line in theconffile:
-    thepair = line.split()
-    confdict[thepair[0]] = thepair[1]
-theconffile.close()
-
-print(confdict.get(thekey,''))
+try:
+    paths = json.load(open('config/config.json'))['paths']
+    print (paths.get(key.lower(), ''))
+except IOError:
+    logging.critical('Failed to open configuration file.')
+except KeyError:
+    logging.critical('Path section not found in configuration file.')

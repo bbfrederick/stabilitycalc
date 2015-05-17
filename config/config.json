@@ -1,0 +1,9 @@
+{
+ "paths": {
+  "sorteddicomdir": "/Users/dmd/mcldata/stability_tracking_raw", 
+  "rawdicomdir": "/Users/dmd/mcldata/stability_export", 
+  "outputdir": "/Users/dmd/mcldata/stability", 
+  "bindir": ".", 
+  "processedscandir": "/Users/dmd/mcldata/stability_tracking"
+ }
+}

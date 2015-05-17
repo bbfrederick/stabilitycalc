@@ -1,5 +1,0 @@
-BINDIR			.
-RAWDICOMDIR		/Users/dmd/mcldata/stability_export
-SORTEDDICOMDIR		/Users/dmd/mcldata/stability_tracking_raw
-PROCESSEDSCANDIR	/Users/dmd/mcldata/stability_tracking
-OUTPUTDIR		/Users/dmd/mcldata/stability
