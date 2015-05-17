@@ -63,21 +63,6 @@ def yellowtag(thestring):
     return("<FONT COLOR=\"888800\">" + thestring + "</FONT>")
 
 
-def formatdate(thedate):
-    theyear = thedate[0:4]
-    themonth = thedate[4:6]
-    theday = thedate[6:8]
-    formatteddate = themonth + "/" + theday + "/" + theyear
-    return(formatteddate)
-
-
-def formattime(thetime):
-    thehour = thetime[0:2]
-    theminute = thetime[2:4]
-    thesecond = thetime[4:6]
-    formattedtime = thehour + ":" + theminute + ":" + thesecond
-    return(formattedtime)
-
 # send a command to the shell
 
 
