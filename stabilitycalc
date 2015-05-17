@@ -912,11 +912,7 @@ plt.savefig(dirname + "/procresults/weisskoffplot.png", format='png')
 plt.close()
 
 if isphasedarray:
-    print()
-    print()
-    print("outputting phased array figures")
-    print()
-    print()
+    print("\n\noutputting phased array figures\n\n")
     plt.figure(figurenumber)
     figurenumber += 1
     coilccimage = sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
