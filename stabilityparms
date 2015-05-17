@@ -10,22 +10,6 @@ import time
 from htmltagutils import *
 import stabilityfuncs as sf
 
-
-# os utilities
-#
-# send a command to the shell
-
-
-def doashellcmd(cmd):
-    a = os.popen(cmd)
-    while True:
-        line = a.readline()
-        if not line:
-            break
-        retval = line[:-1]
-        return retval
-
-
 def key_eval(keyname, thedictionary):
     thevalue = ''
     for theentry in thedictionary:
