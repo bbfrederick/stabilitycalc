@@ -16,30 +16,10 @@ import stabilityfuncs as sf
 
 import nibabel as nib
 
-########################################################################
-#
-#
-#  Subroutine definitions
-#
-#
-########################################################################
-
-
-def usage():
-    print("usage: stabilitycalc directoryname inputfile numskip [xcenter ycenter zcenter]")
-    print("")
-    print("required arguments:")
-    print("	directoryname	- the directory where the 4D NIFTI file is located")
-    print("	inputfile	- the name of the 4D NIFTI file")
-    print("	numskip		- the number of tr periods to skip at the beginning of the file")
-    print("")
-    print("optional arguments:")
-    print("	xcenter ycenter zcenter	- use this location as the center of mass of the phantom")
-    return ()
-
-
 # noinspection PyShadowingNames
 def slicepic(figurenumber, w, h, inputslice, thecaption, themin, themax, dirname, outputname, colormap):
+    # modifies globals.
+    # this is the ONLY function right now.
     plt.figure(figurenumber, figsize=(w, h))
     figurenumber += 1
     theimage = sf.showslice2(inputslice, thecaption, themin, themax, colormap)
@@ -47,21 +27,25 @@ def slicepic(figurenumber, w, h, inputslice, thecaption, themin, themax, dirname
     plt.close()
     return figurenumber, theimage
 
-########################################################################
-########################################################################
-#
-#
-#  Control flow starts here
-#
-#
-########################################################################
-#
-#       Initial setup
-#
-# read in the datafile
+
+# read in the datafile.
+
+# TODO use argparse
 if (len(sys.argv) != 4) and (len(sys.argv) != 7) and (len(sys.argv) != 8):
-    usage()
+    print("""
+usage: stabilitycalc directoryname inputfile numskip [xcenter ycenter zcenter]
+
+required arguments:
+        directoryname   - the directory where the 4D NIFTI file is located
+        inputfile       - the name of the 4D NIFTI file
+        numskip         - the number of tr periods to skip at the beginning of the file
+
+optional arguments:
+        xcenter ycenter zcenter - use this location as the center of mass of the phantom
+    """)
+
     exit()
+
 dirname = sys.argv[1]
 filename = sys.argv[2]
 numdisdaqs = int(sys.argv[3])
