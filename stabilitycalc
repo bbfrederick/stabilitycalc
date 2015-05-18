@@ -16,6 +16,7 @@ import stabilityfuncs as sf
 
 import nibabel as nib
 
+
 def main():
     # noinspection PyShadowingNames
     def slicepic(figurenumber, w, h, inputslice, thecaption, themin, themax, dirname, outputname, colormap):
@@ -27,10 +28,9 @@ def main():
         plt.savefig(dirname + outputname, format='png')
         plt.close()
         return figurenumber, theimage
-    
-    
+
     # read in the datafile.
-    
+
     # TODO use argparse
     if (len(sys.argv) != 4) and (len(sys.argv) != 7) and (len(sys.argv) != 8):
         print("""
@@ -44,25 +44,25 @@ required arguments:
 optional arguments:
         xcenter ycenter zcenter - use this location as the center of mass of the phantom
         """)
-    
+
         exit()
-    
+
     dirname = sys.argv[1]
     filename = sys.argv[2]
     numdisdaqs = int(sys.argv[3])
-    isindividualcoil = 0
+    isindividualcoil = False
     usestudyinfo = True
     if len(sys.argv) == 7:
         initxcenter = float(sys.argv[4])
         initycenter = float(sys.argv[5])
         initzcenter = float(sys.argv[6])
-        isindividualcoil = 1
+        isindividualcoil = True
         print("processing as individual coil element file")
     if len(sys.argv) == 8:
         usestudyinfo = False
         print("not using studyinfo file")
     print("reading input file...")
-    
+
     nim = nib.load(dirname + "/" + filename)
     nim_data = nim.get_data()
     nim_hdr = nim.get_header()
@@ -76,13 +76,9 @@ optional arguments:
     ysize = thedims[2]
     numslices = thedims[3]
     numtimepoints = thedims[4] - numdisdaqs
-    
-    freqstep = 2.0 * tr / numtimepoints
+
     starttime = numdisdaqs
-    mcplotwidth = 500
-    roiplotwidth = 500
-    slicerwidth = 500
-    
+
     if usestudyinfo:
         coilname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep Coil | awk '{print $2}'")
         studydate = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyDate | awk '{print $2}'")
@@ -93,7 +89,7 @@ optional arguments:
         studydate = ''
         studytime = ''
         elementname = ''
-    
+
     if elementname == '':
         elementname = 'unknown'
     if coilname != '':
@@ -108,51 +104,49 @@ optional arguments:
         formattedtime = thehour + ":" + theminute + ":" + thesecond
         print("Coil->" + coilname)
         print("DateTime->" + datetime)
-    
+
     # make empty results directory
     print("initializing output directory...")
     sf.doashellcmd("rm -r " + dirname + "/procresults")
     sf.doashellcmd("mkdir " + dirname + "/procresults")
-    
+
     # initialize the output files
     outputfile = dirname + "/procresults/output.html"
     thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
-    FILE = open(outputfile, "w")
-    
-    FILE.writelines(
+    outfp = open(outputfile, "w")
+
+    outfp.writelines(
         "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\n")
-    
-    FILE.writelines("<head>\n")
-    FILE.writelines("<title>Stability report for " + coilname + " generated on " + thisdate + "</title>\n")
-    FILE.writelines("<style type=\"text/css\">\n")
-    FILE.writelines("h1 {font-family:courier new;text-decoration:underline;}\n")
-    FILE.writelines("h2 {font-family:courier new;color: teal; text-decoration:underline;}\n")
-    FILE.writelines("h3 {font-family:courier new;color: maroon; text-decoration:none;}\n")
-    FILE.writelines("h4 {font-family:courier new;text-decoration:none;}\n")
-    FILE.writelines("p {font-family:courier new;color:black; font-size:16px;text-decoration:none;}\n")
-    FILE.writelines("td {font-family:courier new;color:black; font-size:12px;text-decoration:none;}\n")
-    FILE.writelines("</style>\n")
-    FILE.writelines("</head>\n\n")
-    
-    FILE.writelines("<body>\n")
-    FILE.writelines("<h2>Stability analysis of " + filename + "</h2>\n")
+
+    outfp.writelines("<head>\n")
+    outfp.writelines("<title>Stability report for " + coilname + " generated on " + thisdate + "</title>\n")
+    outfp.writelines("<style type=\"text/css\">\n")
+    outfp.writelines("h1 {font-family:courier new;text-decoration:underline;}\n")
+    outfp.writelines("h2 {font-family:courier new;color: teal; text-decoration:underline;}\n")
+    outfp.writelines("h3 {font-family:courier new;color: maroon; text-decoration:none;}\n")
+    outfp.writelines("h4 {font-family:courier new;text-decoration:none;}\n")
+    outfp.writelines("p {font-family:courier new;color:black; font-size:16px;text-decoration:none;}\n")
+    outfp.writelines("td {font-family:courier new;color:black; font-size:12px;text-decoration:none;}\n")
+    outfp.writelines("</style>\n")
+    outfp.writelines("</head>\n\n")
+
+    outfp.writelines("<body>\n")
+    outfp.writelines("<h2>Stability analysis of " + filename + "</h2>\n")
     if coilname != '':
         row1str = tablerowtag(bigtableentrytag("Coil:") + bigtableentrytag(coilname))
         row2str = tablerowtag(bigtableentrytag("Element:") + bigtableentrytag(elementname))
         row3str = tablerowtag(bigtableentrytag("Date:") + bigtableentrytag(formatteddate))
         row4str = tablerowtag(bigtableentrytag("Time:") + bigtableentrytag(formattedtime))
-        FILE.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
-    
+        outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
+
     #############################
     #
     #       Extract the data that will be used for further calculations
     #
     firstvol = np.transpose(nim_data[:, :, :, 0], (2, 1, 0))
-    if isindividualcoil == 0:
+    if not isindividualcoil:
         slicecenter = sf.findCOM(firstvol)
     else:
-        threshfrac = 0.005
-        objmask = sf.makemask(firstvol, threshfrac, 0)
         slicecenter = (initxcenter, initycenter, initzcenter)
     xcenterf = slicecenter[0]
     ycenterf = slicecenter[1]
@@ -164,51 +158,48 @@ optional arguments:
         xcenter, xcenterf, ycenter, ycenterf, zcenter, zcenterf))
     # numslices=1
     selecteddata = np.transpose(nim_data[:, :, :, starttime:], (3, 2, 1, 0))
-    
+
     #############################
     #
     #  Calculate various statistical images
     #
-    
+
     # calculate the mean, stddev, variance and ptp images
     print("calculating mean, stddev, and variance...")
     meanslice = np.mean(selecteddata, 0)
     stddevslice = np.std(selecteddata, 0)
     varslice = np.var(selecteddata, 0)
     ppslice = np.ptp(selecteddata, 0)
-    
+
     # calculate a mask from meanimage and find its center
     (threshguess, threshfrac) = sf.findsepval(meanslice)
     print("Threshguess %2.2f, threshfrac %2.2f" % (threshguess, 100.0 * threshfrac))
     initmask = sf.makemask(meanslice, threshfrac, 0)
     threshmean = sf.getnzfracval(initmask * meanslice, 0.02)
     print("corrected threshmean %2.2f" % threshmean)
-    if isindividualcoil == 0:
+    if not isindividualcoil:
         objectmask = sf.makemask(meanslice, threshmean, 1)
     else:
         objectmask = sf.makemask(meanslice, 0.01 * threshmean, 1)
-    
+
     print("objectmask max: %2.2f, min: %2.2f" % (np.max(objectmask), np.min(objectmask)))
-    
+
     # calculate the image normalized standard deviation
     print("calculating normalized standard deviation...")
     normstdslice = objectmask * np.nan_to_num(100.0 * stddevslice / meanslice)
-    
+
     # calculate the sfnr image
     print("calculating sfnr...")
-    [temp1, temp2] = sf.nzrobust(objectmask * meanslice)
-    minstddev = temp2 / 5000.0
+    minstddev = sf.nzrobust(objectmask * meanslice)[1] / 5000.0
     print("minstddev=", minstddev)
     # threshstddevslice=np.where(stddevslice<minstddev,0.0,stddevslice)
     # sfnrslice=objectmask * np.nan_to_num(meanslice/threshstddevslice)
     sfnrslice = np.where(objectmask * stddevslice > minstddev, meanslice / stddevslice, 0.0)
-    
+
     # Now determine where the object is and how big it is
     slicecenter = sf.findCOM(objectmask)
     zcenterf = slicecenter[2]
     zcenter = int(round(zcenterf))
-    radiusslice = objectmask[zcenter, :, :]
-    objectarea = np.sum(radiusslice)
     slicecenter = sf.findCOM(objectmask[zcenter, :, :])
     xcenterf = slicecenter[0]
     ycenterf = slicecenter[1]
@@ -238,8 +229,8 @@ optional arguments:
     xcenter = int(round(xcenterf))
     ycenter = int(round(ycenterf))
     origslicecenter = (xcenterf, ycenterf, zcenterf)
-    
-    if isindividualcoil == 1:
+
+    if isindividualcoil:
         # reset everything to assumed values
         numinmask = 0
         objectmask[:, :, :] = 0.0
@@ -265,63 +256,55 @@ optional arguments:
                     if np.sqrt(isq + jsq + ksq) <= objectradiusx_mm:
                         numinmask += 1
                         objectmask[k, j, i] = 1.0
-        slicecenter = (xcenterf, ycenterf, 0.0)
         xcenter = int(round(xcenterf))
         ycenter = int(round(ycenterf))
         zcenter = int(round(zcenterf))
         print(numinmask)
-    
+
     print("Center of mass of mask: %d (%2.2f), %d (%2.2f), %d (%2.2f)" % (
         xcenter, xcenterf, ycenter, ycenterf, zcenter, zcenterf))
-    
+
     # define the canonical limits
     thelimitdict = sf.getlimits(coilname)
-    
+
     # Try to figure out what we're looking at
     unknown = 0
     BIRNphantom = 1
-    DopedWaterPhantom = 2
     head = 3
     objecttype = unknown
     objectname = "Unknown"
-    
+
     object_radius_mm = np.sqrt(objectradiusx_mm * objectradiusy_mm)
     object_shape = objectradiusy / objectradiusx
     print("Object radius: " + str(object_radius_mm) + " shape: " + str(object_shape))
-    
-    object_snr = 1.0
-    
+
     BIRNphantom_radiuscheck = sf.limitcheck(object_radius_mm, thelimitdict['BIRNphantom_rad'])
     BIRNphantom_shapecheck = sf.limitcheck(object_shape, thelimitdict['BIRNphantom_shape'])
-    BIRNphantom_snrcheck = sf.limitcheck(object_snr, thelimitdict['BIRNphantom_snr'])
     if (BIRNphantom_radiuscheck < 2) and (BIRNphantom_shapecheck < 2):
         objecttype = BIRNphantom
         objectname = "BIRN_phantom"
         print("setting objecttype to BIRNphantom")
-    
+
     head_radiuscheck = sf.limitcheck(object_radius_mm, thelimitdict['head_rad'])
     head_shapecheck = sf.limitcheck(object_shape, thelimitdict['head_shape'])
     if (head_radiuscheck < 2) or (head_shapecheck < 2):
         objecttype = head
         objectname = "Head"
         print("setting objecttype to head")
-    
-    isMcLeanSequence = 1
-    isBIRNsequence = 1
+
+    isBIRNsequence = True
     print("Dimensions: " + str(xsize) + "," + str(ysize) + "," + str(numslices) + "," + str(tr))
     if (xsize != 64) or (ysize != 64) or (numslices != 28) or (tr != 2.0):
-        isBIRNsequence = 0
-    if (xsize != 64) or (ysize != 64) or (numslices != 1) or (tr != 1.0):
-        isMcLeanSequence = 0
-    isBIRNprotocol = 0
-    if (isBIRNsequence == 1) and (objecttype == BIRNphantom):
+        isBIRNsequence = False
+    isBIRNprotocol = False
+    if isBIRNsequence and (objecttype == BIRNphantom):
         print("Assuming this is a BIRN protocol")
-        isBIRNprotocol = 1
+        isBIRNprotocol = True
         protocolname = "fBIRN"
     else:
         print("Assuming this is NOT a BIRN protocol")
         protocolname = "Unknown"
-    
+
     #############################
     #
     #       Odd-even SNR - Modified to match BIRN
@@ -333,10 +316,9 @@ optional arguments:
     oddlength = oddims.shape[0]
     if oddlength < evenlength:
         evenims = evenims[:evenlength - 1]
-        evenlength = evenims.shape[0]
     eodiffimage = np.sum(oddims, 0) - np.sum(evenims, 0)
     eodiffpcimage = 100.0 * np.nan_to_num(eodiffimage / (objectmask * meanslice))
-    
+
     #############################
     #
     #       Weisskoff analysis - Modified to match BIRN
@@ -364,12 +346,11 @@ optional arguments:
         # print "voxel size ",i," mean value ",themean,", std dev ",theweissstddevs[i-1],", proj ",theprojstddevs[i-1]
     theweissrdc = theweisscvs[0] / theweisscvs[numrois - 1]
     print("Radius of decorrelation=", theweissrdc)
-    
+
     #############################
     #
     #       Image analysis
     #
-    rawmeanstats = sf.completestats(meanslice * objectmask)
     meanstats = sf.nzstats(meanslice * objectmask)
     stddevstats = sf.nzstats(stddevslice * objectmask)
     varstats = sf.nzstats(varslice * objectmask)
@@ -378,10 +359,10 @@ optional arguments:
     eodiffstats = sf.nzstats(eodiffimage * objectmask)
     eodiffpcstats = sf.nzstats(np.nan_to_num(eodiffpcimage * objectmask))
     ppstats = sf.nzstats(ppslice * objectmask)
-    
+
     objectmax = np.max(objectmask)
     objectmin = np.min(objectmask)
-    [rawmeanmin, rawmeanmax] = sf.completerobust(meanslice)
+    rawmeanmax = sf.completerobust(meanslice)[1]
     [meanmin, meanmax] = sf.nzrobust(meanslice * objectmask)
     [stddevmin, stddevmax] = sf.nzrobust(stddevslice * objectmask)
     [varmin, varmax] = sf.nzrobust(varslice * objectmask)
@@ -390,7 +371,7 @@ optional arguments:
     [eodiffmin, eodiffmax] = sf.nzrobust(eodiffimage * objectmask)
     [eodiffpcmin, eodiffpcmax] = sf.nzrobust(np.nan_to_num(eodiffpcimage * objectmask))
     [ppmin, ppmax] = sf.nzrobust(ppslice * objectmask)
-    
+
     #############################
     #
     #       Corner (noise region) analysis
@@ -400,27 +381,21 @@ optional arguments:
     cornerxpos = int(int(cornerroisize / 2.0) + 1)
     cornerypos = int(int(cornerroisize / 2.0) + 1)
     thecornerroi = sf.setroilims(cornerxpos, cornerypos, cornerroisize)
-    if isindividualcoil == 0:
+    if not isindividualcoil:
         sf.markroi(thecornerroi, zcenter, roislice, 0.91 * rawmeanmax)
     thecornertc = sf.getroistdtc(selecteddata, thecornerroi, zcenter)
-    cornermean = np.mean(thecornertc)
-    
+
     #############################
     #
     #       Central ROI analysis
     #
     print("Analyzing central ROI...")
-    centralroi_rawpplimits = ((0, 0.5), (0, 0.6))
-    centralroi_dtpplimits = ((0, 0.5), (0, 0.6))
-    centralroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
-    centralroi_dtstddevlimits = ((0, 0.125), (0, 0.15))
     centralroisize = 10
     thecentralroi = sf.setroilims(xcenter, ycenter, centralroisize)
-    if isindividualcoil == 0:
+    if not isindividualcoil:
         sf.markroi(thecentralroi, zcenter, roislice, 0.92 * rawmeanmax)
     thecenttc = sf.getroimeantc(selecteddata, thecentralroi, zcenter)
     thecentsnrvec = thecenttc / thecornertc
-    thecentvoxels = sf.getroivoxels(selecteddata, thecentralroi, zcenter)
     thecentsnr = np.mean(thecentsnrvec)
     thecentsfnr = sf.getroival(sfnrslice, thecentralroi, zcenter)
     print("mean central snr,sfnr " + str(thecentsnr) + "," + str(thecentsfnr))
@@ -429,7 +404,7 @@ optional arguments:
     # print "Polynomial fit parameters", thecentfitcoffs
     thefittc = sf.trendgen(thetimepoints, thecentfitcoffs)
     thedetrendedcenttc = thecenttc - thefittc
-    
+
     centmean = np.mean(thecenttc)
     centdrift = 100.0 * (np.max(thefittc) - np.min(thefittc)) / centmean
     centstddev = np.std(thecenttc)
@@ -444,7 +419,7 @@ optional arguments:
     ppquality = sf.limitcheck(centpp / centmean * 100.0, thelimitdict['central_roi_raw_p-p%'])
     centppstr = "p-p=%4.4f " % centpp + boldtag(qualitytag("(%4.4f%%)", ppquality) % (centpp / centmean * 100.0))
     centtc_summary = centmeanstr + breaktag(centstddevstr) + breaktag(centppstr) + breaktag(centdriftstr)
-    
+
     centmean_dt = np.mean(thedetrendedcenttc)
     centstddev_dt = np.std(thedetrendedcenttc)
     centmin_dt = np.min(thedetrendedcenttc)
@@ -458,13 +433,9 @@ optional arguments:
     centtc_dt_summary = tcstats_format % (
         centmean_dt, centstddev_dt, centstddev_dt / centmean_dt * 100.0, centpp_dt, centpp_dt / centmean_dt * 100.0)
     print(centtc_dt_summary)
-    
-    centroidata = (centmean, centdrift, centstddev, centmin, centmax, centpp)
-    centroidata_dt = (
-        centmean_dt, centdrift, centstddev_dt, centmin_dt, centmax_dt, centpp_dt, thecentfitcoffs[1], thecentfitcoffs[0])
-    
+
     centsnr_summary = "mean=%4.4f" % thecentsnr
-    
+
     #############################
     #
     #       Maximum value ROI analysis
@@ -476,9 +447,9 @@ optional arguments:
     maxlocroi_dtstddevlimits = ((0, 0.125), (0, 0.15))
     maxlocroisize = 5
     maxlocradfrac = 0.7
-    
+
     # find the maximum region
-    if isindividualcoil == 1:
+    if isindividualcoil:
         elementmask = sf.makemask(meanslice, threshmean, 1)
         elementcenter = sf.findCOM(elementmask)
         elementdirvec = (
@@ -500,7 +471,7 @@ optional arguments:
                              origslicecenter[1] + newmaxlocoffsetscl * elementdirvec[1],
                              origslicecenter[2] + newmaxlocoffsetscl * elementdirvec[2])
             print("maxpos adjusted to fall within valid image region")
-    
+
         if elementmaxpos[2] < 0:
             newmaxlocoffsetscl = -origslicecenter[2] / elementdirvec[2]
             elementmaxpos = (origslicecenter[0] + newmaxlocoffsetscl * elementdirvec[0],
@@ -515,23 +486,18 @@ optional arguments:
         sf.markroi(themaxlocroi, maxloccenterz, roislice, 0.92 * rawmeanmax)
         themaxloctc = sf.getroimeantc(selecteddata, themaxlocroi, zcenter)
         themaxlocsnrvec = themaxloctc / thecornertc
-        themaxlocvoxels = sf.getroivoxels(selecteddata, themaxlocroi, zcenter)
         themaxlocsnr = np.mean(themaxlocsnrvec)
         themaxlocsfnr = sf.getroival(sfnrslice, themaxlocroi, zcenter)
         print("mean maxloc snr,sfnr " + str(themaxlocsnr) + "," + str(themaxlocsfnr))
         thetimepoints = np.arange(0.0, tr * numtimepoints, tr)
         themaxlocfitcoffs = np.polyfit(thetimepoints, thetimecourse, 2)
-        # print "Polynomial fit parameters", themaxlocfitcoffs
         thefittc = sf.trendgen(thetimepoints, themaxlocfitcoffs)
         thedetrendedmaxloctc = themaxloctc - thefittc
-    
+
         maxlocmean = np.mean(themaxloctc)
         maxlocstddev = np.std(themaxloctc)
-        maxlocmin = np.min(themaxloctc)
-        maxlocmax = np.max(themaxloctc)
         maxlocpp = np.ptp(themaxloctc)
         maxlocmeanstr = "mean=%4.4f" % maxlocmean
-        maxlocstddevstr = "stddev=%4.4f " % maxlocstddev + boldtag("(%4.4f%%)" % float(maxlocstddev / maxlocmean * 100.0))
         stddevquality = sf.limitcheck(maxlocstddev / maxlocmean * 100.0, maxlocroi_rawstddevlimits)
         maxlocstddevstr = "stddev=%4.4f " % maxlocstddev + boldtag(
             qualitytag("(%4.4f%%)", stddevquality) % (maxlocstddev / maxlocmean * 100.0))
@@ -539,7 +505,7 @@ optional arguments:
         maxlocppstr = "p-p=%4.4f " % maxlocpp + boldtag(
             qualitytag("(%4.4f%%)", ppquality) % (maxlocpp / maxlocmean * 100.0))
         maxloctc_summary = maxlocmeanstr + breaktag(maxlocstddevstr) + breaktag(maxlocppstr)
-    
+
         maxlocmean_dt = np.mean(thedetrendedmaxloctc)
         maxlocstddev_dt = np.std(thedetrendedmaxloctc)
         maxlocmin_dt = np.min(thedetrendedmaxloctc)
@@ -553,27 +519,22 @@ optional arguments:
             maxlocmean_dt, maxlocstddev_dt, maxlocstddev_dt / maxlocmean_dt * 100.0, maxlocpp_dt,
             maxlocpp_dt / maxlocmean_dt * 100.0)
         print(maxloctc_dt_summary)
-    
-        maxlocroidata = (maxlocmean, maxlocstddev, maxlocmin, maxlocmax, maxlocpp)
-        maxlocroidata_dt = (
-            maxlocmean_dt, maxlocstddev_dt, maxlocmin_dt, maxlocmax_dt, maxlocpp_dt, themaxlocfitcoffs[1],
-            themaxlocfitcoffs[0])
-    
+
         maxlocsnr_summary = "mean=%4.4f" % themaxlocsnr
-    
+
     #############################
     #
     # Individual coil assessment ROIs
     #
     print("Analyzing phased array ROIs...")
-    
+
     isphasedarray = False
-    
+
     thiscoildata = sf.getphasedarraydata(coilname)
     if thiscoildata and numslices > 1:
         isphasedarray = True
         numphasedarray = len(thiscoildata)
-    
+
     if isphasedarray:
         paindices = np.arange(0.0, numphasedarray, 1.0)
         # TODO move these into a config file
@@ -582,12 +543,10 @@ optional arguments:
         phasedarrayroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
         phasedarrayroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
         phasedarraysize = 5
-        voxperroi = phasedarraysize * phasedarraysize
         phasedarrayradiusx = 0.8 * objectradiusx
         phasedarrayradiusy = 0.8 * objectradiusy
         print("phasedarrayradius set to %2.2f, %2.2f" % (phasedarrayradiusx, phasedarrayradiusy))
-    
-        thephasedarraystddevs = np.zeros(numphasedarray)
+
         phasedarrayroimeans = np.zeros(numphasedarray)
         phasedarrayroistddevs = np.zeros(numphasedarray)
         phasedarrayroimins = np.zeros(numphasedarray)
@@ -600,9 +559,6 @@ optional arguments:
         phasedarrayroipps_dt = np.zeros(numphasedarray)
         phasedarrayroisfnrs = np.zeros(numphasedarray)
         phasedarrayroisnrs = np.zeros(numphasedarray)
-        theavgphasedarraytc = thecenttc * 0.0
-        theavgphasedarraysnrvec = thecenttc * 0.0
-        thephasedarrayvoxels = np.zeros((selecteddata.shape[0], voxperroi * numphasedarray))
         phasedarraytcs = np.zeros((numphasedarray, len(thetimepoints)), dtype=float)
         phasedarrayfittcs = np.zeros((numphasedarray, len(thetimepoints)), dtype=float)
         phasedarraydttcs = np.zeros((numphasedarray, len(thetimepoints)), dtype=float)
@@ -615,7 +571,7 @@ optional arguments:
             myyloc = round(therecord['yloc'])
             myzloc = round(therecord['zloc'])
             theroi = sf.setroilims(myxloc, myyloc, phasedarraysize)
-            if isindividualcoil == 0:
+            if not isindividualcoil:
                 sf.markroi(theroi, myzloc, roislice, 0.95 * rawmeanmax)
             thetimecourse = sf.getroimeantc(selecteddata, theroi, zcenter)
             phasedarraytcs[i, :] = thetimecourse[:]
@@ -640,70 +596,50 @@ optional arguments:
                   phasedarrayroisfnrs[i], ", mean=", phasedarrayroimeans[i], ", p-p%=",
                   100.0 * phasedarrayroipps[i] / phasedarrayroimeans[i],
                   ", detrended p-p%=", 100.0 * phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i])
-    
+
             # do average timecourse calculations
             phasedarraymeanstr = "mean=%4.4f" % phasedarrayroimeans[i]
             stddevquality = sf.limitcheck(phasedarrayroistddevs[i] / phasedarrayroimeans[i] * 100.0,
                                           phasedarrayroi_rawstddevlimits)
             phasedarraystddevstr = "stddev=%4.4f " % (phasedarrayroistddevs[i]) + boldtag(qualitytag("(%4.4f%%)",
-                                                                                          stddevquality) % (
-                                                                                          phasedarrayroistddevs[i] /
+                                                                                                     stddevquality) % (
+                                                                                              phasedarrayroistddevs[i] /
                                                                                               phasedarrayroimeans[
                                                                                                   i] * 100.0))
             ppquality = sf.limitcheck(phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0, phasedarrayroi_rawpplimits)
             phasedarrayppstr = "p-p=%4.4f " % (phasedarrayroipps[i]) + boldtag(
                 qualitytag("(%4.4f%%)", ppquality) % (phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0))
-            phasedarraytc_summary.append(phasedarraymeanstr + breaktag(phasedarraystddevstr) + breaktag(phasedarrayppstr))
-    
+            phasedarraytc_summary.append(
+                phasedarraymeanstr + breaktag(phasedarraystddevstr) + breaktag(phasedarrayppstr))
+
             stddevformat = qualitytag("(%4.4f%%)",
                                       sf.limitcheck(phasedarrayroistddevs_dt[i] / phasedarrayroimeans_dt[i] * 100.0,
                                                     phasedarrayroi_dtstddevlimits))
-            ppformat = qualitytag("(%4.4f%%)", sf.limitcheck(phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i] * 100.0,
-                                                             phasedarrayroi_dtpplimits))
+            ppformat = qualitytag("(%4.4f%%)",
+                                  sf.limitcheck(phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i] * 100.0,
+                                                phasedarrayroi_dtpplimits))
             tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
             phasedarraytc_dt_summary.append(tcstats_format % (phasedarrayroimeans_dt[i], phasedarrayroistddevs_dt[i],
                                                               phasedarrayroistddevs_dt[i] / phasedarrayroimeans_dt[
                                                                   i] * 100.0, phasedarrayroipps_dt[i],
-                                                              phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i] * 100.0))
-    
+                                                              phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[
+                                                                  i] * 100.0))
+
         # do calculations regarding variation between rois
-        meanroiphasedarrayval = np.mean(phasedarrayroimeans)
         meanroiphasedarraysfnr = np.mean(phasedarrayroisfnrs)
         meanroiphasedarraysnr = np.mean(phasedarrayroisnrs)
-        # TODO move to config
-        phasedarrayroiintensity_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
-        ptproiphasedarrayval = np.ptp(phasedarrayroimeans)
-        phasedarrayroiintensitymeanstr = "mean=%4.4f" % meanroiphasedarrayval
-        phasedarrayroiintensityppquality = sf.limitcheck(ptproiphasedarrayval / meanroiphasedarrayval * 100.0,
-                                                         phasedarrayroiintensity_pplimits)
-        ptproiphasedarrayvalstr = "p-p=%4.4f " % ptproiphasedarrayval + boldtag(
-            qualitytag("(%4.4f%%)", phasedarrayroiintensityppquality) % (
-                ptproiphasedarrayval / meanroiphasedarrayval * 100.0))
-        phasedarrayroiintensity_summary = phasedarrayroiintensitymeanstr + breaktag(ptproiphasedarrayvalstr)
-    
+
         phasedarrayroipps_percent = 100.0 * phasedarrayroipps / phasedarrayroimeans
         phasedarrayroipps_dt_percent = 100.0 * phasedarrayroipps_dt / phasedarrayroimeans_dt
-        # TODO move to config
-        phasedarrayroi_sfnr_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
-        phasedarrayroi_sfnr_ptp = np.ptp(phasedarrayroisfnrs)
-        phasedarrayroi_sfnr_meanstr = "mean=%4.4f" % meanroiphasedarraysfnr
-        phasedarrayroi_sfnr_ppquality = sf.limitcheck((phasedarrayroi_sfnr_ptp / meanroiphasedarraysfnr) * 100.0,
-                                                      phasedarrayroi_sfnr_pplimits)
-        phasedarrayroi_sfnr_ptpstr = "p-p=%4.4f " % phasedarrayroi_sfnr_ptp + boldtag(
-            qualitytag("(%4.4f%%)", phasedarrayroi_sfnr_ppquality) % (
-                (phasedarrayroi_sfnr_ptp / meanroiphasedarraysfnr) * 100.0))
-        phasedarrayroi_sfnr_summary = phasedarrayroi_sfnr_meanstr + breaktag(phasedarrayroi_sfnr_ptpstr)
-    
+
         print("mean phasedarray snr,sfnr " + str(meanroiphasedarraysnr) + "," + str(meanroiphasedarraysfnr))
-        phasedarraysnr_summary = "mean=%4.4f" % meanroiphasedarraysnr
-    
+
         # finally calculate the correlation between the timeseries
         coilccmatrix = np.corrcoef(phasedarraydttcs_demeaned)
         coilccmin = np.min(coilccmatrix)
-        coilccmax = np.max(coilccmatrix)
         print(np.shape(coilccmatrix))
         print("minimun phased array element correlation=", coilccmin)
-    
+
     #############################
     #
     # Peripheral ROIs
@@ -711,18 +647,12 @@ optional arguments:
     peripheralroisize = 3
     peripheralradfrac = 0.8
     print("Analyzing peripheral ROIs...")
-    # TODO move to config
-    peripheralroi_rawpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
-    peripheralroi_dtpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
-    peripheralroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
-    peripheralroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
     voxperroi = peripheralroisize * peripheralroisize
     peripheralradiusx = peripheralradfrac * objectradiusx
     peripheralradiusy = peripheralradfrac * objectradiusy
     print("peripheralradius set to %2.2f, %2.2f" % (peripheralradiusx, peripheralradiusy))
     numperiph = 32
-    
-    theperiphstddevs = np.zeros(numperiph)
+
     periphindex = np.arange(numperiph)
     periphangles = (6.283 * periphindex) / numperiph
     periphanglesd = (360.0 * periphindex) / numperiph
@@ -736,7 +666,7 @@ optional arguments:
     theperiphvoxels = np.zeros((selecteddata.shape[0], voxperroi * numperiph))
     for i in periphindex:
         theroi = sf.setroilims(round(thexlocs[i]), round(theylocs[i]), peripheralroisize)
-        if isindividualcoil == 0:
+        if not isindividualcoil:
             sf.markroi(theroi, zcenter, roislice, 0.95 * rawmeanmax)
         thetimecourse = sf.getroimeantc(selecteddata, theroi, zcenter)
         newvoxels = sf.getroivoxels(selecteddata, theroi, zcenter)
@@ -750,15 +680,15 @@ optional arguments:
         periphangmeans[i] = 100.0 * np.mean(thetimecourse) / centmean
         periphangsfnrs[i] = thesfnrval
         periphangsnrs[i] = thesnr
-    
+
     theavgperiphtc2 = np.mean(theperiphvoxels, 1)
     theavgperiphsnrvec = theavgperiphtc2 / thecornertc
-    
+
     # do average timecourse calculations
     theperiphfitcoffs = np.polyfit(thetimepoints, theavgperiphtc, 2)
     theperiphfittc = sf.trendgen(thetimepoints, theperiphfitcoffs)
     thedetrendedperiphtc = theavgperiphtc - theperiphfittc
-    
+
     periphmean = np.mean(theavgperiphtc)
     periphdrift = 100.0 * (np.max(theperiphfittc) - np.min(theperiphfittc)) / periphmean
     periphstddev = np.std(theavgperiphtc)
@@ -771,9 +701,10 @@ optional arguments:
     periphstddevstr = "stddev=%4.4f " % periphstddev + boldtag(
         qualitytag("(%4.4f%%)", stddevquality) % (periphstddev / periphmean * 100.0))
     ppquality = sf.limitcheck(periphpp / periphmean * 100.0, thelimitdict['peripheral_roi_raw_p-p%'])
-    periphppstr = "p-p=%4.4f " % periphpp + boldtag(qualitytag("(%4.4f%%)", ppquality) % (periphpp / periphmean * 100.0))
+    periphppstr = "p-p=%4.4f " % periphpp + boldtag(
+        qualitytag("(%4.4f%%)", ppquality) % (periphpp / periphmean * 100.0))
     periphtc_summary = periphmeanstr + breaktag(periphstddevstr) + breaktag(periphppstr) + breaktag(periphdriftstr)
-    
+
     periphmean_dt = np.mean(thedetrendedperiphtc)
     periphstddev_dt = np.std(thedetrendedperiphtc)
     periphmin_dt = np.min(thedetrendedperiphtc)
@@ -782,20 +713,20 @@ optional arguments:
     stddevformat = qualitytag("(%4.4f%%)", sf.limitcheck(periphstddev_dt / periphmean_dt * 100.0,
                                                          thelimitdict['peripheral_roi_detrended_std%']))
     ppformat = qualitytag("(%4.4f%%)",
-                          sf.limitcheck(periphpp_dt / periphmean_dt * 100.0, thelimitdict['peripheral_roi_detrended_p-p%']))
+                          sf.limitcheck(periphpp_dt / periphmean_dt * 100.0,
+                                        thelimitdict['peripheral_roi_detrended_p-p%']))
     tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
     periphtc_dt_summary = tcstats_format % (
         periphmean_dt, periphstddev_dt, periphstddev_dt / periphmean_dt * 100.0, periphpp_dt,
         periphpp_dt / periphmean_dt * 100.0)
     print(periphtc_dt_summary)
-    
+
     # do calculations regarding angular dependance
     meanangperiphval = np.mean(periphangmeans)
     meanangperiphsfnr = np.mean(periphangsfnrs)
     meanangperiphsnr = np.mean(theavgperiphsnrvec)
-    
+
     # TODO move to config
-    periphangintensity_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
     ptpangperiphval = np.ptp(periphangmeans)
     periphangintensitymeanstr = "mean=%4.4f" % meanangperiphval
     periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0,
@@ -803,9 +734,7 @@ optional arguments:
     ptpangperiphvalstr = "p-p=%4.4f " % ptpangperiphval + boldtag(
         qualitytag("(%4.4f%%)", periphangintensityppquality) % (ptpangperiphval / meanangperiphval * 100.0))
     periphangintensity_summary = periphangintensitymeanstr + breaktag(ptpangperiphvalstr)
-    
-    # TODO move to config
-    periphang_sfnr_pplimits = {'good_max': 10.0, 'good_min': 0, 'warn_max': 10.0, 'warn_min': 0}
+
     periphang_sfnr_ptp = np.ptp(periphangsfnrs)
     periphang_sfnr_meanstr = "mean=%4.4f" % meanangperiphsfnr
     periphang_sfnr_ppquality = sf.limitcheck((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0,
@@ -813,10 +742,10 @@ optional arguments:
     periphang_sfnr_ptpstr = "p-p=%4.4f " % periphang_sfnr_ptp + boldtag(
         qualitytag("(%4.4f%%)", periphang_sfnr_ppquality) % ((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0))
     periphang_sfnr_summary = periphang_sfnr_meanstr + breaktag(periphang_sfnr_ptpstr)
-    
+
     print("mean peripheral snr,sfnr " + str(meanangperiphsnr) + "," + str(meanangperiphsfnr))
     periphsnr_summary = "mean=%4.4f" % meanangperiphsnr
-    
+
     #############################
     #
     #       Ghost ROI analysis
@@ -827,16 +756,16 @@ optional arguments:
     ghostypos = int(1 + ghostroisize / 2.0)
     theevenghostroi = sf.setroilims(ghostevenxpos, ghostypos, ghostroisize)
     theoddghostroi = sf.setroilims(ghostoddxpos, ghostypos, ghostroisize)
-    if isindividualcoil == 0:
+    if not isindividualcoil:
         sf.markroi(theevenghostroi, zcenter, roislice, 0.97 * rawmeanmax)
         sf.markroi(theoddghostroi, zcenter, roislice, 0.97 * rawmeanmax)
-    
+
     theevenghosttc = sf.getroimeantc(selecteddata, theevenghostroi, zcenter)
     theoddghosttc = sf.getroimeantc(selecteddata, theoddghostroi, zcenter)
-    
+
     relevenghosttc = 100.0 * theevenghosttc / thecenttc
     reloddghosttc = 100.0 * theoddghosttc / thecenttc
-    
+
     oddghostmean = np.mean(reloddghosttc)
     oddghoststddev = np.std(reloddghosttc)
     oddghostmin = np.min(reloddghosttc)
@@ -847,19 +776,20 @@ optional arguments:
     evenghostmin = np.min(relevenghosttc)
     evenghostmax = np.max(relevenghosttc)
     evenghostpp = np.ptp(relevenghosttc)
-    tcstats_format2 = "mean=%4.4f" + breaktag("stddev=%4.4f") + breaktag("min=%4.4f") + breaktag("max=%4.4f") + breaktag(
+    tcstats_format2 = "mean=%4.4f" + breaktag("stddev=%4.4f") + breaktag("min=%4.4f") + breaktag(
+        "max=%4.4f") + breaktag(
         "p-p=%4.4f ")
     oddghosttc_summary = tcstats_format2 % (oddghostmean, oddghoststddev, oddghostmin, oddghostmax, oddghostpp)
     evenghosttc_summary = tcstats_format2 % (evenghostmean, evenghoststddev, evenghostmin, evenghostmax, evenghostpp)
     print(oddghosttc_summary)
     print(evenghosttc_summary)
-    
-    
+
+
     #############################
     #
     # Output
     #
-    
+
     # sample type and protocol type description
     if objecttype == unknown:
         objecttypestr = "unknown"
@@ -867,28 +797,29 @@ optional arguments:
         objecttypestr = "head"
     elif objecttype == BIRNphantom:
         objecttypestr = "BIRN phantom"
-    
+
     row1str = tablerowtag(bigtableentrytag("Object center of mass:") + bigtableentrytag(
         str(xcenterf) + "," + str(ycenterf) + "," + str(zcenterf)))
     row2str = tablerowtag(bigtableentrytag("Object type:") + bigtableentrytag(objecttypestr))
     row3str = tablerowtag(bigtableentrytag("Object mean radius:") + bigtableentrytag(str(object_radius_mm)))
     row4str = tablerowtag(bigtableentrytag("Object shape factor:") + bigtableentrytag(str(object_shape)))
-    FILE.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
-    if isBIRNprotocol == 1:
-        FILE.writelines("<h3>Imaging protocol: BIRN stability</h3>\n")
-    
-    
+    outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
+    if isBIRNprotocol:
+        outfp.writelines("<h3>Imaging protocol: BIRN stability</h3>\n")
+
+
     # statistical images section
     w, h = plt.figaspect(1.0)
     figurenumber = 1
-    
+
     roimin = np.min(roislice)
     roimax = np.max(roislice)
     (figurenumber, roiimage) = slicepic(figurenumber, w, h, roislice, "ROI locations", roimin, roimax, dirname,
                                         "/procresults/roiimage.png", 1)
     (figurenumber, normstdimage) = slicepic(figurenumber, w, h, normstdslice, "Normalized stddev % image", normstdmin,
                                             normstdmax, dirname, "/procresults/normstdimage.png", 0)
-    (figurenumber, objectmaskimage) = slicepic(figurenumber, w, h, objectmask, "Object mask", objectmin, objectmax, dirname,
+    (figurenumber, objectmaskimage) = slicepic(figurenumber, w, h, objectmask, "Object mask", objectmin, objectmax,
+                                               dirname,
                                                "/procresults/objectmaskimage.png", 0)
     (figurenumber, varimage) = slicepic(figurenumber, w, h, varslice, "Variance image", varmin, varmax, dirname,
                                         "/procresults/varimage.png", 0)
@@ -905,158 +836,159 @@ optional arguments:
                                          "/procresults/eodiffpcimage.png", 0)
     (figurenumber, ppimage) = slicepic(figurenumber, w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname,
                                        "/procresults/ppimage.png", 0)
-    
+
     plt.figure(figurenumber)
     figurenumber += 1
-    weiskoffplot = sf.showweisskoff(roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")
+    sf.showweisskoff(roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")
     plt.savefig(dirname + "/procresults/weisskoffplot.png", format='png')
     plt.close()
-    
+
     if isphasedarray:
         print("\n\noutputting phased array figures\n\n")
         plt.figure(figurenumber)
         figurenumber += 1
-        coilccimage = sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
+        sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
         plt.savefig(dirname + "/procresults/coilccmatrix.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        phasedarraysnrplot = sf.showtc(paindices, phasedarrayroisnrs, "Phased array SNR by element")
+        sf.showtc(paindices, phasedarrayroisnrs, "Phased array SNR by element")
         plt.savefig(dirname + "/procresults/phasedarrayroisnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        phasedarraysfnrplot = sf.showtc(paindices, phasedarrayroisfnrs, "Phased array SFNR by element")
+        sf.showtc(paindices, phasedarrayroisfnrs, "Phased array SFNR by element")
         plt.savefig(dirname + "/procresults/phasedarrayroisfnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        phasedarrayppplot = sf.showtc(paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")
+        sf.showtc(paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")
         plt.savefig(dirname + "/procresults/phasedarrayroippplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        phasedarrayppdtplot = sf.showtc(paindices, phasedarrayroipps_dt_percent,
-                                        "Phased array p-p% variation by element (after detrending)")
+        sf.showtc(paindices, phasedarrayroipps_dt_percent,
+                  "Phased array p-p% variation by element (after detrending)")
         plt.savefig(dirname + "/procresults/phasedarrayroippdtplot.png", format='png')
         plt.close()
-    
-    if isindividualcoil == 0:
+
+    if not isindividualcoil:
         plt.figure(figurenumber)
         figurenumber += 1
-        centtcplot = sf.showtc2(thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")
+        sf.showtc2(thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")
         plt.savefig(dirname + "/procresults/centroiplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        centtcplot = sf.showtc2(thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")
+        sf.showtc2(thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")
         plt.savefig(dirname + "/procresults/centroisnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        centtcplot = sf.showtc(thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")
+        sf.showtc(thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")
         plt.savefig(dirname + "/procresults/centroidtplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        periphintensityplot = sf.showtc2(periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval,
-                                         "Relative peripheral image intensity (%)")
+        sf.showtc2(periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval,
+                   "Relative peripheral image intensity (%)")
         plt.savefig(dirname + "/procresults/periphroiplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        periphsfnrplot = sf.showtc2(periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr,
-                                    "Absolute peripheral SFNR")
+        sf.showtc2(periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr,
+                   "Absolute peripheral SFNR")
         plt.savefig(dirname + "/procresults/periphroisfnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        periphtcplot = sf.showtc2(thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")
+        sf.showtc2(thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")
         plt.savefig(dirname + "/procresults/periphroitcplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        periphsnrplot = sf.showtc2(thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr,
-                                   "Peripheral ROI SNR over time")
+        sf.showtc2(thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr,
+                   "Peripheral ROI SNR over time")
         plt.savefig(dirname + "/procresults/periphroisnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        periphdttcplot = sf.showtc(thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")
+        sf.showtc(thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")
         plt.savefig(dirname + "/procresults/periphroidttcplot.png", format='png')
         plt.close()
-    
+
     else:
         plt.figure(figurenumber)
         figurenumber += 1
-        maxloctcplot = sf.showtc2(thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")
+        sf.showtc2(thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")
         plt.savefig(dirname + "/procresults/maxlocroiplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        maxloctcplot = sf.showtc2(thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr,
-                                  "Max sensitivity ROI SNR over time")
+        sf.showtc2(thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr,
+                   "Max sensitivity ROI SNR over time")
         plt.savefig(dirname + "/procresults/maxlocroisnrplot.png", format='png')
         plt.close()
-    
+
         plt.figure(figurenumber)
         figurenumber += 1
-        maxloctcplot = sf.showtc(thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")
+        sf.showtc(thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")
         plt.savefig(dirname + "/procresults/maxlocroidtplot.png", format='png')
         plt.close()
-    
+
     plt.figure(figurenumber)
     figurenumber += 1
-    oddghosttcplot = sf.showtc2(thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean,
-                                "Relative odd ghost ROI amplitude plot (%)")
+    sf.showtc2(thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean,
+               "Relative odd ghost ROI amplitude plot (%)")
     plt.savefig(dirname + "/procresults/oddghostroiplot.png", format='png')
     plt.close()
-    
+
     plt.figure(figurenumber)
     figurenumber += 1
-    evenghosttcplot = sf.showtc2(thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean,
-                                 "Relative even ghost ROI amplitude plot (%)")
+    sf.showtc2(thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean,
+               "Relative even ghost ROI amplitude plot (%)")
     plt.savefig(dirname + "/procresults/evenghostroiplot.png", format='png')
     plt.close()
-    
-    
+
+
     ########################################################
     #
     # Compose the image table
     #
     calcimagehdrstr = hruletag() + headertag("Calculated images")
-    myimwidth = 500 #TODO get from config
-    
+    myimwidth = 500  # TODO get from config
+
     meanimagestr = sf.makecaptionedimage("Mean over time:", meanstats, "meanimage.png", myimwidth)
     stddevimagestr = sf.makecaptionedimage("Standard deviation over time:", stddevstats, "stddevimage.png", myimwidth)
     varianceimagestr = sf.makecaptionedimage("Variance over time:", varstats, "varimage.png", myimwidth)
-    normstdimagestr = sf.makecaptionedimage("Normalized % stddev over time:", normstdstats, "normstdimage.png", myimwidth)
+    normstdimagestr = sf.makecaptionedimage("Normalized % stddev over time:", normstdstats, "normstdimage.png",
+                                            myimwidth)
     sfnrimagestr = sf.makecaptionedimage("SFNR:", sfnrstats, "sfnrimage.png", myimwidth)
     eoimagestr = sf.makecaptionedimage("Even-odd difference:", eodiffstats, "eodiffimage.png", myimwidth)
     eopcimagestr = sf.makecaptionedimage("Even-odd difference percent:", eodiffpcstats, "eodiffpcimage.png", myimwidth)
     ppimagestr = sf.makecaptionedimage("Peak to peak:", ppstats, "ppimage.png", myimwidth)
     objectstr = sf.makecaptionedimage("Object mask", [], "objectmaskimage.png", myimwidth)
     roistr = sf.makecaptionedimage("ROI locations:", [], "roiimage.png", myimwidth)
-    
+
     row1str = tablerowtag(tableentrytag(meanimagestr) + tableentrytag(stddevimagestr))
     row2str = tablerowtag(tableentrytag(varianceimagestr) + tableentrytag(sfnrimagestr))
     row3str = tablerowtag(tableentrytag(eoimagestr) + tableentrytag(eopcimagestr))
     row4str = tablerowtag(tableentrytag(ppimagestr) + tableentrytag(normstdimagestr))
     row5str = tablerowtag(tableentrytag(roistr) + tableentrytag(objectstr))
-    FILE.writelines(tablepropstag(calcimagehdrstr + row1str + row2str + row3str + row4str + row5str, 500, "left"))
-    
+    outfp.writelines(tablepropstag(calcimagehdrstr + row1str + row2str + row3str + row4str + row5str, 500, "left"))
+
     ########################################################
     #
     # Central ROI output
@@ -1066,7 +998,7 @@ optional arguments:
         "This is an analysis of the temporal fluctuation in a central voxels. A " + str(centralroisize) + "x" + str(
             centralroisize) +
         "x1 voxel is automatically postioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
-    
+
     rawroicellstr = tableentrytag(
         paratag(boldtag("Raw central ROI plot")) +
         paratag(centtc_summary) +
@@ -1081,20 +1013,21 @@ optional arguments:
         imagetag("centroidtplot.png", myimwidth))
     row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
     row2str = tablerowtag(snrroicellstr)
-    if isindividualcoil == 0:
-        FILE.writelines(tablepropstag(centralroihdrstr + croiparastr + row1str + row2str, 500, "left"))
-    
+    if not isindividualcoil:
+        outfp.writelines(tablepropstag(centralroihdrstr + croiparastr + row1str + row2str, 500, "left"))
+
     ########################################################
     #
     # Peripheral ROI output
     #
     peripheralroihdrstr = hruletag() + headertag("Peripheral ROI Analysis")
     periphroiparastr = paratag(
-        "This is an analysis of the image intensity and SFNR variation in a set of " + str(peripheralroisize) + "x" + str(
+        "This is an analysis of the image intensity and SFNR variation in a set of " + str(
+            peripheralroisize) + "x" + str(
             peripheralroisize) + "x1 voxels at a fixed radius from the center of the object in the central axial slice (" +
         str(
             peripheralradfrac) + " of the distance from the center to the edge of the phantom). For phased array coils this is likely to have better signal to noise than an ROI at the center of the coil.  The variation in SNR as a function of angle is also displayed.\n")
-    
+
     rawperiphroicellstr = tableentrytag(
         paratag(boldtag("Raw peripheral ROI plot")) +
         paratag(periphtc_summary) +
@@ -1118,9 +1051,10 @@ optional arguments:
         paratag(periphsnr_summary) +
         imagetag("periphroisnrplot.png", myimwidth))
     row3str = tablerowtag(snrperiphroicellstr)
-    if isindividualcoil == 0:
-        FILE.writelines(tablepropstag(peripheralroihdrstr + periphroiparastr + row1str + row2str + row3str, 500, "left"))
-    
+    if not isindividualcoil:
+        outfp.writelines(
+            tablepropstag(peripheralroihdrstr + periphroiparastr + row1str + row2str + row3str, 500, "left"))
+
     ########################################################
     #
     # Phased array ROI output
@@ -1131,7 +1065,7 @@ optional arguments:
             "This is an analysis of the variation in SNR, SFNR, and stability parameters across the individual coil elements in a phased array. A set of " + str(
                 maxlocroisize) + "x" + str(maxlocroisize) + "x1 voxels are postioned " + str(maxlocradfrac) +
             " of the distance from the phantom center to the edge along the direction of maximum sensitivity for the coil element. The average voxel values are plotted a function of coil element. The timecourses from each location are then crosscorrelated to assess common mode noise. Non-zero off-diagonal elements indicate correlation between channels, either due to geometric overlap or common mode system noise.\n")
-    
+
         snrroicellstr = tableentrytag(
             paratag(boldtag("SNR at region of maximum sensitivity for each phased array element")) +
             imagetag("phasedarrayroisnrplot.png", myimwidth))
@@ -1143,7 +1077,8 @@ optional arguments:
             imagetag("phasedarrayroippplot.png", myimwidth))
         ppdtroicellstr = tableentrytag(
             paratag(
-                boldtag("p-p% variation after detrending at region of maximum sensitivity for each phased array element")) +
+                boldtag(
+                    "p-p% variation after detrending at region of maximum sensitivity for each phased array element")) +
             imagetag("phasedarrayroippdtplot.png", myimwidth))
         crosscorrcellstr = tableentrytag(
             paratag(boldtag("Cross correlation of time data at each coil element's region of max sensitivity")) +
@@ -1151,18 +1086,18 @@ optional arguments:
         row1str = tablerowtag(snrroicellstr + sfnrroicellstr)
         row2str = tablerowtag(pproicellstr + ppdtroicellstr)
         row3str = tablerowtag(crosscorrcellstr)
-        FILE.writelines(
+        outfp.writelines(
             tablepropstag(phasedarrayroihdrstr + phasedarrayroiparastr + row1str + row2str + row3str, 500, "left"))
-    
+
     ########################################################
     #
     # Max sensitivity ROI output
     #
-    if isindividualcoil == 1:
+    if isindividualcoil:
         maxlocroihdrstr = hruletag() + headertag("Maximum sensitivity region ROI Analysis")
         maxlocroiparastr = paratag(
             "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically postioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
-    
+
         rawroicellstr = tableentrytag(
             paratag(boldtag("Raw max sensitivity ROI plot")) +
             paratag(maxloctc_summary) +
@@ -1177,9 +1112,9 @@ optional arguments:
             imagetag("maxlocroidtplot.png", myimwidth))
         row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
         row2str = tablerowtag(snrroicellstr)
-        if isindividualcoil == 1:
-            FILE.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
-    
+        if isindividualcoil:
+            outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
+
     ########################################################
     #
     # Ghost ROI output
@@ -1198,20 +1133,19 @@ optional arguments:
         paratag(evenghosttc_summary) +
         imagetag("evenghostroiplot.png", myimwidth))
     row1str = tablerowtag(oddghostroicellstr + evenghostroicellstr)
-    FILE.writelines(tablepropstag(ghostroihdrstr + ghostroiparastr + row1str, 500, "left"))
-    
+    outfp.writelines(tablepropstag(ghostroihdrstr + ghostroiparastr + row1str, 500, "left"))
+
     ########################################################
     #
     # Weisskoff output
     #
     weisshdrstr = hruletag() + headertag("Weisskoff analysis")
-    imcapstring = paratag(boldtag("Weisskoff plot"))
     weissimagestr = imagetag("weisskoffplot.png", myimwidth)
     weisstablestr = sf.weisstable(roiareas, theweisscvs, theprojcvs)
     row1str = tablerowtag(tableentrytag(weissimagestr) + tableentrytag(weisstablestr))
     row2str = tablerowtag(tableentrytag(bigtag(boldtag("RDC=" + str(theweissrdc)))))
-    FILE.writelines(tablepropstag(weisshdrstr + row1str + row2str, 500, "left"))
-    
+    outfp.writelines(tablepropstag(weisshdrstr + row1str + row2str, 500, "left"))
+
     datadict = {'Coil': coilname,
                 'Date': formatteddate,
                 'Time': formattedtime,
@@ -1225,8 +1159,8 @@ optional arguments:
                 'center_of_mass_x': xcenterf,
                 'center_of_mass_y': ycenterf,
                 'center_of_mass_z': zcenterf}
-    
-    if isindividualcoil == 0:
+
+    if not isindividualcoil:
         datadict['central_roi_raw_mean'] = centmean
         datadict['central_roi_raw_std'] = centstddev
         datadict['central_roi_raw_std%'] = 100.0 * centstddev / centmean
@@ -1296,7 +1230,7 @@ optional arguments:
     datadict['weissrdc'] = theweissrdc
     datadict['central_roi_drift%'] = centdrift
     datadict['peripheral_roi_drift%'] = periphdrift
-    
+
     evalfile = dirname + "/procresults/dataquality.txt"
     AFILE = open(evalfile, "w")
     for theentry in datadict:
@@ -1314,99 +1248,99 @@ optional arguments:
                 outstring = entrydesc + "," + str(entryval) + "," + entryqualitystr
                 AFILE.writelines(outstring + "\n")
                 print(outstring)
-    
-    
+
+
     ########################################################
     #
     # Write summary text file
     summaryfile = dirname + "/procresults/analysissummary.txt"
-    
-    SFILE = open(summaryfile, "w")
-    SFILE.writelines("Filename	" + summaryfile + "\n")
-    SFILE.writelines("Coil	" + datadict['Coil'] + "\n")
-    SFILE.writelines("Date	" + datadict['Date'] + "\n")
-    SFILE.writelines("Time	" + datadict['Time'] + "\n")
-    SFILE.writelines("DateTime	" + datadict['DateTime'] + "\n")
-    SFILE.writelines("Object	" + datadict['Object'] + "\n")
-    SFILE.writelines("Protocol	" + datadict['Protocol'] + "\n")
-    SFILE.writelines("Element	" + datadict['Element'] + "\n")
-    SFILE.writelines("processed_as_individual	" + str(datadict['processed_as_individual']) + "\n")
-    SFILE.writelines("object_radius_mm	" + str(datadict['object_radius_mm']) + "\n")
-    SFILE.writelines("object_shape	" + str(datadict['object_shape']) + "\n")
-    SFILE.writelines("center_of_mass_x	" + str(datadict['center_of_mass_x']) + "\n")
-    SFILE.writelines("center_of_mass_y	" + str(datadict['center_of_mass_y']) + "\n")
-    SFILE.writelines("center_of_mass_z	" + str(datadict['center_of_mass_z']) + "\n")
-    if isindividualcoil == 0:
-        SFILE.writelines("central_roi_raw_mean	" + str(datadict['central_roi_raw_mean']) + "\n")
-        SFILE.writelines("central_roi_raw_std	" + str(datadict['central_roi_raw_std']) + "\n")
-        SFILE.writelines("central_roi_raw_std%	" + str(datadict['central_roi_raw_std%']) + "\n")
-        SFILE.writelines("central_roi_raw_min	" + str(datadict['central_roi_raw_min']) + "\n")
-        SFILE.writelines("central_roi_raw_max	" + str(datadict['central_roi_raw_max']) + "\n")
-        SFILE.writelines("central_roi_raw_p-p	" + str(datadict['central_roi_raw_p-p']) + "\n")
-        SFILE.writelines("central_roi_raw_p-p%	" + str(datadict['central_roi_raw_p-p%']) + "\n")
-        SFILE.writelines("central_roi_detrended_mean	" + str(datadict['central_roi_detrended_mean']) + "\n")
-        SFILE.writelines("central_roi_detrended_std		" + str(datadict['central_roi_detrended_std']) + "\n")
-        SFILE.writelines("central_roi_detrended_std%	" + str(datadict['central_roi_detrended_std%']) + "\n")
-        SFILE.writelines("central_roi_detrended_min		" + str(datadict['central_roi_detrended_min']) + "\n")
-        SFILE.writelines("central_roi_detrended_max		" + str(datadict['central_roi_detrended_max']) + "\n")
-        SFILE.writelines("central_roi_detrended_p-p		" + str(datadict['central_roi_detrended_p-p']) + "\n")
-        SFILE.writelines("central_roi_detrended_p-p%	" + str(datadict['central_roi_detrended_p-p%']) + "\n")
-        SFILE.writelines("central_roi_SNR	" + str(datadict['central_roi_SNR']) + "\n")
-        SFILE.writelines("central_roi_SFNR	" + str(datadict['central_roi_SFNR']) + "\n")
-        SFILE.writelines("central_roi_polyfit_lin	" + str(datadict['central_roi_polyfit_lin']) + "\n")
-        SFILE.writelines("central_roi_polyfit_quad	" + str(datadict['central_roi_polyfit_quad']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_mean	" + str(datadict['peripheral_roi_raw_mean']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_std	" + str(datadict['peripheral_roi_raw_std']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_std%	" + str(datadict['peripheral_roi_raw_std%']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_min	" + str(datadict['peripheral_roi_raw_min']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_max	" + str(datadict['peripheral_roi_raw_max']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_p-p	" + str(datadict['peripheral_roi_raw_p-p']) + "\n")
-        SFILE.writelines("peripheral_roi_raw_p-p%	" + str(datadict['peripheral_roi_raw_p-p%']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_mean	" + str(datadict['peripheral_roi_detrended_mean']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_std	" + str(datadict['peripheral_roi_detrended_std']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_std%	" + str(datadict['peripheral_roi_detrended_std%']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_min	" + str(datadict['peripheral_roi_detrended_min']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_max	" + str(datadict['peripheral_roi_detrended_max']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_p-p	" + str(datadict['peripheral_roi_detrended_p-p']) + "\n")
-        SFILE.writelines("peripheral_roi_detrended_p-p%	" + str(datadict['peripheral_roi_detrended_p-p%']) + "\n")
-        SFILE.writelines("peripheral_roi_SNR	" + str(datadict['peripheral_roi_SNR']) + "\n")
-        SFILE.writelines("peripheral_roi_SFNR	" + str(datadict['peripheral_roi_SFNR']) + "\n")
-        SFILE.writelines("peripheral_roi_polyfit_lin	" + str(datadict['peripheral_roi_polyfit_lin']) + "\n")
-        SFILE.writelines("peripheral_roi_polyfit_quad	" + str(datadict['peripheral_roi_polyfit_quad']) + "\n")
+
+    sumfp = open(summaryfile, "w")
+    sumfp.writelines("Filename	" + summaryfile + "\n")
+    sumfp.writelines("Coil	" + datadict['Coil'] + "\n")
+    sumfp.writelines("Date	" + datadict['Date'] + "\n")
+    sumfp.writelines("Time	" + datadict['Time'] + "\n")
+    sumfp.writelines("DateTime	" + datadict['DateTime'] + "\n")
+    sumfp.writelines("Object	" + datadict['Object'] + "\n")
+    sumfp.writelines("Protocol	" + datadict['Protocol'] + "\n")
+    sumfp.writelines("Element	" + datadict['Element'] + "\n")
+    sumfp.writelines("processed_as_individual	" + str(datadict['processed_as_individual']) + "\n")
+    sumfp.writelines("object_radius_mm	" + str(datadict['object_radius_mm']) + "\n")
+    sumfp.writelines("object_shape	" + str(datadict['object_shape']) + "\n")
+    sumfp.writelines("center_of_mass_x	" + str(datadict['center_of_mass_x']) + "\n")
+    sumfp.writelines("center_of_mass_y	" + str(datadict['center_of_mass_y']) + "\n")
+    sumfp.writelines("center_of_mass_z	" + str(datadict['center_of_mass_z']) + "\n")
+    if not isindividualcoil:
+        sumfp.writelines("central_roi_raw_mean	" + str(datadict['central_roi_raw_mean']) + "\n")
+        sumfp.writelines("central_roi_raw_std	" + str(datadict['central_roi_raw_std']) + "\n")
+        sumfp.writelines("central_roi_raw_std%	" + str(datadict['central_roi_raw_std%']) + "\n")
+        sumfp.writelines("central_roi_raw_min	" + str(datadict['central_roi_raw_min']) + "\n")
+        sumfp.writelines("central_roi_raw_max	" + str(datadict['central_roi_raw_max']) + "\n")
+        sumfp.writelines("central_roi_raw_p-p	" + str(datadict['central_roi_raw_p-p']) + "\n")
+        sumfp.writelines("central_roi_raw_p-p%	" + str(datadict['central_roi_raw_p-p%']) + "\n")
+        sumfp.writelines("central_roi_detrended_mean	" + str(datadict['central_roi_detrended_mean']) + "\n")
+        sumfp.writelines("central_roi_detrended_std		" + str(datadict['central_roi_detrended_std']) + "\n")
+        sumfp.writelines("central_roi_detrended_std%	" + str(datadict['central_roi_detrended_std%']) + "\n")
+        sumfp.writelines("central_roi_detrended_min		" + str(datadict['central_roi_detrended_min']) + "\n")
+        sumfp.writelines("central_roi_detrended_max		" + str(datadict['central_roi_detrended_max']) + "\n")
+        sumfp.writelines("central_roi_detrended_p-p		" + str(datadict['central_roi_detrended_p-p']) + "\n")
+        sumfp.writelines("central_roi_detrended_p-p%	" + str(datadict['central_roi_detrended_p-p%']) + "\n")
+        sumfp.writelines("central_roi_SNR	" + str(datadict['central_roi_SNR']) + "\n")
+        sumfp.writelines("central_roi_SFNR	" + str(datadict['central_roi_SFNR']) + "\n")
+        sumfp.writelines("central_roi_polyfit_lin	" + str(datadict['central_roi_polyfit_lin']) + "\n")
+        sumfp.writelines("central_roi_polyfit_quad	" + str(datadict['central_roi_polyfit_quad']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_mean	" + str(datadict['peripheral_roi_raw_mean']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_std	" + str(datadict['peripheral_roi_raw_std']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_std%	" + str(datadict['peripheral_roi_raw_std%']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_min	" + str(datadict['peripheral_roi_raw_min']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_max	" + str(datadict['peripheral_roi_raw_max']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_p-p	" + str(datadict['peripheral_roi_raw_p-p']) + "\n")
+        sumfp.writelines("peripheral_roi_raw_p-p%	" + str(datadict['peripheral_roi_raw_p-p%']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_mean	" + str(datadict['peripheral_roi_detrended_mean']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_std	" + str(datadict['peripheral_roi_detrended_std']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_std%	" + str(datadict['peripheral_roi_detrended_std%']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_min	" + str(datadict['peripheral_roi_detrended_min']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_max	" + str(datadict['peripheral_roi_detrended_max']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_p-p	" + str(datadict['peripheral_roi_detrended_p-p']) + "\n")
+        sumfp.writelines("peripheral_roi_detrended_p-p%	" + str(datadict['peripheral_roi_detrended_p-p%']) + "\n")
+        sumfp.writelines("peripheral_roi_SNR	" + str(datadict['peripheral_roi_SNR']) + "\n")
+        sumfp.writelines("peripheral_roi_SFNR	" + str(datadict['peripheral_roi_SFNR']) + "\n")
+        sumfp.writelines("peripheral_roi_polyfit_lin	" + str(datadict['peripheral_roi_polyfit_lin']) + "\n")
+        sumfp.writelines("peripheral_roi_polyfit_quad	" + str(datadict['peripheral_roi_polyfit_quad']) + "\n")
     else:
-        SFILE.writelines("maxloc_roi_x	" + str(datadict['maxloc_roi_x']) + "\n")
-        SFILE.writelines("maxloc_roi_y	" + str(datadict['maxloc_roi_y']) + "\n")
-        SFILE.writelines("maxloc_roi_z	" + str(datadict['maxloc_roi_z']) + "\n")
-        SFILE.writelines("maxloc_roi_dirvec_x	" + str(datadict['maxloc_roi_dirvec_x']) + "\n")
-        SFILE.writelines("maxloc_roi_dirvec_y	" + str(datadict['maxloc_roi_dirvec_y']) + "\n")
-        SFILE.writelines("maxloc_roi_dirvec_z	" + str(datadict['maxloc_roi_dirvec_z']) + "\n")
-        SFILE.writelines("maxloc_roi_mean	" + str(datadict['maxloc_roi_mean']) + "\n")
-        SFILE.writelines("maxloc_roi_std	" + str(datadict['maxloc_roi_std']) + "\n")
-        SFILE.writelines("maxloc_roi_std%	" + str(datadict['maxloc_roi_std%']) + "\n")
-        SFILE.writelines("maxloc_roi_min	" + str(datadict['maxloc_roi_min']) + "\n")
-        SFILE.writelines("maxloc_roi_max	" + str(datadict['maxloc_roi_max']) + "\n")
-        SFILE.writelines("maxloc_roi_p-p	" + str(datadict['maxloc_roi_p-p']) + "\n")
-        SFILE.writelines("maxloc_roi_p-p%	" + str(datadict['maxloc_roi_p-p%']) + "\n")
-        SFILE.writelines("maxloc_roi_SNR	" + str(datadict['maxloc_roi_SNR']) + "\n")
-        SFILE.writelines("maxloc_roi_SFNR	" + str(datadict['maxloc_roi_SFNR']) + "\n")
-        SFILE.writelines("maxloc_roi_polyfit_lin	" + str(datadict['maxloc_roi_polyfit_lin']) + "\n")
-        SFILE.writelines("maxloc_roi_polyfit_quad	" + str(datadict['maxloc_roi_polyfit_quad']) + "\n")
-    SFILE.writelines("odd_ghost_mean	" + str(datadict['odd_ghost_mean']) + "\n")
-    SFILE.writelines("odd_ghost_std	" + str(datadict['odd_ghost_std']) + "\n")
-    SFILE.writelines("odd_ghost_min	" + str(datadict['odd_ghost_min']) + "\n")
-    SFILE.writelines("odd_ghost_max	" + str(datadict['odd_ghost_max']) + "\n")
-    SFILE.writelines("odd_ghost_p-p	" + str(datadict['odd_ghost_p-p']) + "\n")
-    SFILE.writelines("odd_ghost_p-p%	" + str(datadict['odd_ghost_p-p%']) + "\n")
-    SFILE.writelines("even_ghost_mean	" + str(datadict['even_ghost_mean']) + "\n")
-    SFILE.writelines("even_ghost_std	" + str(datadict['even_ghost_std']) + "\n")
-    SFILE.writelines("even_ghost_min	" + str(datadict['even_ghost_min']) + "\n")
-    SFILE.writelines("even_ghost_max	" + str(datadict['even_ghost_max']) + "\n")
-    SFILE.writelines("even_ghost_p-p	" + str(datadict['even_ghost_p-p']) + "\n")
-    SFILE.writelines("even_ghost_p-p%	" + str(datadict['even_ghost_p-p%']) + "\n")
-    SFILE.writelines("weissrdc		" + str(datadict['weissrdc']) + "\n")
-    SFILE.writelines("central_roi_drift%	" + str(datadict['central_roi_drift%']) + "\n")
-    SFILE.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
-    FILE.writelines("</body>\n")
+        sumfp.writelines("maxloc_roi_x	" + str(datadict['maxloc_roi_x']) + "\n")
+        sumfp.writelines("maxloc_roi_y	" + str(datadict['maxloc_roi_y']) + "\n")
+        sumfp.writelines("maxloc_roi_z	" + str(datadict['maxloc_roi_z']) + "\n")
+        sumfp.writelines("maxloc_roi_dirvec_x	" + str(datadict['maxloc_roi_dirvec_x']) + "\n")
+        sumfp.writelines("maxloc_roi_dirvec_y	" + str(datadict['maxloc_roi_dirvec_y']) + "\n")
+        sumfp.writelines("maxloc_roi_dirvec_z	" + str(datadict['maxloc_roi_dirvec_z']) + "\n")
+        sumfp.writelines("maxloc_roi_mean	" + str(datadict['maxloc_roi_mean']) + "\n")
+        sumfp.writelines("maxloc_roi_std	" + str(datadict['maxloc_roi_std']) + "\n")
+        sumfp.writelines("maxloc_roi_std%	" + str(datadict['maxloc_roi_std%']) + "\n")
+        sumfp.writelines("maxloc_roi_min	" + str(datadict['maxloc_roi_min']) + "\n")
+        sumfp.writelines("maxloc_roi_max	" + str(datadict['maxloc_roi_max']) + "\n")
+        sumfp.writelines("maxloc_roi_p-p	" + str(datadict['maxloc_roi_p-p']) + "\n")
+        sumfp.writelines("maxloc_roi_p-p%	" + str(datadict['maxloc_roi_p-p%']) + "\n")
+        sumfp.writelines("maxloc_roi_SNR	" + str(datadict['maxloc_roi_SNR']) + "\n")
+        sumfp.writelines("maxloc_roi_SFNR	" + str(datadict['maxloc_roi_SFNR']) + "\n")
+        sumfp.writelines("maxloc_roi_polyfit_lin	" + str(datadict['maxloc_roi_polyfit_lin']) + "\n")
+        sumfp.writelines("maxloc_roi_polyfit_quad	" + str(datadict['maxloc_roi_polyfit_quad']) + "\n")
+    sumfp.writelines("odd_ghost_mean	" + str(datadict['odd_ghost_mean']) + "\n")
+    sumfp.writelines("odd_ghost_std	" + str(datadict['odd_ghost_std']) + "\n")
+    sumfp.writelines("odd_ghost_min	" + str(datadict['odd_ghost_min']) + "\n")
+    sumfp.writelines("odd_ghost_max	" + str(datadict['odd_ghost_max']) + "\n")
+    sumfp.writelines("odd_ghost_p-p	" + str(datadict['odd_ghost_p-p']) + "\n")
+    sumfp.writelines("odd_ghost_p-p%	" + str(datadict['odd_ghost_p-p%']) + "\n")
+    sumfp.writelines("even_ghost_mean	" + str(datadict['even_ghost_mean']) + "\n")
+    sumfp.writelines("even_ghost_std	" + str(datadict['even_ghost_std']) + "\n")
+    sumfp.writelines("even_ghost_min	" + str(datadict['even_ghost_min']) + "\n")
+    sumfp.writelines("even_ghost_max	" + str(datadict['even_ghost_max']) + "\n")
+    sumfp.writelines("even_ghost_p-p	" + str(datadict['even_ghost_p-p']) + "\n")
+    sumfp.writelines("even_ghost_p-p%	" + str(datadict['even_ghost_p-p%']) + "\n")
+    sumfp.writelines("weissrdc		" + str(datadict['weissrdc']) + "\n")
+    sumfp.writelines("central_roi_drift%	" + str(datadict['central_roi_drift%']) + "\n")
+    sumfp.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
+    outfp.writelines("</body>\n")
+
 
 main()
-
