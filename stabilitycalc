@@ -1036,7 +1036,7 @@ plt.close()
 # Compose the image table
 #
 calcimagehdrstr = hruletag() + headertag("Calculated images")
-myimwidth = 500
+myimwidth = 500 #TODO get from config
 
 meanimagestr = sf.makecaptionedimage("Mean over time:", meanstats, "meanimage.png", myimwidth)
 stddevimagestr = sf.makecaptionedimage("Standard deviation over time:", stddevstats, "stddevimage.png", myimwidth)
