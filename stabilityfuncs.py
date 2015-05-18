@@ -70,6 +70,11 @@ def formatlimits(lim):
 
 def limitcheck(n, lim):
     # check to see if a parameter falls within preset limits.
+
+    # check for legacy input mode and convert if needed
+    if type(lim) is tuple:
+        lim = {'good_min': lim[0][0], 'good_max': lim[0][1], 'warn_min': lim[1][0], 'warn_max': lim[1][1]}
+
     retval = 2  # start with the assumption that the data is bad
     if (float(n) >= float(lim['warn_min'])) and (float(n) <= float(lim['warn_max'])):
         retval = 1  # number falls within the warning limits
