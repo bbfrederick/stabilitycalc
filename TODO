@@ -1,1 +1,3 @@
 logging instead of prints
+replace gnuplot calls with pure matplotlib
+$ pip install --allow-external gnuplot-py --allow-unverified gnuplot-py gnuplot-py
