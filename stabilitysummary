@@ -9,6 +9,8 @@ import os
 import time
 from htmltagutils import *
 import stabilityfuncs as sf
+import argparse
+
 #
 # os utilities
 #
@@ -51,32 +53,20 @@ def stability_eval(specs, thedictionary):
 
     return stability_results
 
-########################################################################
-########################################################################
-#
-#
-#  Control flow starts here
-#
-#
-########################################################################
-#
-#       Initial setup
-#
-# read in the datafile
-if len(sys.argv) != 4:
-    print("usage: stabilitysummary datadirectory outputdirectory whichscan")
-    exit()
-called_as = os.path.basename(sys.argv[0])
-datadirectory = sys.argv[1]
-outputdirectory = sys.argv[2]
-whichscan = sys.argv[3]
 
-if called_as == 'stabilitysummary':
-    print('called as stabilitysummary (BIRN)')
-    TargetisBIRNphantom = True
-elif called_as == 'stabilitysummary_nonbirn':
-    print('called as stabilitysummary_nonbirn (NONBIRN)')
-    TargetisBIRNphantom = False
+parser = argparse.ArgumentParser(description='Create the stability summary.')
+parser.add_argument('--nonbirn', action='store_true', help='process as non-BIRN data')
+parser.add_argument('datadirectory')
+parser.add_argument('outputdirectory')
+parser.add_argument('whichscan')
+args = parser.parse_args()
+
+
+datadirectory = args.datadirectory
+outputdirectory = args.outputdirectory
+whichscan = args.whichscan
+TargetisBIRNphantom = not args.nonbirn
+
 
 # initialize the outut directory if need be
 doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan)

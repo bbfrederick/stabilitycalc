@@ -10,6 +10,6 @@ setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
 setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
 setenv outputdir	`stabilityparms OUTPUTDIR`
 
-stabilitysummary_nonbirn $processedscandir $outputdir/3T/nonbirn epi_pace
-stabilitysummary_nonbirn $processedscandir $outputdir/3T/nonbirn epi_bold
-stabilitysummary_nonbirn $processedscandir $outputdir/3T/nonbirn epi_singleslice
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_pace
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_bold
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_singleslice

@@ -63,7 +63,7 @@ if( $multiflip10name != '' ) then
     chmod -R a+r $processedscandir/$subjname/epi_multiflip10 
     if ( doregen == True ) then
         stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip10 &
-        stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
+        stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
 	endif
     endif
 
@@ -74,7 +74,7 @@ if( $multiflip77name != '' ) then
     chmod -R a+r $processedscandir/$subjname/epi_multiflip77 
     if ( doregen == True ) then
         stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip77 &
-        stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
+        stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
 	endif
     endif
 

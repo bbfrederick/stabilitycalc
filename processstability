@@ -40,7 +40,7 @@ if( $pacename != '' ) then
 
     source $sorteddicomdir/$session/elementlist
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_pace &
-    #stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace &
+    #stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace &
 endif
 
 if( $singleslicename != '' ) then
@@ -50,7 +50,7 @@ if( $singleslicename != '' ) then
     stabilitycalc $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_singleslice
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_singleslice &
-    stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_singleslice &
+    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_singleslice &
 endif
 
 if( $multiflip77name != '' ) then
@@ -60,7 +60,7 @@ if( $multiflip77name != '' ) then
     stabilitycalc $processedscandir/$session/epi_multiflip77 epi_multiflip77.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip77 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip77 &
-    stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
+    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
 endif
 
 if( $multiflip10name != '' ) then
@@ -70,7 +70,7 @@ if( $multiflip10name != '' ) then
     stabilitycalc $processedscandir/$session/epi_multiflip10 epi_multiflip10.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip10 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip10 &
-    stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
+    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
 endif
 
 if( $boldname != '' ) then
@@ -80,7 +80,7 @@ if( $boldname != '' ) then
     stabilitycalc $processedscandir/$session/epi_bold epi_bold.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_bold 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_bold &
-    stabilitysummary_nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_bold &
+    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_bold &
 endif
 
 touch $processedscandir/$session
