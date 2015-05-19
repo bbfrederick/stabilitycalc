@@ -49,7 +49,7 @@ def stability_eval(specs, thedictionary):
         except KeyError:
             pass
 
-    return(stability_results)
+    return stability_results
 
 ########################################################################
 ########################################################################
@@ -113,24 +113,19 @@ for summaryfile in stabilitydirs:
             ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN_phantom')
             if ObjectisBIRNphantom == TargetisBIRNphantom:
                 if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
-                    num_cp_TARGET = num_cp_TARGET + 1
+                    num_cp_TARGET += 1
                 if datadict[filenumber_TARGET]['Coil'] == '32Ch_Head':
-                    num_32_TARGET = num_32_TARGET + 1
+                    num_32_TARGET += 1
                 if datadict[filenumber_TARGET]['Coil'] == 'HeadMatrix':
-                    num_12_TARGET = num_12_TARGET + 1
-                filenumber_TARGET = filenumber_TARGET + 1
+                    num_12_TARGET += 1
+                filenumber_TARGET += 1
         except IOError:
             pass
     except KeyError:
         pass
-if TargetisBIRNphantom:
-    print(str(num_cp_TARGET) + " CP coil runs (BIRN phantom)")
-    print(str(num_12_TARGET) + " 12 channel coil runs (BIRN phantom)")
-    print(str(num_32_TARGET) + " 32 channel coil runs (BIRN phantom)")
-else:
-    print(str(num_cp_TARGET) + " CP coil runs (NONBIRN phantom)")
-    print(str(num_12_TARGET) + " 12 channel coil runs (NONBIRN phantom)")
-    print(str(num_32_TARGET) + " 32 channel coil runs (NONBIRN phantom)")
+print(str(num_cp_TARGET) + " CP coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+print(str(num_12_TARGET) + " 12 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+print(str(num_32_TARGET) + " 32 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
 
 #######################################################################################
 #
@@ -348,14 +343,6 @@ REPORTFILE.writelines("            var minutes12=Math.floor((time12-days12*one_d
 REPORTFILE.writelines("            var minutescp=Math.floor((timecp-dayscp*one_day-hourscp*one_hour)/one_minute);\n")
 REPORTFILE.writelines("            var mindays=Math.min(dayscp,days12,days32);\n")
 REPORTFILE.writelines("\n")
-#REPORTFILE.writelines("            theTime = ((now.getHours() > 0 && now.getHours() < 13)) ? now.getHours() : (now.getHours() == 0) ? 12 : now.getHours()-12;\n")
-#REPORTFILE.writelines("            theTime += (now.getMinutes() > 9) ? \":\" + now.getMinutes() : \":0\" + now.getMinutes();\n")
-#REPORTFILE.writelines("            theTime += (now.getSeconds() > 9) ? \":\" + now.getSeconds() : \":0\" + now.getSeconds();\n")
-#REPORTFILE.writelines("            theTime += (now.getHours() < 12) ? \" am\" : \" pm\";\n")
-# REPORTFILE.writelines("\n")
-#REPORTFILE.writelines("            clockSpan = document.getElementById(\"myClock\");\n")
-#REPORTFILE.writelines("            clockSpan.replaceChild(document.createTextNode(theTime), clockSpan.firstChild);\n")
-# REPORTFILE.writelines("\n")
 REPORTFILE.writelines("            fmttime32=days32+\"d \"+hours32+\"h \"+minutes32+\"m\";\n")
 REPORTFILE.writelines("            fmttime12=days12+\"d \"+hours12+\"h \"+minutes12+\"m\";\n")
 REPORTFILE.writelines("            fmttimecp=dayscp+\"d \"+hourscp+\"h \"+minutescp+\"m\";\n")
@@ -400,12 +387,7 @@ REPORTFILE.writelines("<body>\n")
 
 # Compose the image table
 myimwidth = 400
-if TargetisBIRNphantom:
-    #imagehdrstr = bigheadertag("BIRN phantom stability tests"+whitetag("   WARNING: DATA IS STALE"))+headertag("Summary images")
-    imagehdrstr = bigheadertag("BIRN phantom stability tests") + headertag("Summary images")
-else:
-    #imagehdrstr = bigheadertag("NONBIRN phantom stability tests"+whitetag("   WARNING: DATA IS STALE"))+headertag("Summary images")
-    imagehdrstr = bigheadertag("NONBIRN phantom stability tests") + headertag("Summary images")
+imagehdrstr = bigheadertag("{} phantom stability tests".format('BIRN' if TargetisBIRNphantom else 'NONBIRN')) + headertag("Summary images")
 
 ROIstab_headerstr = headertag("ROI p-p% variation:")
 ROIdrift_headerstr = headertag("ROI lin-quad drift % amplitude:")
@@ -481,11 +463,11 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
     for i in range(filenumber_TARGET - 1, -1, -1):
         if datadict[i]['Coil'] == targetcoil:
             # copy the individual scan data if necessary
-            if(os.path.exists(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])):
+            if os.path.exists(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir']):
                 copypreamble = outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'] + " exists..."
                 desttime = os.path.getmtime(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
                 sourcetime = os.path.getmtime(datadirectory + "/" + datadict[i]['datadir'])
-                if(sourcetime >= desttime):
+                if sourcetime >= desttime:
                     print(copypreamble, "and is modified - copying")
                     print(datadirectory + "/" + datadict[i]['datadir'])
                     print("time difference=", desttime - sourcetime)
@@ -513,7 +495,7 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
                         if thedataquality[theentry]['quality'] > 0:
                             themarker = themarker + sf.qualitytag(thedataquality[theentry]['symbol'], flag)
                         else:
-                            themarker = themarker + " "
+                            themarker += " "
 
             # generate the output line
             coildirlist = coildirlist + "<p><a href=" + datadict[i]['datadir'] + "/output.html>" + datadict[i]['Date'] + " " + datadict[i]['Time'] + "</a> " + themarker + "</p>\n"
