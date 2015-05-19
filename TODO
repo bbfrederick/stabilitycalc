@@ -1,4 +1,0 @@
-logging instead of prints
-replace gnuplot calls with pure matplotlib
-remove all doashellcmd
-merge getdicom*
