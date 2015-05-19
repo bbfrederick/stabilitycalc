@@ -5,15 +5,15 @@
 #       $Id: stabilitycalc,v 1.35 2015/05/08 19:02:26 frederic Exp $
 #
 import sys
+import os
 import time
 import matplotlib
-
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from htmltagutils import *
 import stabilityfuncs as sf
-
+import shutil
 import nibabel as nib
 
 
@@ -107,8 +107,8 @@ optional arguments:
 
     # make empty results directory
     print("initializing output directory...")
-    sf.doashellcmd("rm -r " + dirname + "/procresults")
-    sf.doashellcmd("mkdir " + dirname + "/procresults")
+    shutil.rmtree(os.path.join(dirname,'procresults'))
+    os.mkdir(os.path.join(dirname,'procresults'))
 
     # initialize the output files
     outputfile = dirname + "/procresults/output.html"
