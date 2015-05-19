@@ -503,6 +503,4 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
 REPORTFILE.writelines(tablerowendtag())
 REPORTFILE.writelines(tablepropsendtag())
 
-#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/graphtemp")
-#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/plotcmds")
 REPORTFILE.writelines("</body>\n")
