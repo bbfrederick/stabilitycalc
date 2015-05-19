@@ -1,0 +1,21 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2015/05/08 18:58:14 $
+#	$Id: regenwebsite,v 1.5 2015/05/08 18:58:14 frederic Exp $
+#
+
+setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
+setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
+setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
+setenv outputdir	`stabilityparms OUTPUTDIR`
+
+stabilitysummary $processedscandir $outputdir/3T/birn epi_pace
+stabilitysummary $processedscandir $outputdir/3T/birn epi_bold
+stabilitysummary $processedscandir $outputdir/3T/birn epi_singleslice
+
+setenv outputdir	/Volumes/Stability/stability
+
+stabilitysummary $processedscandir $outputdir/3T/birn epi_pace
+stabilitysummary $processedscandir $outputdir/3T/birn epi_bold
+stabilitysummary $processedscandir $outputdir/3T/birn epi_singleslice

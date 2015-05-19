@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+"""legacy thing for scripts to read paths from the config.ini file"""
+
+import sys
+import ConfigParser
+import logging
+
+if len(sys.argv) != 2:
+    logging.critical('usage: stabilityparms key')
+    exit(1)
+key = sys.argv[1]
+
+config = ConfigParser.ConfigParser()
+
+try:
+    config.read('config/config.ini')
+except IOError:
+    logging.critical('Failed to open configuration file.')
+
+try:
+    print(config.get('paths', key.lower()))
+except ConfigParser.NoOptionError:
+    print('')

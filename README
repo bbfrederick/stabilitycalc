@@ -28,10 +28,3 @@ One of the design goals of the set of tools is to use pure python to
 minimize machine architecture and compilation headaches, and to avoid
 costly proprietary environments such as matlab.
 
-Inputs:
-
-
-Output:
-stabilitycalc produces an HTML report:
-    STABILITYDIR/procresults/output.html
-

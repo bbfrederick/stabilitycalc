@@ -1,0 +1,4 @@
+#!/bin/csh
+#processstability2 stability_20110308_095248_32Ch_Head 
+#processstability2 stability_20110307_091300_TxRx_Head 
+stabilitycalc /Users/frederic/Documents/MR_data/stability_tracking/stability_20110307_091300_TxRx_Head/epi_pace epi_pace.nii.gz 10

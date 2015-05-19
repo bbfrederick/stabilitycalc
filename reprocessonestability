@@ -1,0 +1,27 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2011/09/01 19:27:51 $
+#	$Id: reprocessonestability,v 1.3 2011/09/01 19:27:51 frederic Exp $
+#
+
+setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
+setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
+setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
+setenv outputdir	`stabilityparms OUTPUTDIR`
+
+setenv subjname		$1
+setenv elementinname	$2
+setenv elementoutbase	$3
+setenv elementoutsuffix	$4
+setenv com_x		$5
+setenv com_y		$6
+setenv com_z		$7
+setenv funcremap	'x -y z'
+
+if( -e $sorteddicomdir'/'$subjname'/'$elementinname ) then
+    studyinfo $sorteddicomdir'/'$subjname'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$subjname'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
+    stabilitycalc $processedscandir/$subjname/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
+endif
+
+#stabilitysummary $processedscandir $outputdir epi_coilelements

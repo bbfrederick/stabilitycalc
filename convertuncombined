@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2011/09/01 19:27:51 $
+#       $Id: convertuncombined,v 1.2 2011/09/01 19:27:51 frederic Exp $
+#
+import sys
+import re
+import os
+import time
+import shlex
+import subprocess
+
+
+def filtfiles(rootdirname, directoryname, filterstring):
+    initlist = os.listdir(rootdirname + "/" + datadirectory)
+    filteredlist = [thefilename for thefilename in initlist if (thefilename.startswith(filterstring))]
+    return(filteredlist)
+
+
+def trimend(thestring, suffixstart):
+    currentloc = 0
+    if(thestring.find(suffixstart) == -1):
+        return("")
+    else:
+        while True:
+            theloc = thestring.find(suffixstart, currentloc + 1)
+            if(theloc == -1):
+                break
+            currentloc = theloc
+        return(thestring[:currentloc])
+
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    #a = subprocess.Popen("cmd", shell=True, bufsize=1024, stdout=subprocess.PIPE).stdout
+    while True:
+        line = a.readlines()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+# read in the datafile
+stab_bindir = "/Users/frederic/bin/fmristability/"
+if len(sys.argv) != 3:
+    print("usage: convertuncombined datadirectory inputroot")
+    exit()
+datadirectory = sys.argv[1]
+inputroot = sys.argv[2]
+
+#
+# find the names of the elements to convert to nifti
+#
+# dicombasedir="/Volumes/disk2/MR_data/stability_tracking_raw"
+# fslbasedir="/Volumes/disk2/MR_data/stability_tracking"
+dicombasedir = doashellcmd("stabilityparms SORTEDDICOMDIR")
+fslbasedir = doashellcmd("stabilityparms PROCESSEDSCANDIR")
+theelementdirectories = filtfiles(dicombasedir, datadirectory, inputroot + "H")
+
+#
+# now convert
+#
+
+for thename in theelementdirectories:
+    thecallstring = "newprocfuncs " + dicombasedir + " " + fslbasedir + " " + datadirectory + " " + thename + " " + trimend(thename, "_") + " \"x -y z\""
+    doashellcmd(thecallstring)
+    # print thecallstring
+exit()

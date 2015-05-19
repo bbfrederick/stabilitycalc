@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2010/05/26 01:58:34 $
+#       $Id: commonmode,v 1.6 2010/05/26 01:58:34 frederic Exp $
+#
+import sys
+import os
+import numpy as np
+import matplotlib.mlab as mlab
+from nifti import *
+
+########################################################################
+########################################################################
+#
+#
+#  Control flow starts here
+#
+#
+########################################################################
+#
+#       Initial setup
+#
+# read in the datafile
+if (len(sys.argv) != 4):
+    print("usage: commonmode directoryname inputroot outputroot")
+    print("	directoryname: the directory where the input files are found")
+    print("	inputroot: the base of the input filename (not including the element specifier)")
+    print("	outputroot: the base of the output filenames")
+    exit()
+dirname = sys.argv[1]
+inputroot = sys.argv[2]
+outputroot = sys.argv[3]
+
+allsubdirs = os.listdir(dirname)
+coildirs = [thedir for thedir in allsubdirs]
+individualcoildirs = [thedir for thedir in coildirs if (thedir.startswith(inputroot))]
+print(individualcoildirs)
+numcoils = len(individualcoildirs)
+print(numcoils)
+
+# read one of the files to get dimensions
+nim = NiftiImage(individualcoildirs[0] + "/" + individualcoildirs[0])
+thedims = nim.header['dim']
+thesizes = nim.pixdim
+xdim = thesizes[0]
+ydim = thesizes[1]
+slicedim = thesizes[2]
+xsize = thedims[1]
+ysize = thedims[2]
+numslices = thedims[3]
+timepoints = thedims[4]
+tr = thesizes[3]
+firstvol = nim.data[0, :, :, :]
+evarr = np.zeros((timepoints, numslices, ysize, xsize), dtype='float')
+
+tcdata = np.zeros((timepoints, numslices, numcoils), dtype='float')
+allcoilccmatrices = np.zeros((1, numslices, numcoils, numcoils), dtype='float')
+
+j = 0
+for thedir in individualcoildirs:
+    print("processing ", thedir)
+    nim = NiftiImage(thedir + "/" + thedir)
+    tcdata[:, :, j] = np.sum(np.sum(nim.data, axis=3), axis=2)
+    for theslice in range(numslices):
+        tcdata[:, theslice, j] = tcdata[:, theslice, j] - np.mean(tcdata[:, theslice, j])
+    j = j + 1
+
+slicetcs = np.sum(tcdata, axis=2)
+for theslice in range(numslices):
+    [Pcomponents, Trans, fracVar] = mlab.prepca(np.transpose(tcdata[:, theslice, :]))
+    slicetcs[:, theslice] = Pcomponents[0, :]
+    print(theslice, np.shape(Pcomponents), fracVar[0])
+
+for theslice in range(numslices):
+    for thetime in range(timepoints):
+        evarr[thetime, theslice, :, :] = slicetcs[thetime, theslice]
+    allcoilccmatrices[0, theslice, :, :] = np.corrcoef(np.transpose(tcdata[:, theslice, :]))
+
+nim_ev = NiftiImage(evarr)
+nim_ev.save(outputroot + "_voxelevs.nii.gz")
+nim_tc = NiftiImage(tcdata)
+nim_tc.save(outputroot + "_tcdata.nii.gz")
+nim_cc = NiftiImage(allcoilccmatrices)
+nim_cc.save(outputroot + "_theccmatrix.nii.gz")

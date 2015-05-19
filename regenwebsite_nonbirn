@@ -1,0 +1,15 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2011/09/01 19:27:51 $
+#	$Id: regenwebsite_nonbirn,v 1.3 2011/09/01 19:27:51 frederic Exp $
+#
+
+setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
+setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
+setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
+setenv outputdir	`stabilityparms OUTPUTDIR`
+
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_pace
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_bold
+stabilitysummary --nonbirn $processedscandir $outputdir/3T/nonbirn epi_singleslice

@@ -1,0 +1,10 @@
+#!/bin/csh -f
+#
+#       $Author: frederic $
+#       $Date: 2011/09/01 19:27:51 $
+#       $Id: updatestability_dicomlistener,v 1.4 2011/09/01 19:27:51 frederic Exp $
+#
+setenv  rawdicomdir     `stabilityparms RAWDICOMDIR`
+setenv  sorteddicomdir  `stabilityparms SORTEDDICOMDIR`
+
+renamestabilitydata_dicomlistener $rawdicomdir $sorteddicomdir

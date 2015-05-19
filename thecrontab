@@ -1,0 +1,9 @@
+# use /bin/csh to run commands, overriding the default set by cron
+SHELL=/bin/csh
+# mail any output to me
+#MAILTO=bbfrederick@mclean.harvard.edu
+#
+# run every two hours on the half hour
+30 0-23/2 * * *       source /Users/frederic/bin/fmristability/updatestability_dicomlistener >>& /Users/frederic/updatedicomlistener_log 
+# run every two minutes
+0-59/2 * * * *        /Users/frederic/code/getsensorvals/refreshenvwebpage >>& /Users/frederic/code/getsensorvals/envsensorlog 

@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+#
+#       $Author: frederic $
+#       $Date: 2015/05/08 18:58:14 $
+#       $Id: renamestabilitydata_dicomlistener,v 1.14 2015/05/08 18:58:14 frederic Exp $
+#
+import sys
+import re
+import os
+import time
+import shlex
+import subprocess
+
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    #a = subprocess.Popen("cmd", shell=True, bufsize=1024, stdout=subprocess.PIPE).stdout
+    while True:
+        line = a.readlines()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+# read in the datafile
+stab_bindir = doashellcmd("/Users/frederic/bin/fmristability/stabilityparms BINDIR")
+stab_bindir = "/Users/frederic/bin/fmristability"
+print(">>>", stab_bindir, "<<<")
+if len(sys.argv) != 3:
+    print("usage: renamestabilitydata datadirectory outputdirectory")
+    exit()
+datadirectory = sys.argv[1]
+outputdirectory = sys.argv[2]
+
+#
+# scan the data directory for stability scans which haven't been renamed
+#	and haven't been altered in the last 5 minutes
+#
+stabilitydirs = os.listdir(datadirectory)
+dirstorename = [examname for examname in stabilitydirs]
+now = time.time()
+dirstorenamefilt = [examname for examname in dirstorename
+                    if (not(examname.startswith("."))
+                        and not(examname.startswith("duplicates"))
+                        and not(examname.startswith("notstability"))
+                        and not((now - os.stat(datadirectory + "/" + examname).st_mtime) < 180))]
+
+# first rename files at the top level to get rid of spaces
+for dirname in dirstorenamefilt:
+    newname = re.sub(' ', '_', dirname)
+    os.rename(datadirectory + "/" + dirname, datadirectory + "/" + newname)
+
+#
+# regenerate the directory list now that spaces have been removed
+#
+stabilitydirs = os.listdir(datadirectory)
+# print 'stabilitydirs = ',stabilitydirs
+dirstorename = [examname for examname in stabilitydirs]
+# print 'dirstorename = ',dirstorename
+dirstorenamefilt = [examname for examname in dirstorename
+                    if (not(examname.startswith("."))
+                        and not(examname.startswith("duplicates"))
+                        and not(examname.startswith("notstability"))
+                        and not((now - os.stat(datadirectory + "/" + examname).st_mtime) < 300))]
+
+print("dirstorenamefilt=", dirstorenamefilt)
+
+for examname in dirstorenamefilt:
+    examdir = datadirectory + "/" + examname
+    print("processing ", examdir)
+    doashellcmd(stab_bindir + "/renamealldicoms " + examdir)
+    seriesdir = examdir
+    scannames = [subprotocolname for subprotocolname in os.listdir(seriesdir)
+                 if not(subprotocolname.startswith("."))]
+    scandir = seriesdir + "/" + scannames[0]
+    try:
+        dicomnames = [filename for filename in os.listdir(scandir)
+                      if filename.endswith("0001.dcm")]
+        if dicomnames != []:
+            # we process directories that have dicoms in them, otherwise skip them
+            thestudyinfo = doashellcmd(stab_bindir + "/studyinfo " + scandir + "/" + dicomnames[0])
+            print(thestudyinfo)
+            studydate = re.sub('\n', '', re.sub('StudyDate: ', '', thestudyinfo[1]))
+            studytime = ('000' + str(int(float(re.sub('\n', '', re.sub('StudyTime: ', '', thestudyinfo[2]))))))[-6:]
+            print(studytime)
+            coil = re.sub('\n', '', re.sub('Coil: ', '', thestudyinfo[0]))
+            newtldirname = "stability_" + studydate + "_" + studytime + "_" + coil
+            print("attempting to move ", examdir, " to ", newtldirname)
+            os.rename(examdir, datadirectory + "/" + newtldirname)
+            examdir = datadirectory + "/" + newtldirname
+
+            # now move into the output directory and process the data
+            if(os.path.exists(outputdirectory + "/" + newtldirname)):
+                destdir = datadirectory + "/duplicates/" + examname
+                print("Directory already exists - moving to duplicates...")
+                os.rename(examdir, destdir)
+            else:
+                os.rename(examdir, outputdirectory + "/" + newtldirname)
+                doashellcmd(stab_bindir + "/processstability " + newtldirname)
+    except OSError:
+        # we get here if there are no subdirectories in scandir
+        destdir = datadirectory + "/notstability/" + examname
+        print(scandir + " is not a valid stability directory; no subdirectories - moving to " + destdir)
+        os.rename(examdir, destdir)

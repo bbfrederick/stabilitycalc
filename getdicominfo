@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python
 #
 #       $Author: frederic $
 #       $Date: 2011/08/31 21:07:13 $
@@ -7,34 +7,35 @@
 import sys
 import dicom
 
+
 def getsiemensmrheader(theplan):
-    SiemensCSAHeader2=theplan[0x0029,0x1020].value
-    startposition=SiemensCSAHeader2.find('### ASCCONV BEGIN ###')+len('### ASCCONV BEGIN ###')
-    endposition=SiemensCSAHeader2.find('### ASCCONV END ###')
-    InterestingSiemensHeader=SiemensCSAHeader2[startposition:endposition].splitlines()
-    datadict={}
+    SiemensCSAHeader2 = theplan[0x0029, 0x1020].value
+    startposition = SiemensCSAHeader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
+    endposition = SiemensCSAHeader2.find('### ASCCONV END ###')
+    InterestingSiemensHeader = SiemensCSAHeader2[startposition:endposition].splitlines()
+    datadict = {}
     for theline in InterestingSiemensHeader[1:]:
-        thepair=theline.split()
-        datadict[thepair[0]]=thepair[2]
+        thepair = theline.split()
+        datadict[thepair[0]] = thepair[2]
     return datadict
 
 # read in the datafile
-if len(sys.argv)!=2:
-    print "usage: getdicominfo inputfile"
+if len(sys.argv) != 2:
+    print("usage: getdicominfo inputfile")
     exit()
-filename=sys.argv[1]
-plan=dicom.read_file(filename)
-timestr=float(plan.AcquisitionTime)
-thetr=float(plan.RepetitionTime)
-timeconv=3600*(int(timestr/10000)%100)+60*(int(timestr/100)%100)+timestr%100+(timestr-int(timestr))
-acqnum=plan.AcquisitionNumber
-#thesiemensheader=getsiemensmrheader(plan)
-#slicethickness=thesiemensheader['sSliceArray.asSlice[0].dThickness']
-#inplanerot=thesiemensheader['sSliceArray.asSlice[0].dInPlaneRot']
+filename = sys.argv[1]
+plan = dicom.read_file(filename)
+timestr = float(plan.AcquisitionTime)
+thetr = float(plan.RepetitionTime)
+timeconv = 3600 * (int(timestr / 10000) % 100) + 60 * (int(timestr / 100) % 100) + timestr % 100 + (timestr - int(timestr))
+acqnum = plan.AcquisitionNumber
+# thesiemensheader=getsiemensmrheader(plan)
+# slicethickness=thesiemensheader['sSliceArray.asSlice[0].dThickness']
+# inplanerot=thesiemensheader['sSliceArray.asSlice[0].dInPlaneRot']
 
 try:
-    elementnumber=plan[0x0051,0x100f].value
+    elementnumber = plan[0x0051, 0x100f].value
 except KeyError:
-    print timestr, thetr, acqnum
+    print(timestr, thetr, acqnum)
 else:
-    print timestr, thetr, acqnum, elementnumber
+    print(timestr, thetr, acqnum, elementnumber)

@@ -1,0 +1,24 @@
+#!/bin/csh -f
+#
+#	$Author: frederic $
+#	$Date: 2009/10/22 14:04:38 $
+#
+
+# ./dicom2nifti stability_tracking_raw/stability_20150406_070033_32Ch_Head/ep2d_pace_normalize_5 stability_tracking/stability_20150406_070033_32Ch_Head epi_pace
+# this takes a dicom dir and brings us to a nifti file and studyinfo
+# file we can run stabilitycalc on.
+#
+set debug='y'
+
+if($debug == 'y') then
+    echo "Source DICOM Directory >"$1"<"
+    echo "Destination NIFTI Directory >"$2"<"
+    echo "Destination name >"$3"<"
+    endif
+
+rm -rf $2/$3
+mkdir -p $2/$3
+dcm2nii -d n -g y -o $2/$3 $1
+mv $2/$3/*nii.gz $2/$3/$3.nii.gz
+./studyinfo $1/IM*0001.dcm > $2/$3/studyinfo
+
