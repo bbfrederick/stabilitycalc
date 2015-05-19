@@ -66,16 +66,15 @@ def stability_eval(specs, thedictionary):
 if len(sys.argv) != 4:
     print("usage: stabilitysummary datadirectory outputdirectory whichscan")
     exit()
+called_as = os.path.basename(sys.argv[0])
 datadirectory = sys.argv[1]
 outputdirectory = sys.argv[2]
 whichscan = sys.argv[3]
 
-doBIRN = True
-
-if doBIRN:
+if called_as == 'stabilitysummary':
     print('called as stabilitysummary (BIRN)')
     TargetisBIRNphantom = True
-else:
+elif called_as == 'stabilitysummary_nonbirn':
     print('called as stabilitysummary_nonbirn (NONBIRN)')
     TargetisBIRNphantom = False
 
@@ -181,6 +180,13 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
 #
 # central and peripheral SNR and SFNR
 #
+
+if TargetisBIRNphantom:
+    wlp = 'points'
+else:
+    wlp = 'linespoints'
+    
+
 pointsize = 'ps 2'
 PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr", "w")
 PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
@@ -189,10 +195,10 @@ PLOTCMDFILE.writelines("set yrange [0:800]\n")
 PLOTCMDFILE.writelines("set title \"Absolute SNR and SFNR\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:5 title 'Central ROI SNR' with points " + pointsize + " pt 3, \\\n")
-PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:6 title 'Peripheral ROI SNR' with points " + pointsize + " pt 4, \\\n")
-PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:7 title 'Central ROI SFNR' with points " + pointsize + " pt 4, \\\n")
-PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:8 title 'Peripheral ROI SFNR' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:5 title 'Central ROI SNR' with " + wlp + " " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:6 title 'Peripheral ROI SNR' with " + wlp + " " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:7 title 'Central ROI SFNR' with " + wlp + " " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:8 title 'Peripheral ROI SFNR' with " + wlp + " " + pointsize + " pt 4\n")
 PLOTCMDFILE.close()
 
 #
@@ -205,8 +211,8 @@ PLOTCMDFILE.writelines("set yrange [0:1.0]\n")
 PLOTCMDFILE.writelines("set title \"ROI stability: p-p variation in percent\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:3 title 'Central ROI' with points " + pointsize + " pt 3, \\\n")
-PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:4 title 'Peripheral ROI' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:3 title 'Central ROI' with " + wlp + " " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:4 title 'Peripheral ROI' with " + wlp + " " + pointsize + " pt 4\n")
 PLOTCMDFILE.close()
 
 #
@@ -219,8 +225,8 @@ PLOTCMDFILE.writelines("set yrange [0:1.0]\n")
 PLOTCMDFILE.writelines("set title \"ROI linear and quadratic drift: p-p amplitude in percent\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:21 title 'Central ROI' with points " + pointsize + " pt 3, \\\n")
-PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:22 title 'Peripheral ROI' with points " + pointsize + " pt 4\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:21 title 'Central ROI' with " + wlp + " " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:22 title 'Peripheral ROI' with " + wlp + " " + pointsize + " pt 4\n")
 PLOTCMDFILE.close()
 
 #
@@ -247,7 +253,7 @@ PLOTCMDFILE.writelines("set yrange [75.0:90.0]\n")
 PLOTCMDFILE.writelines("set title \"Phantom radius\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"Phantom radius (mm)\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:15 title 'Object radius in mm' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:15 title 'Object radius in mm' with " + wlp + " " + pointsize + " pt 3\n")
 PLOTCMDFILE.close()
 
 #
@@ -260,7 +266,7 @@ PLOTCMDFILE.writelines("set yrange [0.9:1.1]\n")
 PLOTCMDFILE.writelines("set title \"Phantom shape (y/x)\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"Phantom shape (y/x)\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:16 title 'Object shape (y/x)' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:16 title 'Object shape (y/x)' with " + wlp + " " + pointsize + " pt 3\n")
 PLOTCMDFILE.close()
 
 #
@@ -273,7 +279,7 @@ PLOTCMDFILE.writelines("set yrange [0:12.0]\n")
 PLOTCMDFILE.writelines("set title \"Weisskoff Radius of decorrelation\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"Weisskoff RDC\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:23 title 'Weisskoff RDC' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:23 title 'Weisskoff RDC' with " + wlp + " " + pointsize + " pt 3\n")
 PLOTCMDFILE.close()
 
 #
@@ -286,7 +292,7 @@ PLOTCMDFILE.writelines("set yrange [0:2000.0]\n")
 PLOTCMDFILE.writelines("set title \"Detrended mean central signal intensity\"\n")
 PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
 PLOTCMDFILE.writelines("set ylabel \"Mean signal intensity\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:24 title 'Mean central signal intensity' with points " + pointsize + " pt 3\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:24 title 'Mean central signal intensity' with " + wlp + " " + pointsize + " pt 3\n")
 PLOTCMDFILE.close()
 
 for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
