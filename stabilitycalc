@@ -1055,23 +1055,15 @@ def main():
     datadict['central_roi_drift%'] = centdrift
     datadict['peripheral_roi_drift%'] = periphdrift
 
-    evalfile = pjoin(dirname, "procresults/dataquality.txt")
-    AFILE = open(evalfile, "w")
-    # TODO what's going on here
+    AFILE = open(pjoin(dirname, "procresults/dataquality.txt"), "w")
     for k in datadict:
-        for lim in limits:
-            if k == lim:
-                entrydesc = sf.formatlimits(limits[k])
-                entryval = datadict[k]
-                entryquality = sf.limitcheck(entryval, limits[k])
-                if entryquality == 0:
-                    entryqualitystr = "Pass"
-                if entryquality == 1:
-                    entryqualitystr = "Warn"
-                if entryquality == 2:
-                    entryqualitystr = "Fail"
-                outstring = entrydesc + "," + str(entryval) + "," + entryqualitystr
-                AFILE.writelines(outstring + "\n")
+        try:
+            entrydesc = sf.formatlimits(limits[k])
+            entryval = datadict[k]
+            entryquality = sf.limitcheck(entryval, limits[k])
+            AFILE.writelines(','.join((entrydesc, str(entryval), {0: 'Pass', 1: 'Warn', 2:'Fail'}[entryquality])) + "\n")
+        except KeyError:
+            pass
 
     ########################################################
     #
