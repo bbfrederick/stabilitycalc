@@ -21,13 +21,6 @@ import logging
 logging.basicConfig(format='%(levelname)s:%(message)s')
 
 def main():
-    # noinspection PyShadowingNames
-    def slicepic(w, h, inputslice, caption, minp, maxp, dirname, outputname, colormap):
-        plt.figure(figsize=(w, h))
-        sf.showslice2(inputslice, caption, minp, maxp, colormap)
-        plt.savefig(pjoin(dirname, outputname), format='png')
-        plt.close()
-
     # read in the datafile.
     parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
     parser.add_argument('dirname', help='the directory where the 4D NIFTI file is located')
@@ -68,6 +61,7 @@ def main():
 
     starttime = numdisdaqs
 
+    # TODO remove doashellcomd
     coilname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep Coil | awk '{print $2}'")
     studydate = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyDate | awk '{print $2}'")
     studytime = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyTime | awk '{print $2}'")
@@ -124,17 +118,7 @@ def main():
     #
     #       Extract the data that will be used for further calculations
     #
-    firstvol = np.transpose(nim_data[:, :, :, 0], (2, 1, 0))
-    if not isindividualcoil:
-        slicecenter = sf.findCOM(firstvol)
-    else:
-        slicecenter = (initxcenter, initycenter, initzcenter)
-    xcenterf = slicecenter[0]
-    ycenterf = slicecenter[1]
-    zcenterf = slicecenter[2]
-    xcenter = int(round(xcenterf))
-    ycenter = int(round(ycenterf))
-    zcenter = int(round(zcenterf))
+
     selecteddata = np.transpose(nim_data[:, :, :, starttime:], (3, 2, 1, 0))
 
     #############################
@@ -479,10 +463,10 @@ def main():
 
     isphasedarray = False
 
-    thiscoildata = sf.getphasedarraydata(coilname)
-    if thiscoildata and numslices > 1:
+    coildata = sf.getphasedarraydata(coilname)
+    if coildata and numslices > 1:
         isphasedarray = True
-        numphasedarray = len(thiscoildata)
+        numphasedarray = len(coildata)
 
     if isphasedarray:
         paindices = np.arange(0.0, numphasedarray, 1.0)
@@ -511,19 +495,15 @@ def main():
         phasedarraydttcs_demeaned = np.zeros((numphasedarray, len(timepoints)), dtype=float)
         phasedarraytc_summary = []
         phasedarraytc_dt_summary = []
-        for i, elementkey in enumerate(thiscoildata):
-            record = thiscoildata[elementkey]
-            myxloc = round(record['xloc'])
-            myyloc = round(record['yloc'])
-            myzloc = round(record['zloc'])
-            roi = sf.setroilims(myxloc, myyloc, phasedarraysize)
+        for i, ele in enumerate(coildata):
+            roi = sf.setroilims(round(coildata[ele]['xloc']), round(coildata[ele]['yloc']), phasedarraysize)
             if not isindividualcoil:
-                sf.markroi(roi, myzloc, roislice, 0.95 * rawmeanmax)
+                sf.markroi(roi, round(coildata[ele]['zloc']), roislice, 0.95 * rawmeanmax)
             timecourse = sf.getroimeantc(selecteddata, roi, zcenter)
             phasedarraytcs[i, :] = timecourse[:]
-            snrvec = sf.getroisnr(selecteddata, roi, myzloc)
+            snrvec = sf.getroisnr(selecteddata, roi, round(coildata[ele]['zloc']))
             phasedarrayroisnrs[i] = np.mean(snrvec)
-            phasedarrayroisfnrs[i] = sf.getroival(sfnrslice, roi, myzloc)
+            phasedarrayroisfnrs[i] = sf.getroival(sfnrslice, roi, round(coildata[ele]['zloc']))
             phasedarrayroimeans[i] = np.mean(timecourse)
             phasedarrayroistddevs[i] = np.std(timecourse)
             phasedarrayroimins[i] = np.min(timecourse)
@@ -588,7 +568,7 @@ def main():
     numperiph = 32
 
     periphindex = np.arange(numperiph)
-    periphangles = (6.283 * periphindex) / numperiph
+    periphangles = (np.pi * 2 * periphindex) / numperiph
     periphanglesd = (360.0 * periphindex) / numperiph
     xlocs = xcenterf + peripheralradiusx * np.sin(periphangles)
     ylocs = ycenterf + peripheralradiusy * np.cos(periphangles)
@@ -739,26 +719,28 @@ def main():
 
 
     # statistical images section
-    w, h = plt.figaspect(1.0)
+
+    # noinspection PyShadowingNames
+    def slicepic(inputslice, caption, minp, maxp, dirname, outputname, colormap):
+        plt.figure(figsize=plt.figaspect(1.0))
+        sf.showslice2(inputslice, caption, minp, maxp, colormap)
+        plt.savefig(pjoin(dirname, 'procresults', outputname + '.png'), format='png')
+        plt.close()
 
     roimin = np.min(roislice)
     roimax = np.max(roislice)
+
     with np.errstate(invalid='ignore'):
-        slicepic(w, h, roislice, "ROI locations", roimin, roimax, dirname, "procresults/roiimage.png", 1)
-        slicepic(w, h, normstdslice, "Normalized stddev % image", normstdmin, normstdmax, dirname,
-                 "procresults/normstdimage.png", 0)
-        slicepic(w, h, objectmask, "Object mask", objectmin, objectmax, dirname,
-                 "procresults/objectmaskimage.png", 0)
-        slicepic(w, h, varslice, "Variance image", varmin, varmax, dirname, "procresults/varimage.png", 0)
-        slicepic(w, h, stddevslice, "Stddev image", stddevmin, stddevmax, dirname,
-                 "procresults/stddevimage.png", 0)
-        slicepic(w, h, meanslice, "Mean image", meanmin, meanmax, dirname, "procresults/meanimage.png", 0)
-        slicepic(w, h, sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, "procresults/sfnrimage.png", 0)
-        slicepic(w, h, eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname,
-                 "procresults/eodiffimage.png", 0)
-        slicepic(w, h, np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin,
-                 eodiffpcmax, dirname, "procresults/eodiffpcimage.png", 0)
-        slicepic(w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "procresults/ppimage.png", 0)
+        slicepic(roislice, "ROI locations", roimin, roimax, dirname, 'roiimage', 1)
+        slicepic(normstdslice, "Normalized stddev % image", normstdmin, normstdmax, dirname, 'normstdimage', 0)
+        slicepic(objectmask, "Object mask", objectmin, objectmax, dirname, 'objectmaskimage', 0)
+        slicepic(varslice, "Variance image", varmin, varmax, dirname, 'varimage', 0)
+        slicepic(stddevslice, "Stddev image", stddevmin, stddevmax, dirname, 'stddevimage', 0)
+        slicepic(meanslice, "Mean image", meanmin, meanmax, dirname, 'meanimage', 0)
+        slicepic(sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, 'sfnrimage', 0)
+        slicepic(eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname, 'eodiffimage', 0)
+        slicepic(np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin, eodiffpcmax, dirname, 'eodiffpcimage', 0)
+        slicepic(ppslice, "Peak to peak image", ppmin, ppmax, dirname, 'ppimage', 0)
 
     def makefig(id):
         """make a figure using the figure dictionary"""
