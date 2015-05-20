@@ -16,6 +16,7 @@ from htmltagutils import *
 import stabilityfuncs as sf
 import shutil
 import nibabel as nib
+import argparse
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s')
 
@@ -28,37 +29,27 @@ def main():
         plt.close()
 
     # read in the datafile.
+    parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
+    parser.add_argument('dirname', help='the directory where the 4D NIFTI file is located')
+    parser.add_argument('filename', help='the name of the 4D NIFTI file')
+    parser.add_argument('numdisdaqs', help='the number of tr periods to skip at the beginning of the file', metavar='numskip')
 
-    # TODO use argparse
-    if (len(sys.argv) != 4) and (len(sys.argv) != 7) and (len(sys.argv) != 8):
-        print("""
-usage: stabilitycalc directoryname inputfile numskip [xcenter ycenter zcenter]
+    com = parser.add_argument_group('use this location as the center of mass of the phantom')
+    com.add_argument('initxcenter', nargs='?', metavar='xcenter')
+    com.add_argument('initycenter', nargs='?', metavar='ycenter')
+    com.add_argument('initzcenter', nargs='?', metavar='zcenter')
 
-required arguments:
-        directoryname   - the directory where the 4D NIFTI file is located
-        inputfile       - the name of the 4D NIFTI file
-        numskip         - the number of tr periods to skip at the beginning of the file
+    f = parser.parse_args()
+    if None in (f.initxcenter, f.initycenter, f.initzcenter) and not f.initxcenter == f.initycenter == f.initzcenter:
+        parser.error('If you set one center of mass parameter, you must set all three.')
 
-optional arguments:
-        xcenter ycenter zcenter - use this location as the center of mass of the phantom
-        """)
+    dirname, filename, numdisdaqs = f.dirname, f.filename, int(f.numdisdaqs)
 
-        exit()
-
-    dirname = sys.argv[1]
-    filename = sys.argv[2]
-    numdisdaqs = int(sys.argv[3])
     isindividualcoil = False
-    usestudyinfo = True
-    if len(sys.argv) == 7:
-        initxcenter = float(sys.argv[4])
-        initycenter = float(sys.argv[5])
-        initzcenter = float(sys.argv[6])
+    if f.initxcenter is not None:
+        initxcenter, initycenter, initzcenter = [float(x) for x in (f.initxcenter, f.initycenter, f.initzcenter)]
         isindividualcoil = True
-        print("processing as individual coil element file")
-    if len(sys.argv) == 8:
-        usestudyinfo = False
-        print("not using studyinfo file")
+
     logging.info("reading input file...")
 
     nim = nib.load(pjoin(dirname, filename))
@@ -77,16 +68,10 @@ optional arguments:
 
     starttime = numdisdaqs
 
-    if usestudyinfo:
-        coilname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep Coil | awk '{print $2}'")
-        studydate = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyDate | awk '{print $2}'")
-        studytime = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyTime | awk '{print $2}'")
-        elementname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep ElementName | awk '{print $2}'")
-    else:
-        coilname = '32Ch_Head'
-        studydate = ''
-        studytime = ''
-        elementname = ''
+    coilname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep Coil | awk '{print $2}'")
+    studydate = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyDate | awk '{print $2}'")
+    studytime = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyTime | awk '{print $2}'")
+    elementname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep ElementName | awk '{print $2}'")
 
     if elementname == '':
         elementname = 'unknown'
