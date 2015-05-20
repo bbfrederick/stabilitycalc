@@ -8,6 +8,7 @@ import sys
 import os
 from os.path import join as pjoin
 import time
+
 import matplotlib
 
 matplotlib.use('Agg')
@@ -829,111 +830,50 @@ optional arguments:
              eodiffpcmax, dirname, "procresults/eodiffpcimage.png", 0)
     slicepic(w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "procresults/ppimage.png", 0)
 
-    plt.figure()
-    sf.showweisskoff(roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")
-    plt.savefig(pjoin(dirname, "procresults/weisskoffplot.png"), format='png')
-    plt.close()
+    def makefig(id):
+        """make a figure using the figure dictionary"""
+        plt.figure()
+        figs[id]['fn'](*figs[id]['args'])
+        plt.savefig(pjoin(dirname, 'procresults', id + '.png'), format='png')
+        plt.close()
+
+    # @formatter:off
+    figs = {
+        'weisskoffplot': {'fn': sf.showweisskoff, 'args': (roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")},
+        'oddghostroiplot': {'fn': sf.showtc2, 'args': (thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean, "Relative odd ghost ROI amplitude plot (%)")},
+        'evenghostroiplot': {'fn': sf.showtc2, 'args': (thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean, "Relative even ghost ROI amplitude plot (%)")}}
+
 
     if isphasedarray:
-        print("\n\noutputting phased array figures\n\n")
-        plt.figure()
-        sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
-        plt.savefig(pjoin(dirname, "procresults/coilccmatrix.png"), format='png')
-        plt.close()
+        figs.update({
+            'coilccmatrix': {'fn': sf.showslice3, 'args': (coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)},
+            'phasedarrayroisnrplot': {'fn': sf.showtc, 'args': (paindices, phasedarrayroisnrs, "Phased array SNR by element")},
+            'phasedarrayroisfnrplot': {'fn': sf.showtc, 'args': (paindices, phasedarrayroisfnrs, "Phased array SFNR by element")},
+            'phasedarrayroippplot': {'fn': sf.showtc, 'args': (paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")},
+            'phasedarrayroippdtplot': {'fn': sf.showtc, 'args': (paindices, phasedarrayroipps_dt_percent, "Phased array p-p% variation by element (after detrending)")}})
 
-        plt.figure()
-        sf.showtc(paindices, phasedarrayroisnrs, "Phased array SNR by element")
-        plt.savefig(pjoin(dirname, "procresults/phasedarrayroisnrplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc(paindices, phasedarrayroisfnrs, "Phased array SFNR by element")
-        plt.savefig(pjoin(dirname, "procresults/phasedarrayroisfnrplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc(paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")
-        plt.savefig(pjoin(dirname, "procresults/phasedarrayroippplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc(paindices, phasedarrayroipps_dt_percent,
-                  "Phased array p-p% variation by element (after detrending)")
-        plt.savefig(pjoin(dirname, "procresults/phasedarrayroippdtplot.png"), format='png')
-        plt.close()
-
-    if not isindividualcoil:
-        plt.figure()
-        sf.showtc2(thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/centroiplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc2(thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")
-        plt.savefig(pjoin(dirname, "procresults/centroisnrplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc(thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/centroidtplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc2(periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval,
-                   "Relative peripheral image intensity (%)")
-        plt.savefig(pjoin(dirname, "procresults/periphroiplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc2(periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr,
-                   "Absolute peripheral SFNR")
-        plt.savefig(pjoin(dirname, "procresults/periphroisfnrplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc2(thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/periphroitcplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc2(thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr,
-                   "Peripheral ROI SNR over time")
-        plt.savefig(pjoin(dirname, "procresults/periphroisnrplot.png"), format='png')
-        plt.close()
-
-        plt.figure()
-        sf.showtc(thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/periphroidttcplot.png"), format='png')
-        plt.close()
-
+    if isindividualcoil:
+        figs.update({
+            'maxlocroiplot': {'fn': sf.showtc2, 'args': (thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")},
+            'maxlocroisnrplot': {'fn': sf.showtc2, 'args': (thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr, "Max sensitivity ROI SNR over time")},
+            'maxlocroidtplot': {'fn': sf.showtc, 'args': (thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")}})
     else:
-        plt.figure()
-        sf.showtc2(thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/maxlocroiplot.png"), format='png')
-        plt.close()
+        figs.update({
+            'centroiplot': {'fn': sf.showtc2, 'args': (thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")},
+            'centroisnrplot': {'fn': sf.showtc2, 'args': (thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")},
+            'centroidtplot': {'fn': sf.showtc, 'args': (thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")},
+            'periphroiplot': {'fn': sf.showtc2, 'args': (periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval, "Relative peripheral image intensity (%)")},
+            'periphroisfnrplot': {'fn': sf.showtc2, 'args': (periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr, "Absolute peripheral SFNR")},
+            'periphroitcplot': {'fn': sf.showtc2, 'args': (thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")},
+            'periphroisnrplot': {'fn': sf.showtc2, 'args': (thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr, "Peripheral ROI SNR over time")},
+            'periphroidttcplot': {'fn': sf.showtc, 'args': (thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")}})
 
-        plt.figure()
-        sf.showtc2(thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr,
-                   "Max sensitivity ROI SNR over time")
-        plt.savefig(pjoin(dirname, "procresults/maxlocroisnrplot.png"), format='png')
-        plt.close()
+    # @formatter:on
 
-        plt.figure()
-        sf.showtc(thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")
-        plt.savefig(pjoin(dirname, "procresults/maxlocroidtplot.png"), format='png')
-        plt.close()
 
-    plt.figure()
-    sf.showtc2(thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean,
-               "Relative odd ghost ROI amplitude plot (%)")
-    plt.savefig(pjoin(dirname, "procresults/oddghostroiplot.png"), format='png')
-    plt.close()
+    for k in figs:
+        makefig(k)
 
-    plt.figure()
-    sf.showtc2(thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean,
-               "Relative even ghost ROI amplitude plot (%)")
-    plt.savefig(pjoin(dirname, "procresults/evenghostroiplot.png"), format='png')
-    plt.close()
 
 
     ########################################################
@@ -1085,8 +1025,7 @@ optional arguments:
             imagetag("maxlocroidtplot.png", myimwidth))
         row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
         row2str = tablerowtag(snrroicellstr)
-        if isindividualcoil:
-            outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
+        outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
 
     ########################################################
     #
