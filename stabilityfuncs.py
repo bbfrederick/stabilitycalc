@@ -3,14 +3,16 @@
 """stabilityfuncs.py: provides general helper functions, especially for stabilitycalc"""
 
 import os
+import csv
+from collections import OrderedDict
+
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
+
 from htmltagutils import *
-import csv
-from collections import OrderedDict
 
 
 def getlimits(coil):
@@ -198,7 +200,6 @@ def showtc(thexvals, theyvals, thelabel):
     for tick in roisubplot.yaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
     roisubplot.set_title(thelabel, fontsize=30)
-    return
 
 
 def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
@@ -260,7 +261,6 @@ def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
     for tick in roisubplot.yaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
     roisubplot.set_title(thelabel, fontsize=30)
-    return
 
 
 def showtc2(thexvals, theyvals, thefitvals, thelabel):
@@ -276,7 +276,6 @@ def showtc2(thexvals, theyvals, thefitvals, thelabel):
     for tick in roisubplot.yaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
     roisubplot.set_title(thelabel, fontsize=30)
-    return
 
 
 def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
@@ -289,7 +288,6 @@ def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
     thestddevs += 0.00000001
     roisubplot.loglog(theareas, thestddevs, 'r', theareas, theprojstddevs, 'k', basex=10)
     roisubplot.grid(True)
-    return
 
 
 def showslice2(thedata, thelabel, minval, maxval, colormap):
@@ -321,7 +319,6 @@ def showslice2(thedata, thelabel, minval, maxval, colormap):
         thecmap = colors.LinearSegmentedColormap('mycm', mycmdata1)
     plt.imshow(theslice, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal',
                cmap=thecmap)
-    return
 
 
 def showslice3(thedata, thelabel, minval, maxval, colormap):
@@ -346,7 +343,6 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
         }
         thecmap = colors.LinearSegmentedColormap('mycm', mycmdata1)
     plt.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
-    return
 
 
 def showslice(theslice):
@@ -358,7 +354,6 @@ def showslice(theslice):
     plt.axis('tight')
     plt.imshow(theslice, interpolation='nearest', aspect='equal', cmap=cm.gray)
     plt.colorbar()
-    return
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -499,7 +494,6 @@ def markroi(theinputroi, zpos, roislice, theval):
     ystart = theinputroi[0][1]
     yend = theinputroi[1][1]
     roislice[zpos, ystart:yend, xstart:xend] = theval
-    return
 
 
 def setroilims(xpos, ypos, size):

@@ -6,8 +6,10 @@
 #
 import sys
 import os
+from os.path import join as pjoin
 import time
 import matplotlib
+
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +27,7 @@ def main():
         plt.figure(figurenumber, figsize=(w, h))
         figurenumber += 1
         theimage = sf.showslice2(inputslice, thecaption, themin, themax, colormap)
-        plt.savefig(dirname + outputname, format='png')
+        plt.savefig(pjoin(dirname, outputname), format='png')
         plt.close()
         return figurenumber, theimage
 
@@ -63,7 +65,7 @@ optional arguments:
         print("not using studyinfo file")
     print("reading input file...")
 
-    nim = nib.load(dirname + "/" + filename)
+    nim = nib.load(pjoin(dirname, filename))
     nim_data = nim.get_data()
     nim_hdr = nim.get_header()
     thedims = nim_hdr['dim']
@@ -107,11 +109,11 @@ optional arguments:
 
     # make empty results directory
     print("initializing output directory...")
-    shutil.rmtree(os.path.join(dirname,'procresults'))
-    os.mkdir(os.path.join(dirname,'procresults'))
+    shutil.rmtree(pjoin(dirname, 'procresults'), ignore_errors=True)
+    os.mkdir(pjoin(dirname, 'procresults'))
 
     # initialize the output files
-    outputfile = dirname + "/procresults/output.html"
+    outputfile = pjoin(dirname, "procresults/output.html")
     thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
     outfp = open(outputfile, "w")
 
@@ -814,33 +816,26 @@ optional arguments:
 
     roimin = np.min(roislice)
     roimax = np.max(roislice)
-    (figurenumber, roiimage) = slicepic(figurenumber, w, h, roislice, "ROI locations", roimin, roimax, dirname,
-                                        "/procresults/roiimage.png", 1)
-    (figurenumber, normstdimage) = slicepic(figurenumber, w, h, normstdslice, "Normalized stddev % image", normstdmin,
-                                            normstdmax, dirname, "/procresults/normstdimage.png", 0)
-    (figurenumber, objectmaskimage) = slicepic(figurenumber, w, h, objectmask, "Object mask", objectmin, objectmax,
-                                               dirname,
-                                               "/procresults/objectmaskimage.png", 0)
-    (figurenumber, varimage) = slicepic(figurenumber, w, h, varslice, "Variance image", varmin, varmax, dirname,
-                                        "/procresults/varimage.png", 0)
-    (figurenumber, stdimage) = slicepic(figurenumber, w, h, stddevslice, "Stddev image", stddevmin, stddevmax, dirname,
-                                        "/procresults/stddevimage.png", 0)
-    (figurenumber, meanimage) = slicepic(figurenumber, w, h, meanslice, "Mean image", meanmin, meanmax, dirname,
-                                         "/procresults/meanimage.png", 0)
-    (figurenumber, sfnrimage) = slicepic(figurenumber, w, h, sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname,
-                                         "/procresults/sfnrimage.png", 0)
-    (figurenumber, eoimage) = slicepic(figurenumber, w, h, eodiffimage, "Even odd diff image", eodiffmin, eodiffmax,
-                                       dirname, "/procresults/eodiffimage.png", 0)
-    (figurenumber, eopcimage) = slicepic(figurenumber, w, h, np.nan_to_num(objectmask * eodiffpcimage),
-                                         "Even odd diff percent image", eodiffpcmin, eodiffpcmax, dirname,
-                                         "/procresults/eodiffpcimage.png", 0)
-    (figurenumber, ppimage) = slicepic(figurenumber, w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname,
-                                       "/procresults/ppimage.png", 0)
+    slicepic(figurenumber, w, h, roislice, "ROI locations", roimin, roimax, dirname, "procresults/roiimage.png", 1)
+    slicepic(figurenumber, w, h, normstdslice, "Normalized stddev % image", normstdmin, normstdmax, dirname,
+             "procresults/normstdimage.png", 0)
+    slicepic(figurenumber, w, h, objectmask, "Object mask", objectmin, objectmax, dirname,
+             "procresults/objectmaskimage.png", 0)
+    slicepic(figurenumber, w, h, varslice, "Variance image", varmin, varmax, dirname, "procresults/varimage.png", 0)
+    slicepic(figurenumber, w, h, stddevslice, "Stddev image", stddevmin, stddevmax, dirname,
+             "procresults/stddevimage.png", 0)
+    slicepic(figurenumber, w, h, meanslice, "Mean image", meanmin, meanmax, dirname, "procresults/meanimage.png", 0)
+    slicepic(figurenumber, w, h, sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, "procresults/sfnrimage.png", 0)
+    slicepic(figurenumber, w, h, eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname,
+             "procresults/eodiffimage.png", 0)
+    slicepic(figurenumber, w, h, np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin,
+             eodiffpcmax, dirname, "procresults/eodiffpcimage.png", 0)
+    slicepic(figurenumber, w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "procresults/ppimage.png", 0)
 
     plt.figure(figurenumber)
     figurenumber += 1
     sf.showweisskoff(roiareas, theweissstddevs, theprojstddevs, "Weisskoff plot")
-    plt.savefig(dirname + "/procresults/weisskoffplot.png", format='png')
+    plt.savefig(pjoin(dirname, "procresults/weisskoffplot.png"), format='png')
     plt.close()
 
     if isphasedarray:
@@ -848,118 +843,118 @@ optional arguments:
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showslice3(coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)
-        plt.savefig(dirname + "/procresults/coilccmatrix.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/coilccmatrix.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(paindices, phasedarrayroisnrs, "Phased array SNR by element")
-        plt.savefig(dirname + "/procresults/phasedarrayroisnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/phasedarrayroisnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(paindices, phasedarrayroisfnrs, "Phased array SFNR by element")
-        plt.savefig(dirname + "/procresults/phasedarrayroisfnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/phasedarrayroisfnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(paindices, phasedarrayroipps_percent, "Phased array p-p% variation by element")
-        plt.savefig(dirname + "/procresults/phasedarrayroippplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/phasedarrayroippplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(paindices, phasedarrayroipps_dt_percent,
                   "Phased array p-p% variation by element (after detrending)")
-        plt.savefig(dirname + "/procresults/phasedarrayroippdtplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/phasedarrayroippdtplot.png"), format='png')
         plt.close()
 
     if not isindividualcoil:
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, thecenttc, centmean_dt + thefittc, "Central ROI plot (%)")
-        plt.savefig(dirname + "/procresults/centroiplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/centroiplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, thecentsnrvec, 0.0 * thecentsnrvec + thecentsnr, "Central ROI SNR over time")
-        plt.savefig(dirname + "/procresults/centroisnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/centroisnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(thetimepoints, thecenttc - thefittc, "Detrended central ROI plot (%)")
-        plt.savefig(dirname + "/procresults/centroidtplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/centroidtplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval,
                    "Relative peripheral image intensity (%)")
-        plt.savefig(dirname + "/procresults/periphroiplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/periphroiplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr,
                    "Absolute peripheral SFNR")
-        plt.savefig(dirname + "/procresults/periphroisfnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/periphroisfnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, theavgperiphtc, periphmean_dt + theperiphfittc, "Peripheral ROI plot (%)")
-        plt.savefig(dirname + "/procresults/periphroitcplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/periphroitcplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, theavgperiphsnrvec, 0.0 * thetimepoints + meanangperiphsnr,
                    "Peripheral ROI SNR over time")
-        plt.savefig(dirname + "/procresults/periphroisnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/periphroisnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(thetimepoints, theavgperiphtc - theperiphfittc, "Detrended peripheral ROI plot (%)")
-        plt.savefig(dirname + "/procresults/periphroidttcplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/periphroidttcplot.png"), format='png')
         plt.close()
 
     else:
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, themaxloctc, maxlocmean_dt + thefittc, "Max sensitivity ROI plot (%)")
-        plt.savefig(dirname + "/procresults/maxlocroiplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/maxlocroiplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc2(thetimepoints, themaxlocsnrvec, 0.0 * themaxlocsnrvec + themaxlocsnr,
                    "Max sensitivity ROI SNR over time")
-        plt.savefig(dirname + "/procresults/maxlocroisnrplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/maxlocroisnrplot.png"), format='png')
         plt.close()
 
         plt.figure(figurenumber)
         figurenumber += 1
         sf.showtc(thetimepoints, themaxloctc - thefittc, "Detrended max sensitivity ROI plot (%)")
-        plt.savefig(dirname + "/procresults/maxlocroidtplot.png", format='png')
+        plt.savefig(pjoin(dirname, "procresults/maxlocroidtplot.png"), format='png')
         plt.close()
 
     plt.figure(figurenumber)
     figurenumber += 1
     sf.showtc2(thetimepoints, reloddghosttc, 0.0 * thetimepoints + oddghostmean,
                "Relative odd ghost ROI amplitude plot (%)")
-    plt.savefig(dirname + "/procresults/oddghostroiplot.png", format='png')
+    plt.savefig(pjoin(dirname, "procresults/oddghostroiplot.png"), format='png')
     plt.close()
 
     plt.figure(figurenumber)
     figurenumber += 1
     sf.showtc2(thetimepoints, relevenghosttc, 0.0 * thetimepoints + evenghostmean,
                "Relative even ghost ROI amplitude plot (%)")
-    plt.savefig(dirname + "/procresults/evenghostroiplot.png", format='png')
+    plt.savefig(pjoin(dirname, "procresults/evenghostroiplot.png"), format='png')
     plt.close()
 
 
@@ -1231,7 +1226,7 @@ optional arguments:
     datadict['central_roi_drift%'] = centdrift
     datadict['peripheral_roi_drift%'] = periphdrift
 
-    evalfile = dirname + "/procresults/dataquality.txt"
+    evalfile = pjoin(dirname, "procresults/dataquality.txt")
     AFILE = open(evalfile, "w")
     for theentry in datadict:
         for thelimit in thelimitdict:
@@ -1253,7 +1248,7 @@ optional arguments:
     ########################################################
     #
     # Write summary text file
-    summaryfile = dirname + "/procresults/analysissummary.txt"
+    summaryfile = pjoin(dirname, "procresults/analysissummary.txt")
 
     sumfp = open(summaryfile, "w")
     sumfp.writelines("Filename	" + summaryfile + "\n")
