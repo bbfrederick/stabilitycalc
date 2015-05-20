@@ -11,7 +11,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
-
+import logging
+logging.basicConfig(format='%(levelname)s:%(message)s')
 from htmltagutils import *
 
 
@@ -25,7 +26,7 @@ def getlimits(coil):
                 for r in reader:
                     d[r['var']] = r
         except IOError:
-            print("getlimits: coil not recognized!")
+            logging.critical("getlimits: coil not recognized!")
             exit(1)
         return d
 
@@ -45,7 +46,7 @@ def getphasedarraydata(coil):
                 d[r['element']] = r
         return d
     except IOError:
-        print("getphasedarraydata: Not a phased array.")
+        logging.debug("getphasedarraydata: Not a phased array.")
         return False
 
 
@@ -109,12 +110,10 @@ def trendgen(thexvals, thefitcoffs):
     # generate the polynomial fit timecourse from the coefficients
     theshape = thefitcoffs.shape
     order = theshape[0] - 1
-    # print "fitting to order "+str(order)
     thepoly = thexvals
     thefit = 0.0 * thexvals
     if order > 0:
         for i in range(1, order + 1):
-            # print "fitting component "+str(i)+", coff="+str(thefitcoffs[order-i])
             thefit = thefit + thefitcoffs[order - i] * thepoly
             thepoly = np.multiply(thepoly, thexvals)
     return thefit
@@ -209,7 +208,7 @@ def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
     numlegends = len(legendvec)
     numspecvals = len(specvals)
     if (numxs != numys) or (numxs != numlegends) or (numxs != numspecvals):
-        print("dimensions do not match")
+        logging.warning("dimensions do not match")
         exit(1)
     w, h = plt.figaspect(0.50)
     roiplot = plt.figure(figsize=(w, h))
@@ -280,7 +279,7 @@ def showtc2(thexvals, theyvals, thefitvals, thelabel):
 
 def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
     # initialize and show a loglog Weiskoff plot
-    print("Generating plot for {}".format(thelabel))
+    logging.debug("Generating plot for {}".format(thelabel))
     w, h = plt.figaspect(1.0)
     roiplot = plt.figure(figsize=(w, h))
     roiplot.subplots_adjust(hspace=0.35)
@@ -401,7 +400,6 @@ def smooth(x, window_len=11, window='hanning'):
         raise ValueError("Window should be one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
-    # print(len(s))
     if window == 'flat':  # moving average
         w = np.ones(window_len, 'd')
     else:

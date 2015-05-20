@@ -8,9 +8,7 @@ import sys
 import os
 from os.path import join as pjoin
 import time
-
 import matplotlib
-
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +16,8 @@ from htmltagutils import *
 import stabilityfuncs as sf
 import shutil
 import nibabel as nib
-
+import logging
+logging.basicConfig(format='%(levelname)s:%(message)s')
 
 def main():
     # noinspection PyShadowingNames
@@ -60,7 +59,7 @@ optional arguments:
     if len(sys.argv) == 8:
         usestudyinfo = False
         print("not using studyinfo file")
-    print("reading input file...")
+    logging.info("reading input file...")
 
     nim = nib.load(pjoin(dirname, filename))
     nim_data = nim.get_data()
@@ -101,11 +100,9 @@ optional arguments:
         datetime = studydate + "T" + hour + minute + second
         formatteddate = month + "/" + day + "/" + year
         formattedtime = hour + ":" + minute + ":" + second
-        print("Coil->" + coilname)
-        print("DateTime->" + datetime)
 
     # make empty results directory
-    print("initializing output directory...")
+    logging.debug("initializing output directory...")
     shutil.rmtree(pjoin(dirname, 'procresults'), ignore_errors=True)
     os.mkdir(pjoin(dirname, 'procresults'))
 
@@ -153,9 +150,6 @@ optional arguments:
     xcenter = int(round(xcenterf))
     ycenter = int(round(ycenterf))
     zcenter = int(round(zcenterf))
-    print("Center of mass of input dataset: %d (%2.2f), %d (%2.2f), %d (%2.2f)" % (
-        xcenter, xcenterf, ycenter, ycenterf, zcenter, zcenterf))
-    # numslices=1
     selecteddata = np.transpose(nim_data[:, :, :, starttime:], (3, 2, 1, 0))
 
     #############################
@@ -164,7 +158,7 @@ optional arguments:
     #
 
     # calculate the mean, stddev, variance and ptp images
-    print("calculating mean, stddev, and variance...")
+    logging.debug("calculating mean, stddev, and variance...")
     meanslice = np.mean(selecteddata, 0)
     stddevslice = np.std(selecteddata, 0)
     varslice = np.var(selecteddata, 0)
@@ -172,28 +166,19 @@ optional arguments:
 
     # calculate a mask from meanimage and find its center
     (threshguess, threshfrac) = sf.findsepval(meanslice)
-    print("Threshguess %2.2f, threshfrac %2.2f" % (threshguess, 100.0 * threshfrac))
     initmask = sf.makemask(meanslice, threshfrac, 0)
     threshmean = sf.getnzfracval(initmask * meanslice, 0.02)
-    print("corrected threshmean %2.2f" % threshmean)
     if not isindividualcoil:
         objectmask = sf.makemask(meanslice, threshmean, 1)
     else:
         objectmask = sf.makemask(meanslice, 0.01 * threshmean, 1)
 
-    print("objectmask max: %2.2f, min: %2.2f" % (np.max(objectmask), np.min(objectmask)))
 
-    # calculate the image normalized standard deviation
-    print("calculating normalized standard deviation...")
-    normstdslice = objectmask * np.nan_to_num(100.0 * stddevslice / meanslice)
-
-    # calculate the sfnr image
-    print("calculating sfnr...")
-    minstddev = sf.nzrobust(objectmask * meanslice)[1] / 5000.0
-    print("minstddev=", minstddev)
-    # threshstddevslice=np.where(stddevslice<minstddev,0.0,stddevslice)
-    # sfnrslice=objectmask * np.nan_to_num(meanslice/threshstddevslice)
-    sfnrslice = np.where(objectmask * stddevslice > minstddev, meanslice / stddevslice, 0.0)
+    logging.debug("calculating normalized standard deviation and sfnr...")
+    with np.errstate(invalid='ignore'):
+        normstdslice = objectmask * np.nan_to_num(100.0 * stddevslice / meanslice)
+        minstddev = sf.nzrobust(objectmask * meanslice)[1] / 5000.0
+        sfnrslice = np.where(objectmask * stddevslice > minstddev, meanslice / stddevslice, 0.0)
 
     # Now determine where the object is and how big it is
     slicecenter = sf.findCOM(objectmask)
@@ -231,18 +216,14 @@ optional arguments:
 
     if isindividualcoil:
         # reset everything to assumed values
-        numinmask = 0
         objectmask[:, :, :] = 0.0
         objectradiusx_mm = 85.0
         objectradiusy_mm = 85.0
         objectradiusx = objectradiusx_mm / xdim
         objectradiusy = objectradiusy_mm / ydim
-        print(objectradiusx, objectradiusy)
         xcenterf = initxcenter
         ycenterf = initycenter
         zcenterf = initzcenter
-        maskshape = objectmask.shape
-        print(maskshape)
         for i in range(xsize):
             ival = ((float(i) - xcenterf) * xdim)
             isq = ival * ival
@@ -253,15 +234,10 @@ optional arguments:
                     kval = ((float(k) - zcenterf) * slicethickness)
                     ksq = kval * kval
                     if np.sqrt(isq + jsq + ksq) <= objectradiusx_mm:
-                        numinmask += 1
                         objectmask[k, j, i] = 1.0
         xcenter = int(round(xcenterf))
         ycenter = int(round(ycenterf))
         zcenter = int(round(zcenterf))
-        print(numinmask)
-
-    print("Center of mass of mask: %d (%2.2f), %d (%2.2f), %d (%2.2f)" % (
-        xcenter, xcenterf, ycenter, ycenterf, zcenter, zcenterf))
 
     # define the canonical limits
     limits = sf.getlimits(coilname)
@@ -275,40 +251,38 @@ optional arguments:
 
     object_radius_mm = np.sqrt(objectradiusx_mm * objectradiusy_mm)
     object_shape = objectradiusy / objectradiusx
-    print("Object radius: " + str(object_radius_mm) + " shape: " + str(object_shape))
 
     BIRNphantom_radiuscheck = sf.limitcheck(object_radius_mm, limits['BIRNphantom_rad'])
     BIRNphantom_shapecheck = sf.limitcheck(object_shape, limits['BIRNphantom_shape'])
     if (BIRNphantom_radiuscheck < 2) and (BIRNphantom_shapecheck < 2):
         objecttype = BIRNphantom
         objectname = "BIRN_phantom"
-        print("setting objecttype to BIRNphantom")
+        logging.debug("setting objecttype to BIRNphantom")
 
     head_radiuscheck = sf.limitcheck(object_radius_mm, limits['head_rad'])
     head_shapecheck = sf.limitcheck(object_shape, limits['head_shape'])
     if (head_radiuscheck < 2) or (head_shapecheck < 2):
         objecttype = head
         objectname = "Head"
-        print("setting objecttype to head")
+        logging.debug("setting objecttype to head")
 
     isBIRNsequence = True
-    print("Dimensions: " + str(xsize) + "," + str(ysize) + "," + str(numslices) + "," + str(tr))
     if (xsize != 64) or (ysize != 64) or (numslices != 28) or (tr != 2.0):
         isBIRNsequence = False
     isBIRNprotocol = False
     if isBIRNsequence and (objecttype == BIRNphantom):
-        print("Assuming this is a BIRN protocol")
+        logging.debug("Assuming this is a BIRN protocol")
         isBIRNprotocol = True
         protocolname = "fBIRN"
     else:
-        print("Assuming this is NOT a BIRN protocol")
+        logging.debug("Assuming this is NOT a BIRN protocol")
         protocolname = "Unknown"
 
     #############################
     #
     #       Odd-even SNR - Modified to match BIRN
     #
-    print("calculating even/odd snr...")
+    logging.debug("calculating even/odd snr...")
     evenims = selecteddata[0:-1:2]
     oddims = selecteddata[1:-1:2]
     evenlength = evenims.shape[0]
@@ -316,7 +290,8 @@ optional arguments:
     if oddlength < evenlength:
         evenims = evenims[:evenlength - 1]
     eodiffimage = np.sum(oddims, 0) - np.sum(evenims, 0)
-    eodiffpcimage = 100.0 * np.nan_to_num(eodiffimage / (objectmask * meanslice))
+    with np.errstate(invalid='ignore', over='ignore', divide='ignore'):
+        eodiffpcimage = 100.0 * np.nan_to_num(eodiffimage / (objectmask * meanslice))
 
     #############################
     #
@@ -343,32 +318,33 @@ optional arguments:
         projstddevs[i - 1] = weissstddevs[0] / i
         projcvs[i - 1] = weisscvs[0] / i
     weissrdc = weisscvs[0] / weisscvs[numrois - 1]
-    print("Radius of decorrelation=", weissrdc)
 
     #############################
     #
     #       Image analysis
     #
-    meanstats = sf.nzstats(meanslice * objectmask)
-    stddevstats = sf.nzstats(stddevslice * objectmask)
-    varstats = sf.nzstats(varslice * objectmask)
-    sfnrstats = sf.nzstats(np.nan_to_num(sfnrslice * objectmask))
-    normstdstats = sf.nzstats(normstdslice * objectmask)
-    eodiffstats = sf.nzstats(eodiffimage * objectmask)
-    eodiffpcstats = sf.nzstats(np.nan_to_num(eodiffpcimage * objectmask))
-    ppstats = sf.nzstats(ppslice * objectmask)
 
-    objectmax = np.max(objectmask)
-    objectmin = np.min(objectmask)
-    rawmeanmax = sf.completerobust(meanslice)[1]
-    [meanmin, meanmax] = sf.nzrobust(meanslice * objectmask)
-    [stddevmin, stddevmax] = sf.nzrobust(stddevslice * objectmask)
-    [varmin, varmax] = sf.nzrobust(varslice * objectmask)
-    [sfnrmin, sfnrmax] = sf.nzrobust(np.nan_to_num(sfnrslice * objectmask))
-    [normstdmin, normstdmax] = sf.nzrobust(normstdslice * objectmask)
-    [eodiffmin, eodiffmax] = sf.nzrobust(eodiffimage * objectmask)
-    [eodiffpcmin, eodiffpcmax] = sf.nzrobust(np.nan_to_num(eodiffpcimage * objectmask))
-    [ppmin, ppmax] = sf.nzrobust(ppslice * objectmask)
+    with np.errstate(invalid='ignore'):
+        meanstats = sf.nzstats(meanslice * objectmask)
+        stddevstats = sf.nzstats(stddevslice * objectmask)
+        varstats = sf.nzstats(varslice * objectmask)
+        sfnrstats = sf.nzstats(np.nan_to_num(sfnrslice * objectmask))
+        normstdstats = sf.nzstats(normstdslice * objectmask)
+        eodiffstats = sf.nzstats(eodiffimage * objectmask)
+        eodiffpcstats = sf.nzstats(np.nan_to_num(eodiffpcimage * objectmask))
+        ppstats = sf.nzstats(ppslice * objectmask)
+
+        objectmax = np.max(objectmask)
+        objectmin = np.min(objectmask)
+        rawmeanmax = sf.completerobust(meanslice)[1]
+        [meanmin, meanmax] = sf.nzrobust(meanslice * objectmask)
+        [stddevmin, stddevmax] = sf.nzrobust(stddevslice * objectmask)
+        [varmin, varmax] = sf.nzrobust(varslice * objectmask)
+        [sfnrmin, sfnrmax] = sf.nzrobust(np.nan_to_num(sfnrslice * objectmask))
+        [normstdmin, normstdmax] = sf.nzrobust(normstdslice * objectmask)
+        [eodiffmin, eodiffmax] = sf.nzrobust(eodiffimage * objectmask)
+        [eodiffpcmin, eodiffpcmax] = sf.nzrobust(np.nan_to_num(eodiffpcimage * objectmask))
+        [ppmin, ppmax] = sf.nzrobust(ppslice * objectmask)
 
     #############################
     #
@@ -387,7 +363,7 @@ optional arguments:
     #
     #       Central ROI analysis
     #
-    print("Analyzing central ROI...")
+    logging.debug("Analyzing central ROI...")
     centralroisize = 10
     centralroi = sf.setroilims(xcenter, ycenter, centralroisize)
     if not isindividualcoil:
@@ -396,7 +372,6 @@ optional arguments:
     centsnrvec = centtc / cornertc
     centsnr = np.mean(centsnrvec)
     centsfnr = sf.getroival(sfnrslice, centralroi, zcenter)
-    print("mean central snr,sfnr " + str(centsnr) + "," + str(centsfnr))
     timepoints = np.arange(0.0, tr * numtimepoints, tr)
     centfitcoffs = np.polyfit(timepoints, timecourse, 2)
     fittc = sf.trendgen(timepoints, centfitcoffs)
@@ -429,7 +404,6 @@ optional arguments:
     tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
     centtc_dt_summary = tcstats_format % (
         centmean_dt, centstddev_dt, centstddev_dt / centmean_dt * 100.0, centpp_dt, centpp_dt / centmean_dt * 100.0)
-    print(centtc_dt_summary)
 
     centsnr_summary = "mean=%4.4f" % centsnr
 
@@ -437,7 +411,7 @@ optional arguments:
     #
     #       Maximum value ROI analysis
     #
-    print("Finding and analyzing maximum signal ROI...")
+    logging.debug("Finding and analyzing maximum signal ROI...")
     maxlocroi_rawpplimits = ((0, 0.5), (0, 0.6))
     maxlocroi_dtpplimits = ((0, 0.5), (0, 0.6))
     maxlocroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
@@ -454,10 +428,6 @@ optional arguments:
             elementcenter[2] - origslicecenter[2])
         elementdirnormfac = sf.vecnorm(elementdirvec)
         maxlocoffsetscl = maxlocradfrac * objectradiusx / elementdirnormfac
-        print("maxlocoffsetscl=", maxlocoffsetscl)
-        print("elementdirvec=", elementdirvec)
-        print("origslicecenter=", origslicecenter)
-        print("element center=", elementcenter)
         elementmaxpos = (
             origslicecenter[0] + maxlocoffsetscl * elementdirvec[0],
             origslicecenter[1] + maxlocoffsetscl * elementdirvec[1],
@@ -467,15 +437,14 @@ optional arguments:
             elementmaxpos = (origslicecenter[0] + newmaxlocoffsetscl * elementdirvec[0],
                              origslicecenter[1] + newmaxlocoffsetscl * elementdirvec[1],
                              origslicecenter[2] + newmaxlocoffsetscl * elementdirvec[2])
-            print("maxpos adjusted to fall within valid image region")
+            logging.debug("maxpos adjusted to fall within valid image region")
 
         if elementmaxpos[2] < 0:
             newmaxlocoffsetscl = -origslicecenter[2] / elementdirvec[2]
             elementmaxpos = (origslicecenter[0] + newmaxlocoffsetscl * elementdirvec[0],
                              origslicecenter[1] + newmaxlocoffsetscl * elementdirvec[1],
                              origslicecenter[2] + newmaxlocoffsetscl * elementdirvec[2])
-            print("maxpos adjusted to fall within valid image region")
-        print("element maxpos=", elementmaxpos)
+            logging.debug("maxpos adjusted to fall within valid image region")
         maxloccenterx = int(round(elementmaxpos[0]))
         maxloccentery = int(round(elementmaxpos[1]))
         maxloccenterz = int(round(elementmaxpos[2]))
@@ -485,7 +454,6 @@ optional arguments:
         maxlocsnrvec = maxloctc / cornertc
         maxlocsnr = np.mean(maxlocsnrvec)
         maxlocsfnr = sf.getroival(sfnrslice, maxlocroi, zcenter)
-        print("mean maxloc snr,sfnr " + str(maxlocsnr) + "," + str(maxlocsfnr))
         timepoints = np.arange(0.0, tr * numtimepoints, tr)
         maxlocfitcoffs = np.polyfit(timepoints, timecourse, 2)
         fittc = sf.trendgen(timepoints, maxlocfitcoffs)
@@ -515,7 +483,6 @@ optional arguments:
         maxloctc_dt_summary = tcstats_format % (
             maxlocmean_dt, maxlocstddev_dt, maxlocstddev_dt / maxlocmean_dt * 100.0, maxlocpp_dt,
             maxlocpp_dt / maxlocmean_dt * 100.0)
-        print(maxloctc_dt_summary)
 
         maxlocsnr_summary = "mean=%4.4f" % maxlocsnr
 
@@ -523,7 +490,7 @@ optional arguments:
     #
     # Individual coil assessment ROIs
     #
-    print("Analyzing phased array ROIs...")
+    logging.debug("Analyzing phased array ROIs...")
 
     isphasedarray = False
 
@@ -540,9 +507,6 @@ optional arguments:
         phasedarrayroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
         phasedarrayroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
         phasedarraysize = 5
-        phasedarrayradiusx = 0.8 * objectradiusx
-        phasedarrayradiusy = 0.8 * objectradiusy
-        print("phasedarrayradius set to %2.2f, %2.2f" % (phasedarrayradiusx, phasedarrayradiusy))
 
         phasedarrayroimeans = np.zeros(numphasedarray)
         phasedarrayroistddevs = np.zeros(numphasedarray)
@@ -589,10 +553,6 @@ optional arguments:
             phasedarrayroimins_dt[i] = np.min(phasedarraydttcs[i, :])
             phasedarrayroimaxs_dt[i] = np.max(phasedarraydttcs[i, :])
             phasedarrayroipps_dt[i] = np.ptp(phasedarraydttcs[i, :])
-            print("Element ", elementkey, ": loc=", myxloc, myyloc, myzloc, ", SNR=", phasedarrayroisnrs[i], ", SFNR=",
-                  phasedarrayroisfnrs[i], ", mean=", phasedarrayroimeans[i], ", p-p%=",
-                  100.0 * phasedarrayroipps[i] / phasedarrayroimeans[i],
-                  ", detrended p-p%=", 100.0 * phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i])
 
             # do average timecourse calculations
             phasedarraymeanstr = "mean=%4.4f" % phasedarrayroimeans[i]
@@ -622,20 +582,13 @@ optional arguments:
                                                               phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[
                                                                   i] * 100.0))
 
-        # do calculations regarding variation between rois
-        meanroiphasedarraysfnr = np.mean(phasedarrayroisfnrs)
-        meanroiphasedarraysnr = np.mean(phasedarrayroisnrs)
 
         phasedarrayroipps_percent = 100.0 * phasedarrayroipps / phasedarrayroimeans
         phasedarrayroipps_dt_percent = 100.0 * phasedarrayroipps_dt / phasedarrayroimeans_dt
 
-        print("mean phasedarray snr,sfnr " + str(meanroiphasedarraysnr) + "," + str(meanroiphasedarraysfnr))
 
         # finally calculate the correlation between the timeseries
         coilccmatrix = np.corrcoef(phasedarraydttcs_demeaned)
-        coilccmin = np.min(coilccmatrix)
-        print(np.shape(coilccmatrix))
-        print("minimun phased array element correlation=", coilccmin)
 
     #############################
     #
@@ -643,11 +596,10 @@ optional arguments:
     #
     peripheralroisize = 3
     peripheralradfrac = 0.8
-    print("Analyzing peripheral ROIs...")
+    logging.debug("Analyzing peripheral ROIs...")
     voxperroi = peripheralroisize * peripheralroisize
     peripheralradiusx = peripheralradfrac * objectradiusx
     peripheralradiusy = peripheralradfrac * objectradiusy
-    print("peripheralradius set to %2.2f, %2.2f" % (peripheralradiusx, peripheralradiusy))
     numperiph = 32
 
     periphindex = np.arange(numperiph)
@@ -716,7 +668,6 @@ optional arguments:
     periphtc_dt_summary = tcstats_format % (
         periphmean_dt, periphstddev_dt, periphstddev_dt / periphmean_dt * 100.0, periphpp_dt,
         periphpp_dt / periphmean_dt * 100.0)
-    print(periphtc_dt_summary)
 
     # do calculations regarding angular dependance
     meanangperiphval = np.mean(periphangmeans)
@@ -740,7 +691,6 @@ optional arguments:
         qualitytag("(%4.4f%%)", periphang_sfnr_ppquality) % ((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0))
     periphang_sfnr_summary = periphang_sfnr_meanstr + breaktag(periphang_sfnr_ptpstr)
 
-    print("mean peripheral snr,sfnr " + str(meanangperiphsnr) + "," + str(meanangperiphsfnr))
     periphsnr_summary = "mean=%4.4f" % meanangperiphsnr
 
     #############################
@@ -778,8 +728,6 @@ optional arguments:
         "p-p=%4.4f ")
     oddghosttc_summary = tcstats_format2 % (oddghostmean, oddghoststddev, oddghostmin, oddghostmax, oddghostpp)
     evenghosttc_summary = tcstats_format2 % (evenghostmean, evenghoststddev, evenghostmin, evenghostmax, evenghostpp)
-    print(oddghosttc_summary)
-    print(evenghosttc_summary)
 
 
     #############################
@@ -810,21 +758,22 @@ optional arguments:
 
     roimin = np.min(roislice)
     roimax = np.max(roislice)
-    slicepic(w, h, roislice, "ROI locations", roimin, roimax, dirname, "procresults/roiimage.png", 1)
-    slicepic(w, h, normstdslice, "Normalized stddev % image", normstdmin, normstdmax, dirname,
-             "procresults/normstdimage.png", 0)
-    slicepic(w, h, objectmask, "Object mask", objectmin, objectmax, dirname,
-             "procresults/objectmaskimage.png", 0)
-    slicepic(w, h, varslice, "Variance image", varmin, varmax, dirname, "procresults/varimage.png", 0)
-    slicepic(w, h, stddevslice, "Stddev image", stddevmin, stddevmax, dirname,
-             "procresults/stddevimage.png", 0)
-    slicepic(w, h, meanslice, "Mean image", meanmin, meanmax, dirname, "procresults/meanimage.png", 0)
-    slicepic(w, h, sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, "procresults/sfnrimage.png", 0)
-    slicepic(w, h, eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname,
-             "procresults/eodiffimage.png", 0)
-    slicepic(w, h, np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin,
-             eodiffpcmax, dirname, "procresults/eodiffpcimage.png", 0)
-    slicepic(w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "procresults/ppimage.png", 0)
+    with np.errstate(invalid='ignore'):
+        slicepic(w, h, roislice, "ROI locations", roimin, roimax, dirname, "procresults/roiimage.png", 1)
+        slicepic(w, h, normstdslice, "Normalized stddev % image", normstdmin, normstdmax, dirname,
+                 "procresults/normstdimage.png", 0)
+        slicepic(w, h, objectmask, "Object mask", objectmin, objectmax, dirname,
+                 "procresults/objectmaskimage.png", 0)
+        slicepic(w, h, varslice, "Variance image", varmin, varmax, dirname, "procresults/varimage.png", 0)
+        slicepic(w, h, stddevslice, "Stddev image", stddevmin, stddevmax, dirname,
+                 "procresults/stddevimage.png", 0)
+        slicepic(w, h, meanslice, "Mean image", meanmin, meanmax, dirname, "procresults/meanimage.png", 0)
+        slicepic(w, h, sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, "procresults/sfnrimage.png", 0)
+        slicepic(w, h, eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname,
+                 "procresults/eodiffimage.png", 0)
+        slicepic(w, h, np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin,
+                 eodiffpcmax, dirname, "procresults/eodiffpcimage.png", 0)
+        slicepic(w, h, ppslice, "Peak to peak image", ppmin, ppmax, dirname, "procresults/ppimage.png", 0)
 
     def makefig(id):
         """make a figure using the figure dictionary"""
@@ -1156,8 +1105,6 @@ optional arguments:
                     entryqualitystr = "Fail"
                 outstring = entrydesc + "," + str(entryval) + "," + entryqualitystr
                 AFILE.writelines(outstring + "\n")
-                print(outstring)
-
 
     ########################################################
     #
