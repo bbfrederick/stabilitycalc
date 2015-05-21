@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2013/09/09 13:38:56 $
-#       $Id: getslicetimes,v 1.2 2013/09/09 13:38:56 frederic Exp $
-#
+
 import sys
 import dicom
 import numpy as np

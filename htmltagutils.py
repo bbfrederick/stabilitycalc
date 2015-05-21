@@ -1,9 +1,4 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2011/03/22 20:03:38 $
-#       $Id: htmltagutils.py,v 1.5 2011/03/22 20:03:38 frederic Exp $
-#
 
 #
 # HTML formatting

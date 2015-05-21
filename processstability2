@@ -1,9 +1,4 @@
 #!/bin/csh -f
-#
-#	$Author: frederic $
-#	$Date: 2010/09/02 13:53:41 $
-#	$Id: processstability,v 1.8 2010/09/02 13:53:41 frederic Exp $
-#
 
 setenv dicombasedir	'/Users/frederic/Documents/MR_data/stability_tracking_raw'
 setenv fslbasedir	'/Users/frederic/Documents/MR_data/stability_tracking'

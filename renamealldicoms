@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2011/03/14 20:10:16 $
-#       $Id: renamealldicoms,v 1.2 2011/03/14 20:10:16 frederic Exp $
-#
+
 import os
 import sys
 import dicom

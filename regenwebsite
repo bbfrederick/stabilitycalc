@@ -1,9 +1,4 @@
 #!/bin/csh -f
-#
-#	$Author: frederic $
-#	$Date: 2015/05/08 18:58:14 $
-#	$Id: regenwebsite,v 1.5 2015/05/08 18:58:14 frederic Exp $
-#
 
 setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
 setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`

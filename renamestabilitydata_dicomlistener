@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2015/05/08 18:58:14 $
-#       $Id: renamestabilitydata_dicomlistener,v 1.14 2015/05/08 18:58:14 frederic Exp $
-#
+
 import sys
 import re
 import os

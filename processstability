@@ -1,9 +1,4 @@
 #!/bin/csh -f
-#
-#	$Author: frederic $
-#	$Date: 2012/11/13 15:25:46 $
-#	$Id: processstability,v 1.13 2012/11/13 15:25:46 frederic Exp $
-#
 
 # $session is the subject name
 # $2 is the element number

@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2010/03/06 20:04:57 $
-#       $Id: findavgvalues,v 1.2 2010/03/06 20:04:57 frederic Exp $
-#
+
 import sys
 import os
 import time

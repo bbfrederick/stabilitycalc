@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2011/09/01 19:27:51 $
-#       $Id: convertuncombined,v 1.2 2011/09/01 19:27:51 frederic Exp $
-#
+
 import sys
 import re
 import os

@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-#
-#       $Author: frederic $
-#       $Date: 2010/03/03 17:06:13 $
-#       $Id: dorenamedicom,v 1.2 2010/03/03 17:06:13 frederic Exp $
-#
+
 import os
 import sys
 import dicom

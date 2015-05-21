@@ -1,8 +1,4 @@
 #!/bin/csh -f
-#
-#	$Author: frederic $
-#	$Date: 2009/10/22 14:04:38 $
-#
 
 # ./dicom2nifti stability_tracking_raw/stability_20150406_070033_32Ch_Head/ep2d_pace_normalize_5 stability_tracking/stability_20150406_070033_32Ch_Head epi_pace
 # this takes a dicom dir and brings us to a nifti file and studyinfo
