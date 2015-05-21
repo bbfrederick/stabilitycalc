@@ -20,6 +20,7 @@ import argparse
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s')
 
+
 def main():
     # read in the datafile.
     parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
@@ -141,7 +142,6 @@ def main():
         objectmask = sf.makemask(meanslice, threshmean, 1)
     else:
         objectmask = sf.makemask(meanslice, 0.01 * threshmean, 1)
-
 
     logging.debug("calculating normalized standard deviation and sfnr...")
     with np.errstate(invalid='ignore'):
@@ -525,9 +525,9 @@ def main():
                                           phasedarrayroi_rawstddevlimits)
             phasedarraystddevstr = "stddev=%4.4f " % (phasedarrayroistddevs[i]) + boldtag(qualitytag("(%4.4f%%)",
                                                                                                      stddevquality) % (
-                                                                                              phasedarrayroistddevs[i] /
-                                                                                              phasedarrayroimeans[
-                                                                                                  i] * 100.0))
+                phasedarrayroistddevs[i] /
+                phasedarrayroimeans[
+                    i] * 100.0))
             ppquality = sf.limitcheck(phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0, phasedarrayroi_rawpplimits)
             phasedarrayppstr = "p-p=%4.4f " % (phasedarrayroipps[i]) + boldtag(
                 qualitytag("(%4.4f%%)", ppquality) % (phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0))
@@ -547,10 +547,8 @@ def main():
                                                               phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[
                                                                   i] * 100.0))
 
-
         phasedarrayroipps_percent = 100.0 * phasedarrayroipps / phasedarrayroimeans
         phasedarrayroipps_dt_percent = 100.0 * phasedarrayroipps_dt / phasedarrayroimeans_dt
-
 
         # finally calculate the correlation between the timeseries
         coilccmatrix = np.corrcoef(phasedarraydttcs_demeaned)
@@ -694,7 +692,6 @@ def main():
     oddghosttc_summary = tcstats_format2 % (oddghostmean, oddghoststddev, oddghostmin, oddghostmax, oddghostpp)
     evenghosttc_summary = tcstats_format2 % (evenghostmean, evenghoststddev, evenghostmin, evenghostmax, evenghostpp)
 
-
     #############################
     #
     # Output
@@ -716,7 +713,6 @@ def main():
     outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
     if isBIRNprotocol:
         outfp.writelines("<h3>Imaging protocol: BIRN stability</h3>\n")
-
 
     # statistical images section
 
@@ -755,7 +751,6 @@ def main():
         'oddghostroiplot': {'fn': sf.showtc2, 'args': (timepoints, reloddghosttc, 0.0 * timepoints + oddghostmean, "Relative odd ghost ROI amplitude plot (%)")},
         'evenghostroiplot': {'fn': sf.showtc2, 'args': (timepoints, relevenghosttc, 0.0 * timepoints + evenghostmean, "Relative even ghost ROI amplitude plot (%)")}}
 
-
     if isphasedarray:
         figs.update({
             'coilccmatrix': {'fn': sf.showslice3, 'args': (coilccmatrix, "Phased array element correlation matrix", 0.0, 1.0, 0)},
@@ -772,7 +767,7 @@ def main():
     else:
         figs.update({
             'centroiplot': {'fn': sf.showtc2, 'args': (timepoints, centtc, centmean_dt + fittc, "Central ROI plot (%)")},
-            'centroisnrplot': {'fn': sf.showtc2, 'args': (timepoints, centsnrvec, 0.0 * centsnrvec +centsnr, "Central ROI SNR over time")},
+            'centroisnrplot': {'fn': sf.showtc2, 'args': (timepoints, centsnrvec, 0.0 * centsnrvec + centsnr, "Central ROI SNR over time")},
             'centroidtplot': {'fn': sf.showtc, 'args': (timepoints, centtc - fittc, "Detrended central ROI plot (%)")},
             'periphroiplot': {'fn': sf.showtc2, 'args': (periphanglesd, periphangmeans, 0.0 * periphanglesd + meanangperiphval, "Relative peripheral image intensity (%)")},
             'periphroisfnrplot': {'fn': sf.showtc2, 'args': (periphanglesd, periphangsfnrs, 0.0 * periphanglesd + meanangperiphsfnr, "Absolute peripheral SFNR")},
@@ -782,11 +777,8 @@ def main():
 
     # @formatter:on
 
-
     for k in figs:
         makefig(k)
-
-
 
     ########################################################
     #
@@ -1061,7 +1053,7 @@ def main():
             entrydesc = sf.formatlimits(limits[k])
             entryval = datadict[k]
             entryquality = sf.limitcheck(entryval, limits[k])
-            AFILE.writelines(','.join((entrydesc, str(entryval), {0: 'Pass', 1: 'Warn', 2:'Fail'}[entryquality])) + "\n")
+            AFILE.writelines(','.join((entrydesc, str(entryval), {0: 'Pass', 1: 'Warn', 2: 'Fail'}[entryquality])) + "\n")
         except KeyError:
             pass
 
