@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import os
 from os.path import join as pjoin
 import time
@@ -209,7 +208,7 @@ def main():
 
     # Try to figure out what we're looking at
     unknown = 0
-    BIRNphantom = 1
+    birn_phantom = 1
     head = 3
     objecttype = unknown
     objectname = "Unknown"
@@ -217,12 +216,12 @@ def main():
     object_radius_mm = np.sqrt(objectradiusx_mm * objectradiusy_mm)
     object_shape = objectradiusy / objectradiusx
 
-    BIRNphantom_radiuscheck = sf.limitcheck(object_radius_mm, limits['BIRNphantom_rad'])
-    BIRNphantom_shapecheck = sf.limitcheck(object_shape, limits['BIRNphantom_shape'])
-    if (BIRNphantom_radiuscheck < 2) and (BIRNphantom_shapecheck < 2):
-        objecttype = BIRNphantom
+    birn_phantom_radiuscheck = sf.limitcheck(object_radius_mm, limits['BIRNphantom_rad'])
+    birn_phantom_shapecheck = sf.limitcheck(object_shape, limits['BIRNphantom_shape'])
+    if (birn_phantom_radiuscheck < 2) and (birn_phantom_shapecheck < 2):
+        objecttype = birn_phantom
         objectname = "BIRN_phantom"
-        logging.debug("setting objecttype to BIRNphantom")
+        logging.debug("setting objecttype to birn_phantom")
 
     head_radiuscheck = sf.limitcheck(object_radius_mm, limits['head_rad'])
     head_shapecheck = sf.limitcheck(object_shape, limits['head_shape'])
@@ -231,13 +230,13 @@ def main():
         objectname = "Head"
         logging.debug("setting objecttype to head")
 
-    isBIRNsequence = True
+    is_birn_sequence = True
     if (xsize != 64) or (ysize != 64) or (numslices != 28) or (tr != 2.0):
-        isBIRNsequence = False
-    isBIRNprotocol = False
-    if isBIRNsequence and (objecttype == BIRNphantom):
+        is_birn_sequence = False
+    is_birn_protocol = False
+    if is_birn_sequence and (objecttype == birn_phantom):
         logging.debug("Assuming this is a BIRN protocol")
-        isBIRNprotocol = True
+        is_birn_protocol = True
         protocolname = "fBIRN"
     else:
         logging.debug("Assuming this is NOT a BIRN protocol")
@@ -698,7 +697,7 @@ def main():
         objecttypestr = "unknown"
     elif objecttype == head:
         objecttypestr = "head"
-    elif objecttype == BIRNphantom:
+    elif objecttype == birn_phantom:
         objecttypestr = "BIRN phantom"
 
     row1str = tablerowtag(bigtableentrytag("Object center of mass:") + bigtableentrytag(
@@ -707,7 +706,7 @@ def main():
     row3str = tablerowtag(bigtableentrytag("Object mean radius:") + bigtableentrytag(str(object_radius_mm)))
     row4str = tablerowtag(bigtableentrytag("Object shape factor:") + bigtableentrytag(str(object_shape)))
     outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
-    if isBIRNprotocol:
+    if is_birn_protocol:
         outfp.writelines("<h3>Imaging protocol: BIRN stability</h3>\n")
 
     # statistical images section
@@ -734,11 +733,12 @@ def main():
         slicepic(np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin, eodiffpcmax, dirname, 'eodiffpcimage', 0)
         slicepic(ppslice, "Peak to peak image", ppmin, ppmax, dirname, 'ppimage', 0)
 
-    def makefig(id):
+    def makefig(figk):
         """make a figure using the figure dictionary"""
         plt.figure()
-        figs[id]['fn'](*figs[id]['args'])
-        plt.savefig(pjoin(dirname, 'procresults', id + '.png'), format='png')
+        # noinspection PyCallingNonCallable
+        figs[figk]['fn'](*figs[figk]['args'])
+        plt.savefig(pjoin(dirname, 'procresults', figk + '.png'), format='png')
         plt.close()
 
     # @formatter:off
@@ -1043,13 +1043,13 @@ def main():
     datadict['central_roi_drift%'] = centdrift
     datadict['peripheral_roi_drift%'] = periphdrift
 
-    AFILE = open(pjoin(dirname, "procresults/dataquality.txt"), "w")
+    afp = open(pjoin(dirname, "procresults/dataquality.txt"), "w")
     for k in datadict:
         try:
             entrydesc = sf.formatlimits(limits[k])
             entryval = datadict[k]
             entryquality = sf.limitcheck(entryval, limits[k])
-            AFILE.writelines(','.join((entrydesc, str(entryval), {0: 'Pass', 1: 'Warn', 2: 'Fail'}[entryquality])) + "\n")
+            afp.writelines(','.join((entrydesc, str(entryval), {0: 'Pass', 1: 'Warn', 2: 'Fail'}[entryquality])) + "\n")
         except KeyError:
             pass
 
