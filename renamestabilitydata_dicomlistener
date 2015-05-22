@@ -74,7 +74,7 @@ for examname in dirstorenamefilt:
                       if filename.endswith("0001.dcm")]
         if dicomnames != []:
             # we process directories that have dicoms in them, otherwise skip them
-            thestudyinfo = doashellcmd(stab_bindir + "/studyinfo " + scandir + "/" + dicomnames[0])
+            thestudyinfo = doashellcmd(stab_bindir + "/studyinfo.py " + scandir + "/" + dicomnames[0])
             print(thestudyinfo)
             studydate = re.sub('\n', '', re.sub('StudyDate: ', '', thestudyinfo[1]))
             studytime = ('000' + str(int(float(re.sub('\n', '', re.sub('StudyTime: ', '', thestudyinfo[2]))))))[-6:]
