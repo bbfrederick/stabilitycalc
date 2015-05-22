@@ -12,53 +12,43 @@ import shutil
 import nibabel as nib
 import argparse
 import logging
-logging.basicConfig(format='%(levelname)s:%(message)s')
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
 from studyinfo import studyinfo
 
 
 def main():
-    # read in the datafile.
     parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
     parser.add_argument('dirname', help='the directory where the 4D NIFTI file is located')
     parser.add_argument('filename', help='the name of the 4D NIFTI file')
-    parser.add_argument('numdisdaqs', help='the number of tr periods to skip at the beginning of the file', metavar='numskip')
+    parser.add_argument('starttime', help='the number of tr periods to skip at the beginning of the file')
 
     com = parser.add_argument_group('use this location as the center of mass of the phantom')
     com.add_argument('initxcenter', nargs='?', metavar='xcenter')
     com.add_argument('initycenter', nargs='?', metavar='ycenter')
     com.add_argument('initzcenter', nargs='?', metavar='zcenter')
 
-    f = parser.parse_args()
-    if None in (f.initxcenter, f.initycenter, f.initzcenter) and not f.initxcenter == f.initycenter == f.initzcenter:
+    args = parser.parse_args()
+    if None in (args.initxcenter, args.initycenter, args.initzcenter) and not args.initxcenter == args.initycenter == args.initzcenter:
         parser.error('If you set one center of mass parameter, you must set all three.')
 
-    dirname, filename, numdisdaqs = f.dirname, f.filename, int(f.numdisdaqs)
+    dirname, filename, starttime = args.dirname, args.filename, int(args.starttime)
 
     isindividualcoil = False
-    if f.initxcenter is not None:
-        initxcenter, initycenter, initzcenter = [float(x) for x in (f.initxcenter, f.initycenter, f.initzcenter)]
+    if args.initxcenter is not None:
+        initxcenter, initycenter, initzcenter = [float(x) for x in (args.initxcenter, args.initycenter, args.initzcenter)]
         isindividualcoil = True
 
-    logging.info("reading input file...")
-
     nim = nib.load(pjoin(dirname, filename))
-    nim_data = nim.get_data()
     nim_hdr = nim.get_header()
-    dims = nim_hdr['dim']
-    sizes = nim_hdr['pixdim']
-    xdim = sizes[1]
-    ydim = sizes[2]
-    slicethickness = sizes[3]
-    tr = sizes[4]
-    xsize = dims[1]
-    ysize = dims[2]
-    numslices = dims[3]
-    numtimepoints = dims[4] - numdisdaqs
-    starttime = numdisdaqs
+    xdim, ydim, slicethickness, tr = nim_hdr['pixdim'][1:5]
+    xsize, ysize, numslices = nim_hdr['dim'][1:4]
+    numtimepoints = nim_hdr['dim'][4] - starttime
+
+    selecteddata = np.transpose(nim.get_data()[:, :, :, starttime:], (3, 2, 1, 0))
 
     info = studyinfo(os.path.join(dirname, 'studyinfo'))
-    
+
     if info['ElementName'] == '':
         info['ElementName'] = 'unknown'
     if info['Coil'] != '':
@@ -109,13 +99,6 @@ def main():
 
     #############################
     #
-    #       Extract the data that will be used for further calculations
-    #
-
-    selecteddata = np.transpose(nim_data[:, :, :, starttime:], (3, 2, 1, 0))
-
-    #############################
-    #
     #  Calculate various statistical images
     #
 
@@ -148,57 +131,42 @@ def main():
     slicecenter = sf.findCOM(objectmask[zcenter, :, :])
     xcenterf = slicecenter[0]
     ycenterf = slicecenter[1]
-    xcenter = int(round(xcenterf))
-    ycenter = int(round(ycenterf))
-    zcenter = int(round(zcenterf))
+    xcenter, ycenter, zcenter = [int(round(x)) for x in xcenterf, ycenterf, zcenterf]
     xvec = objectmask[zcenter, ycenter, :]
     yvec = objectmask[zcenter, :, xcenter]
-    xmin = 0
-    xmax = xsize - 1
-    while xvec[xmin] == 0.0:
-        xmin += 1
-    while xvec[xmax] == 0.0:
-        xmax -= 1
+    # noinspection PyUnresolvedReferences
+    xmin, xmax = np.nonzero(xvec)[0][[0, -1]]
     xcenterf = (xmin + xmax) / 2
     objectradiusx = (xmax - xmin + 1.0) / 2.0
     objectradiusx_mm = xdim * objectradiusx
-    ymin = 0
-    ymax = ysize - 1
-    while yvec[ymin] == 0.0:
-        ymin += 1
-    while yvec[ymax] == 0.0:
-        ymax -= 1
+    # noinspection PyUnresolvedReferences
+    ymin, ymax = np.nonzero(yvec)[0][[0, -1]]
     ycenterf = (ymin + ymax) / 2
     objectradiusy = (ymax - ymin + 1.0) / 2.0
     objectradiusy_mm = ydim * objectradiusy
-    xcenter = int(round(xcenterf))
-    ycenter = int(round(ycenterf))
+    xcenter, ycenter = [int(round(x)) for x in xcenterf, ycenterf]
     origslicecenter = (xcenterf, ycenterf, zcenterf)
 
     if isindividualcoil:
         # reset everything to assumed values
+        # TODO get this from config
         objectmask[:, :, :] = 0.0
         objectradiusx_mm = 85.0
         objectradiusy_mm = 85.0
-        objectradiusx = objectradiusx_mm / xdim
-        objectradiusy = objectradiusy_mm / ydim
-        xcenterf = initxcenter
-        ycenterf = initycenter
-        zcenterf = initzcenter
+        objectradiusx, objectradiusy = objectradiusx_mm / xdim, objectradiusy_mm / ydim
+        xcenterf, ycenterf, zcenterf = initxcenter, initycenter, initzcenter
         for i in range(xsize):
-            ival = ((float(i) - xcenterf) * xdim)
+            ival = (float(i) - xcenterf) * xdim
             isq = ival * ival
             for j in range(ysize):
-                jval = ((float(j) - xcenterf) * ydim)
+                jval = (float(j) - xcenterf) * ydim
                 jsq = jval * jval
                 for k in range(numslices):
-                    kval = ((float(k) - zcenterf) * slicethickness)
+                    kval = (float(k) - zcenterf) * slicethickness
                     ksq = kval * kval
                     if np.sqrt(isq + jsq + ksq) <= objectradiusx_mm:
                         objectmask[k, j, i] = 1.0
-        xcenter = int(round(xcenterf))
-        ycenter = int(round(ycenterf))
-        zcenter = int(round(zcenterf))
+        xcenter, ycenter, zcenter = [int(round(x)) for x in xcenterf, ycenterf, zcenterf]
 
     # define the canonical limits
     limits = sf.getlimits(info['Coil'])
@@ -228,9 +196,9 @@ def main():
         logging.debug("setting objecttype to head")
 
     is_birn_sequence = True
+    is_birn_protocol = False
     if (xsize != 64) or (ysize != 64) or (numslices != 28) or (tr != 2.0):
         is_birn_sequence = False
-    is_birn_protocol = False
     if is_birn_sequence and (objecttype == birn_phantom):
         logging.debug("Assuming this is a BIRN protocol")
         is_birn_protocol = True
@@ -373,6 +341,7 @@ def main():
     #       Maximum value ROI analysis
     #
     logging.debug("Finding and analyzing maximum signal ROI...")
+    # TODO get from config
     maxlocroi_rawpplimits = ((0, 0.5), (0, 0.6))
     maxlocroi_dtpplimits = ((0, 0.5), (0, 0.6))
     maxlocroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
@@ -384,15 +353,14 @@ def main():
     if isindividualcoil:
         elementmask = sf.makemask(meanslice, threshmean, 1)
         elementcenter = sf.findCOM(elementmask)
-        elementdirvec = (
-            elementcenter[0] - origslicecenter[0], elementcenter[1] - origslicecenter[1],
-            elementcenter[2] - origslicecenter[2])
+        elementdirvec = (elementcenter[0] - origslicecenter[0],
+                         elementcenter[1] - origslicecenter[1],
+                         elementcenter[2] - origslicecenter[2])
         elementdirnormfac = sf.vecnorm(elementdirvec)
         maxlocoffsetscl = maxlocradfrac * objectradiusx / elementdirnormfac
-        elementmaxpos = (
-            origslicecenter[0] + maxlocoffsetscl * elementdirvec[0],
-            origslicecenter[1] + maxlocoffsetscl * elementdirvec[1],
-            origslicecenter[2] + maxlocoffsetscl * elementdirvec[2])
+        elementmaxpos = (origslicecenter[0] + maxlocoffsetscl * elementdirvec[0],
+                         origslicecenter[1] + maxlocoffsetscl * elementdirvec[1],
+                         origslicecenter[2] + maxlocoffsetscl * elementdirvec[2])
         if elementmaxpos[2] > numslices - 1:
             newmaxlocoffsetscl = (float(numslices - 1) - origslicecenter[2]) / elementdirvec[2]
             elementmaxpos = (origslicecenter[0] + newmaxlocoffsetscl * elementdirvec[0],
@@ -406,9 +374,7 @@ def main():
                              origslicecenter[1] + newmaxlocoffsetscl * elementdirvec[1],
                              origslicecenter[2] + newmaxlocoffsetscl * elementdirvec[2])
             logging.debug("maxpos adjusted to fall within valid image region")
-        maxloccenterx = int(round(elementmaxpos[0]))
-        maxloccentery = int(round(elementmaxpos[1]))
-        maxloccenterz = int(round(elementmaxpos[2]))
+        maxloccenterx, maxloccentery, maxloccenterz = [int(round(x)) for x in elementmaxpos[:3]]
         maxlocroi = sf.setroilims(maxloccenterx, maxloccentery, maxlocroisize)
         sf.markroi(maxlocroi, maxloccenterz, roislice, 0.92 * rawmeanmax)
         maxloctc = sf.getroimeantc(selecteddata, maxlocroi, zcenter)
@@ -629,7 +595,6 @@ def main():
     meanangperiphsfnr = np.mean(periphangsfnrs)
     meanangperiphsnr = np.mean(avgperiphsnrvec)
 
-    # TODO move to config
     ptpangperiphval = np.ptp(periphangmeans)
     periphangintensitymeanstr = "mean=%4.4f" % meanangperiphval
     periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0,
