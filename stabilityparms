@@ -2,23 +2,36 @@
 
 """legacy thing for scripts to read paths from the config.ini file"""
 
-import sys
 import ConfigParser
-import logging
 
-if len(sys.argv) != 2:
-    logging.critical('usage: stabilityparms key')
-    exit(1)
-key = sys.argv[1]
+def stabilityparms(option, section='paths'):
+    """
+    retrieve a value from the configuration file.
+    for legacy use, assume we're looking for a path.
+    """
 
-config = ConfigParser.ConfigParser()
+    config = ConfigParser.ConfigParser()
 
-try:
-    config.read('config/config.ini')
-except IOError:
-    logging.critical('Failed to open configuration file.')
+    try:
+        config.read('config/config.ini')
+    except IOError:
+        logging.critical('Failed to open configuration file.')
 
-try:
-    print(config.get('paths', key.lower()))
-except ConfigParser.NoOptionError:
-    print('')
+    try:
+        return config.get(section, option.lower())
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        return ''
+
+
+if __name__ == '__main__':
+
+    import argparse
+    import logging
+    logging.basicConfig(format='%(levelname)s:%(message)s')
+
+    parser = argparse.ArgumentParser(description='Retrieve a value from the configuration file.')
+    parser.add_argument('option', help='The option to retrieve.')
+    parser.add_argument('--section', '-s', default='paths')
+    f = parser.parse_args()
+
+    print(stabilityparms(option=f.option, section=f.section))
