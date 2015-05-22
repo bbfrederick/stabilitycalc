@@ -8,12 +8,13 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from htmltagutils import *
-import stabilityfuncs as sf
 import shutil
 import nibabel as nib
 import argparse
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s')
+import stabilityfuncs as sf
+from studyinfo import studyinfo
 
 
 def main():
@@ -54,25 +55,21 @@ def main():
     ysize = dims[2]
     numslices = dims[3]
     numtimepoints = dims[4] - numdisdaqs
-
     starttime = numdisdaqs
 
-    # TODO remove doashellcomd
-    coilname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep Coil | awk '{print $2}'")
-    studydate = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyDate | awk '{print $2}'")
-    studytime = sf.doashellcmd("cat " + dirname + "/studyinfo | grep StudyTime | awk '{print $2}'")
-    elementname = sf.doashellcmd("cat " + dirname + "/studyinfo | grep ElementName | awk '{print $2}'")
-
-    if elementname == '':
-        elementname = 'unknown'
-    if coilname != '':
-        year = studydate[0:4]
-        month = studydate[4:6]
-        day = studydate[6:8]
-        hour = studytime[0:2]
-        minute = studytime[2:4]
-        second = studytime[4:6]
-        datetime = studydate + "T" + hour + minute + second
+    info = studyinfo(os.path.join(dirname, 'studyinfo'))
+    
+    if info['ElementName'] == '':
+        info['ElementName'] = 'unknown'
+    if info['Coil'] != '':
+        # TODO use a real datetime
+        year = info['StudyDate'][0:4]
+        month = info['StudyDate'][4:6]
+        day = info['StudyDate'][6:8]
+        hour = info['StudyTime'][0:2]
+        minute = info['StudyTime'][2:4]
+        second = info['StudyTime'][4:6]
+        datetime = info['StudyDate'] + "T" + hour + minute + second
         formatteddate = month + "/" + day + "/" + year
         formattedtime = hour + ":" + minute + ":" + second
 
@@ -90,7 +87,7 @@ def main():
         "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\n")
 
     outfp.writelines("<head>\n")
-    outfp.writelines("<title>Stability report for " + coilname + " generated on " + thisdate + "</title>\n")
+    outfp.writelines("<title>Stability report for " + info['Coil'] + " generated on " + thisdate + "</title>\n")
     outfp.writelines("<style type=\"text/css\">\n")
     outfp.writelines("h1 {font-family:courier new;text-decoration:underline;}\n")
     outfp.writelines("h2 {font-family:courier new;color: teal; text-decoration:underline;}\n")
@@ -103,9 +100,9 @@ def main():
 
     outfp.writelines("<body>\n")
     outfp.writelines("<h2>Stability analysis of " + filename + "</h2>\n")
-    if coilname != '':
-        row1str = tablerowtag(bigtableentrytag("Coil:") + bigtableentrytag(coilname))
-        row2str = tablerowtag(bigtableentrytag("Element:") + bigtableentrytag(elementname))
+    if info['Coil'] != '':
+        row1str = tablerowtag(bigtableentrytag("Coil:") + bigtableentrytag(info['Coil']))
+        row2str = tablerowtag(bigtableentrytag("Element:") + bigtableentrytag(info['ElementName']))
         row3str = tablerowtag(bigtableentrytag("Date:") + bigtableentrytag(formatteddate))
         row4str = tablerowtag(bigtableentrytag("Time:") + bigtableentrytag(formattedtime))
         outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
@@ -204,7 +201,7 @@ def main():
         zcenter = int(round(zcenterf))
 
     # define the canonical limits
-    limits = sf.getlimits(coilname)
+    limits = sf.getlimits(info['Coil'])
 
     # Try to figure out what we're looking at
     unknown = 0
@@ -458,7 +455,7 @@ def main():
 
     isphasedarray = False
 
-    coildata = sf.getphasedarraydata(coilname)
+    coildata = sf.getphasedarraydata(info['Coil'])
     if coildata and numslices > 1:
         isphasedarray = True
         numphasedarray = len(coildata)
@@ -958,13 +955,13 @@ def main():
     row2str = tablerowtag(tableentrytag(bigtag(boldtag("RDC=" + str(weissrdc)))))
     outfp.writelines(tablepropstag(weisshdrstr + row1str + row2str, 500, "left"))
 
-    datadict = {'Coil': coilname,
+    datadict = {'Coil': info['Coil'],
                 'Date': formatteddate,
                 'Time': formattedtime,
                 'DateTime': datetime,
                 'Object': objectname,
                 'Protocol': protocolname,
-                'Element': elementname,
+                'Element': info['ElementName'],
                 'processed_as_individual': isindividualcoil,
                 'object_radius_mm': object_radius_mm,
                 'object_shape': object_shape,

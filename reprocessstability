@@ -23,7 +23,7 @@ if( $0 == 'reprocessstability_noregen' ) then
 
 if( $boldname != '' ) then
     echo 'BOLD name: ' $boldname
-    studyinfo $sorteddicomdir'/'$subjname'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_bold/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$subjname'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_bold/studyinfo'
     stabilitycalc $processedscandir/$subjname/epi_bold epi_bold.nii.gz 10
     chmod -R a+r $processedscandir/$subjname/epi_bold
     if ( doregen == True ) then
@@ -34,7 +34,7 @@ if( $boldname != '' ) then
 
 if( $pacename != '' ) then
     echo 'PACE name: ' $pacename
-    studyinfo $sorteddicomdir'/'$subjname'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_pace/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$subjname'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_pace/studyinfo'
     stabilitycalc $processedscandir/$subjname/epi_pace epi_pace.nii.gz 10
     chmod -R a+r $processedscandir/$subjname/epi_pace
     pushd $sorteddicomdir/$1
@@ -53,7 +53,7 @@ if( $pacename != '' ) then
 
 if( $multiflip10name != '' ) then
     echo 'Multiflip_10 name: ' $multiflip10name
-    studyinfo $sorteddicomdir'/'$subjname'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip10/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$subjname'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip10/studyinfo'
     stabilitycalc $processedscandir/$subjname/epi_multiflip10 epi_multiflip10.nii.gz 10
     chmod -R a+r $processedscandir/$subjname/epi_multiflip10 
     if ( doregen == True ) then
@@ -64,7 +64,7 @@ if( $multiflip10name != '' ) then
 
 if( $multiflip77name != '' ) then
     echo 'Multiflip_77 name: ' $multiflip77name
-    studyinfo $sorteddicomdir'/'$subjname'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip77/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$subjname'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_multiflip77/studyinfo'
     stabilitycalc $processedscandir/$subjname/epi_multiflip77 epi_multiflip77.nii.gz 10
     chmod -R a+r $processedscandir/$subjname/epi_multiflip77 
     if ( doregen == True ) then
@@ -75,7 +75,7 @@ if( $multiflip77name != '' ) then
 
 if( $singleslicename != '' ) then
     echo 'SS name: ' $singleslicename
-    studyinfo $sorteddicomdir'/'$subjname'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_singleslice/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$subjname'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$subjname'/epi_singleslice/studyinfo'
     stabilitycalc $processedscandir/$subjname/epi_singleslice epi_singleslice.nii.gz 10
     chmod -R a+r $processedscandir/$subjname/epi_singleslice
     if ( doregen == True ) then

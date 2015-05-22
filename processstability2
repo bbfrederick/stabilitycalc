@@ -14,7 +14,7 @@ popd
 if( $pacename != '' ) then
     echo 'PACE name: ' $pacename
     newprocfuncs $dicombasedir $fslbasedir $subjname $pacename epi_pace "$funcremap"
-    studyinfo $dicombasedir'/'$subjname'/'$pacename'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_pace/studyinfo'
+    studyinfo.py $dicombasedir'/'$subjname'/'$pacename'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_pace/studyinfo'
     stabilitycalc $fslbasedir/$subjname/epi_pace epi_pace.nii.gz 10
     chmod -R a+r $fslbasedir/$subjname/epi_pace
 
@@ -32,7 +32,7 @@ endif
 if( $singleslicename != '' ) then
     echo 'SS name: ' $singleslicename
     newprocfuncs $dicombasedir $fslbasedir $subjname $singleslicename epi_singleslice "$funcremap"
-    studyinfo $dicombasedir'/'$subjname'/'$singleslicename'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_singleslice/studyinfo'
+    studyinfo.py $dicombasedir'/'$subjname'/'$singleslicename'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_singleslice/studyinfo'
     stabilitycalc $fslbasedir/$subjname/epi_singleslice epi_singleslice.nii.gz 10
     chmod -R a+r $fslbasedir/$subjname/epi_singleslice
     stabilitysummary $fslbasedir /Volumes/stability epi_singleslice &
@@ -41,7 +41,7 @@ endif
 if( $boldname != '' ) then
     echo 'BOLD name: ' $boldname
     newprocfuncs $dicombasedir $fslbasedir $subjname $boldname epi_bold "$funcremap"
-    studyinfo $dicombasedir'/'$subjname'/'$boldname'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_bold/studyinfo'
+    studyinfo.py $dicombasedir'/'$subjname'/'$boldname'/'IM*0001.dcm > $fslbasedir'/'$subjname'/epi_bold/studyinfo'
     stabilitycalc $fslbasedir/$subjname/epi_bold epi_bold.nii.gz 10
     chmod -R a+r $fslbasedir/$subjname/epi_bold 
     stabilitysummary $fslbasedir /Volumes/stability epi_bold &

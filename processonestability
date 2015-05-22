@@ -15,7 +15,7 @@ setenv com_z		$7
 setenv funcremap	'x -y z'
 if( -e $sorteddicomdir'/'$session'/'$elementinname ) then
     dicom2nifti $sorteddicomdir/$session/$elementinname $processedscandir/$session $elementoutbase'_'$elementoutsuffix 
-    studyinfo $sorteddicomdir'/'$session'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$session'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$session'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
     stabilitycalc $processedscandir/$session/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
 endif
 

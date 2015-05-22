@@ -19,7 +19,7 @@ popd
 if( $pacename != '' ) then
     echo 'PACE name: ' $pacename
     dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_pace
-    studyinfo $sorteddicomdir'/'$session'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_pace/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_pace/studyinfo'
     stabilitycalc $processedscandir/$session/epi_pace epi_pace.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_pace
 
@@ -41,7 +41,7 @@ endif
 if( $singleslicename != '' ) then
     echo 'SS name: ' $singleslicename
     dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_singleslice
-    studyinfo $sorteddicomdir'/'$session'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_singleslice/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_singleslice/studyinfo'
     stabilitycalc $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_singleslice
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_singleslice &
@@ -51,7 +51,7 @@ endif
 if( $multiflip77name != '' ) then
     echo 'Multiflip_77 name: ' $multiflip77name
     dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip77
-    studyinfo $sorteddicomdir'/'$session'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip77/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip77/studyinfo'
     stabilitycalc $processedscandir/$session/epi_multiflip77 epi_multiflip77.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip77 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip77 &
@@ -61,7 +61,7 @@ endif
 if( $multiflip10name != '' ) then
     echo 'Multiflip_10 name: ' $multiflip10name
     dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip10
-    studyinfo $sorteddicomdir'/'$session'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip10/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip10/studyinfo'
     stabilitycalc $processedscandir/$session/epi_multiflip10 epi_multiflip10.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip10 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip10 &
@@ -71,7 +71,7 @@ endif
 if( $boldname != '' ) then
     echo 'BOLD name: ' $boldname
     dicom2nifti $sorteddicomdir/$session/$pacename $processedscandir/$session epi_bold
-    studyinfo $sorteddicomdir'/'$session'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$session'/epi_bold/studyinfo'
+    studyinfo.py $sorteddicomdir'/'$session'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$session'/epi_bold/studyinfo'
     stabilitycalc $processedscandir/$session/epi_bold epi_bold.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_bold 
     stabilitysummary $processedscandir $outputdir'/3T/birn' epi_bold &
