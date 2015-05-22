@@ -4,8 +4,7 @@ import sys
 import re
 import os
 import time
-import shlex
-import subprocess
+from stabilityfuncs import stabilityparms
 
 # send a command to the shell
 
@@ -21,8 +20,7 @@ def doashellcmd(cmd):
         return retval
 
 # read in the datafile
-stab_bindir = doashellcmd("/Users/frederic/bin/fmristability/stabilityparms BINDIR")
-stab_bindir = "/Users/frederic/bin/fmristability"
+stab_bindir = stabilityparms('bindir')
 print(">>>", stab_bindir, "<<<")
 if len(sys.argv) != 3:
     print("usage: renamestabilitydata datadirectory outputdirectory")

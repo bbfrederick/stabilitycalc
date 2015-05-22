@@ -14,7 +14,25 @@ import matplotlib.colors as colors
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s')
 from htmltagutils import *
+import ConfigParser
 
+def stabilityparms(option, section='paths'):
+    """
+    retrieve a value from the configuration file.
+    for legacy use, assume we're looking for a path.
+    """
+
+    config = ConfigParser.ConfigParser()
+
+    try:
+        config.read('config/config.ini')
+    except IOError:
+        logging.critical('Failed to open configuration file.')
+
+    try:
+        return config.get(section, option.lower())
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        return ''
 
 def getlimits(coil):
     # noinspection PyShadowingNames

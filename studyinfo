@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import os
 import dicom
 
 
@@ -10,25 +9,13 @@ def getsiemensmrheader(theplan):
     startposition = SiemensCSAHeader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
     partialheader = SiemensCSAHeader2[startposition:]
     endposition = partialheader.find('### ASCCONV END ###')
-    textversion = partialheader[:endposition]
-    InterestingSiemensHeader = textversion.splitlines()
+    textvers = partialheader[:endposition]
+    InterestingSiemensHeader = textvers.splitlines()
     datadict = {}
     for theline in InterestingSiemensHeader[1:]:
         thepair = theline.split()
         datadict[thepair[0]] = thepair[2]
-    return datadict, textversion
-
-# send a command to the shell
-
-
-def doashellcmd(cmd):
-    a = os.popen(cmd)
-    while True:
-        line = a.readline()
-        if not line:
-            break
-        retval = line[:-1]
-        return retval
+    return datadict, textvers
 
 # read the command line parameters
 fulldump = False
@@ -36,8 +23,8 @@ if (len(sys.argv) < 2) or (len(sys.argv) > 3):
     print("usage: studyinfo dicomfilename [-f]")
     exit()
 dicomfilename = sys.argv[1]
-if(len(sys.argv) == 3):
-    if(sys.argv[2] == "-f"):
+if len(sys.argv) == 3:
+    if sys.argv[2] == "-f":
         fulldump = True
     else:
         print("usage: studyinfo dicomfilename [-f]")
