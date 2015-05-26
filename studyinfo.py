@@ -53,7 +53,9 @@ def studyinfo(studyinfo_file):
 def studyinfo_write(studyinfo_file, info):
     """write a studyinfo file"""
 
-    open(studyinfo_file, 'w').writelines([': '.join(pair) for pair in info.items()])
+    with open(studyinfo_file, 'w') as fp:
+        for pair in info.items():
+            fp.write(': '.join(pair) + '\n')
 
 
 if __name__ == '__main__':
