@@ -1,4 +1,4 @@
-#!/usr/bi# n/env python
+#!/usr/bin/env python
 
 import os
 import dicom
