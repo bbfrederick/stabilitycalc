@@ -2,10 +2,13 @@
 
 import os
 from os.path import join as pjoin
+import shutil
 import time
 from htmltagutils import *
+import logging
 import stabilityfuncs as sf
 import argparse
+
 
 #
 # os utilities
@@ -65,7 +68,8 @@ TargetisBIRNphantom = not args.nonbirn
 
 
 # initialize the outut directory if need be
-doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan)
+if not os.path.exists(pjoin(outputdirectory, whichscan)):
+    os.makedirs(pjoin(outputdirectory, whichscan))
 
 ########################################################################
 #
@@ -86,7 +90,7 @@ num_cp_TARGET = 0
 num_12_TARGET = 0
 num_32_TARGET = 0
 for summaryfile in stabilitydirs:
-    print("Beginning processing for " + summaryfile)
+    logging.info('Beginning processing for ' + summaryfile)
     datadict[filenumber_TARGET] = {}
     try:
         datadict[filenumber_TARGET]['datadir'] = summaryfile + "/" + whichscan + "/procresults"
@@ -109,9 +113,9 @@ for summaryfile in stabilitydirs:
             pass
     except KeyError:
         pass
-print(str(num_cp_TARGET) + " CP coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-print(str(num_12_TARGET) + " 12 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-print(str(num_32_TARGET) + " 32 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+logging.debug(str(num_cp_TARGET) + " CP coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+logging.debug(str(num_12_TARGET) + " 12 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+logging.debug(str(num_32_TARGET) + " 32 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
 
 #######################################################################################
 #
@@ -266,18 +270,17 @@ PLOTCMDFILE.close()
 #
 # central mean signal intensity
 #
-PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_centralsignal", "w")
-PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
-PLOTCMDFILE.writelines("set yrange [0:2000.0]\n")
-PLOTCMDFILE.writelines("set title \"Detrended mean central signal intensity\"\n")
-PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
-PLOTCMDFILE.writelines("set ylabel \"Mean signal intensity\"\n")
-PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:24 title 'Mean central signal intensity' with " + wlp + " " + pointsize + " pt 3\n")
-PLOTCMDFILE.close()
+with open(pjoin(outputdirectory, whichscan, 'plotcmds_centralsignal'), 'w') as fp:
+    fp.writelines('set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt "%Y%m%dT%H:%M:%S"\n')
+    fp.writelines('set xrange ["20091120T00:00:00":]\n')
+    fp.writelines('set yrange [0:2000.0]\n')
+    fp.writelines('set title "Detrended mean central signal intensity"\n')
+    fp.writelines('set xlabel "Date"\n')
+    fp.writelines('set ylabel "Mean signal intensity"\n')
+    fp.writelines('plot    "' + outputdirectory + '/' + whichscan + '/graphtemp" using 2:24 title \'Mean central signal intensity\' with ' + wlp + ' ' + pointsize + ' pt 3\n')
 
 for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
-    doashellcmd("cp " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt " + outputdirectory + "/" + whichscan + "/graphtemp")
+    shutil.copyfile(pjoin(outputdirectory, whichscan, targetcoil + '_vals.txt'), pjoin(outputdirectory, whichscan, 'graphtemp'))
     doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_snrsfnr.jpg")
     doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roistab > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roistab.jpg")
     doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roidrift > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roidrift.jpg")
@@ -461,18 +464,15 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
                 desttime = os.path.getmtime(out_procresults)
                 sourcetime = os.path.getmtime(pjoin(datadirectory, datadict[i]['datadir']))
                 if sourcetime >= desttime:
-                    print(copypreamble, "and is modified - copying")
-                    print(dat_procresults)
-                    print("time difference=", desttime - sourcetime)
-                    doashellcmd("cp -r " + dat_procresults + "/* " + out_procresults)
-                    doashellcmd("touch " + out_procresults)
+                    logging.debug(copypreamble + "and is modified - copying " + dat_procresults)
+                    logging.debug('time difference={}'.format(desttime - sourcetime))
+                    shutil.rmtree(out_procresults)
+                    shutil.copytree(dat_procresults, out_procresults)
                 else:
-                    print(copypreamble, "and is current - not copying")
+                    logging.debug(copypreamble + "and is current - not copying")
             else:
-                print(out_procresults, " does not already exist... copying")
-                doashellcmd("mkdir -p " + out_procresults)
-                doashellcmd("cp -r " + dat_procresults + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
-                doashellcmd("touch " + out_procresults)
+                logging.debug(out_procresults + " does not already exist... copying")
+                shutil.copytree(dat_procresults, out_procresults)
 
             # check the data quality
             thedataquality = stability_eval(specs, datadict[i])

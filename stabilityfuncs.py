@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 import logging
-logging.basicConfig(format='%(levelname)s:%(message)s')
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 from htmltagutils import *
 import ConfigParser
 
