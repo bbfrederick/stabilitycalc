@@ -8,22 +8,7 @@ from htmltagutils import *
 import logging
 import stabilityfuncs as sf
 import argparse
-
-
-#
-# os utilities
-#
-# send a command to the shell
-
-
-def doashellcmd(cmd):
-    a = os.popen(cmd)
-    while True:
-        line = a.readline()
-        if not line:
-            break
-        retval = line[:-1]
-        return retval
+import subprocess
 
 
 def stability_eval(specs, thedictionary):
@@ -42,8 +27,6 @@ def stability_eval(specs, thedictionary):
                 stability_results[theentry]['quality'] = sf.limitcheck(thedictionary[theentry], specs[theentry])
                 if entrydata[2][1] == 1:
                     stability_results[theentry]['critical'] = True
-                    # if stability_results[theentry]['quality']>0:
-                    # print entrydata[3],stability_results[theentry]['quality']
                 else:
                     stability_results[theentry]['critical'] = False
                 stability_results[theentry]['symbol'] = entrydata[4]
@@ -280,15 +263,11 @@ with open(pjoin(outputdirectory, whichscan, 'plotcmds_centralsignal'), 'w') as f
     fp.writelines('plot    "' + outputdirectory + '/' + whichscan + '/graphtemp" using 2:24 title \'Mean central signal intensity\' with ' + wlp + ' ' + pointsize + ' pt 3\n')
 
 for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
-    shutil.copyfile(pjoin(outputdirectory, whichscan, targetcoil + '_vals.txt'), pjoin(outputdirectory, whichscan, 'graphtemp'))
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_snrsfnr.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roistab > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roistab.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roidrift > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roidrift.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_ghost > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_ghost.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_objradius > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_objradius.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_objshape > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_objshape.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_weissrdc > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_weissrdc.jpg")
-    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_centralsignal > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_centralsignal.jpg")
+    outscandir = pjoin(outputdirectory, whichscan)
+    shutil.copyfile(pjoin(outscandir, targetcoil + '_vals.txt'), pjoin(outscandir, 'graphtemp'))
+    for plottype in ['snrsfnr', 'roistab', 'roidrift', 'ghost', 'objradius', 'objshape', 'weissrdc', 'centralsignal']:
+        subprocess.Popen(['gnuplot', pjoin(outscandir, 'plotcmds_' + plottype)],
+                         stdout=open(pjoin(outscandir, '{}_{}.jpg'.format(targetcoil, plottype)), 'wb'))
 
 #######################################################################################
 # generate a report file
