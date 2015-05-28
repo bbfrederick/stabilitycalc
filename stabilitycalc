@@ -772,7 +772,7 @@ def main():
     croiparastr = paratag(
         "This is an analysis of the temporal fluctuation in a central voxels. A " + str(centralroisize) + "x" + str(
             centralroisize) +
-        "x1 voxel is automatically postioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
+        "x1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
 
     rawroicellstr = tableentrytag(
         paratag(boldtag("Raw central ROI plot")) +
@@ -838,7 +838,7 @@ def main():
         phasedarrayroihdrstr = hruletag() + headertag("Phased array element maximum sensitivity region ROI Analysis")
         phasedarrayroiparastr = paratag(
             "This is an analysis of the variation in SNR, SFNR, and stability parameters across the individual coil elements in a phased array. A set of " + str(
-                maxlocroisize) + "x" + str(maxlocroisize) + "x1 voxels are postioned " + str(maxlocradfrac) +
+                maxlocroisize) + "x" + str(maxlocroisize) + "x1 voxels are positioned " + str(maxlocradfrac) +
             " of the distance from the phantom center to the edge along the direction of maximum sensitivity for the coil element. The average voxel values are plotted a function of coil element. The timecourses from each location are then crosscorrelated to assess common mode noise. Non-zero off-diagonal elements indicate correlation between channels, either due to geometric overlap or common mode system noise.\n")
 
         snrroicellstr = tableentrytag(
@@ -871,7 +871,7 @@ def main():
     if isindividualcoil:
         maxlocroihdrstr = hruletag() + headertag("Maximum sensitivity region ROI Analysis")
         maxlocroiparastr = paratag(
-            "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically postioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
+            "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
 
         rawroicellstr = tableentrytag(
             paratag(boldtag("Raw max sensitivity ROI plot")) +
