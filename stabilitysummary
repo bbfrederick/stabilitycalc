@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
 import os
+from os.path import join as pjoin
 import time
 from htmltagutils import *
 import stabilityfuncs as sf
@@ -305,9 +305,10 @@ REPORTFILE.writelines("        function theClock() {\n")
 REPORTFILE.writelines("            var one_minute=1000*60;\n")
 REPORTFILE.writelines("            var one_hour=one_minute*60;\n")
 REPORTFILE.writelines("            var one_day=one_hour*24;\n")
-date32 = mostrecenttimes['32Ch_Head']
-date12 = mostrecenttimes['HeadMatrix']
-datecp = mostrecenttimes['TxRx_Head']
+# format: 20150410T080041
+date32 = mostrecenttimes.get('32Ch_Head', '19700101T000000')
+date12 = mostrecenttimes.get('HeadMatrix', '19700101T000000')
+datecp = mostrecenttimes.get('TxRx_Head', '19700101T000000')
 args32 = date32[0:4] + "," + str(int(date32[4:6]) - 1) + "," + date32[6:8] + "," + date32[9:11] + "," + date32[11:13] + "," + date32[13:15]
 args12 = date12[0:4] + "," + str(int(date12[4:6]) - 1) + "," + date12[6:8] + "," + date12[9:11] + "," + date12[11:13] + "," + date12[13:15]
 argscp = datecp[0:4] + "," + str(int(datecp[4:6]) - 1) + "," + datecp[6:8] + "," + datecp[9:11] + "," + datecp[11:13] + "," + datecp[13:15]
@@ -432,8 +433,12 @@ row1 = tableentrytag(yellowtag("Warning, ") + redtag("Out of spec")) + tableentr
 keyrows = ""
 for theentry in specs:
     entrydata = specs[theentry]
-    if entrydata[2][1] == 1:
-        keyrows = keyrows + tablerowtag(tableentrytag(entrydata[4]) + tableentrytag(entrydata[3]))
+    # TODO this is a hack to get it to run but is not what i want. dmd.
+    try:
+        if entrydata[2][1] == 1:
+            keyrows = keyrows + tablerowtag(tableentrytag(entrydata[4]) + tableentrytag(entrydata[3]))
+    except KeyError:
+        pass
 REPORTFILE.writelines(tablepropstag(bigtag(row0 + row1 + keyrows), int(1.0 * myimwidth), "left"))
 
 # copy and link to individual reports
@@ -449,23 +454,25 @@ for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
     for i in range(filenumber_TARGET - 1, -1, -1):
         if datadict[i]['Coil'] == targetcoil:
             # copy the individual scan data if necessary
-            if os.path.exists(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir']):
-                copypreamble = outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'] + " exists..."
-                desttime = os.path.getmtime(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
-                sourcetime = os.path.getmtime(datadirectory + "/" + datadict[i]['datadir'])
+            dat_procresults = pjoin(datadirectory, datadict[i]['datadir'])
+            out_procresults = pjoin(outputdirectory, whichscan, datadict[i]['datadir'])
+            if os.path.exists(out_procresults):
+                copypreamble = out_procresults + " exists..."
+                desttime = os.path.getmtime(out_procresults)
+                sourcetime = os.path.getmtime(pjoin(datadirectory, datadict[i]['datadir']))
                 if sourcetime >= desttime:
                     print(copypreamble, "and is modified - copying")
-                    print(datadirectory + "/" + datadict[i]['datadir'])
+                    print(dat_procresults)
                     print("time difference=", desttime - sourcetime)
-                    doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
-                    doashellcmd("touch " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                    doashellcmd("cp -r " + dat_procresults + "/* " + out_procresults)
+                    doashellcmd("touch " + out_procresults)
                 else:
                     print(copypreamble, "and is current - not copying")
             else:
-                print(outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'], " does not already exist... copying")
-                doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
-                doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
-                doashellcmd("touch " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                print(out_procresults, " does not already exist... copying")
+                doashellcmd("mkdir -p " + out_procresults)
+                doashellcmd("cp -r " + dat_procresults + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir'])
+                doashellcmd("touch " + out_procresults)
 
             # check the data quality
             thedataquality = stability_eval(specs, datadict[i])
