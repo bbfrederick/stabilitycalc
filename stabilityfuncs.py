@@ -16,6 +16,19 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 from htmltagutils import *
 import ConfigParser
 
+
+def dict_from_tsvfile(filename):
+    """open a tab separated two column file, return it as a str->str dict"""
+
+    d = {}
+    with open(filename) as csvfile:
+        reader = csv.reader(csvfile, delimiter='\t')
+        for row in reader:
+            d[row[0]] = row[1]
+
+    return d
+
+
 def stabilityparms(option, section='paths'):
     """
     retrieve a value from the configuration file.
@@ -34,6 +47,7 @@ def stabilityparms(option, section='paths'):
         return config.get(section, option.lower())
     except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
         return ''
+
 
 def getlimits(coil):
     # noinspection PyShadowingNames

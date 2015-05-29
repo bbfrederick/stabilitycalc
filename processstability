@@ -20,7 +20,7 @@ if( $pacename != '' ) then
     echo 'PACE name: ' $pacename
     dicom2nifti.py $sorteddicomdir/$session/$pacename $processedscandir/$session epi_pace
     studyinfo.py $sorteddicomdir'/'$session'/'$pacename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_pace/studyinfo'
-    stabilitycalc $processedscandir/$session/epi_pace epi_pace.nii.gz 10
+    stabilitycalc.py $processedscandir/$session/epi_pace epi_pace.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_pace
 
     setenv com_x	`grep center_of_mass_x $processedscandir/$session/epi_pace/procresults/analysissummary.txt | awk '{print $2}'`
@@ -34,48 +34,53 @@ if( $pacename != '' ) then
     end
 
     source $sorteddicomdir/$session/elementlist
-    stabilitysummary $processedscandir $outputdir'/3T/birn' epi_pace &
-    #stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace &
+    stabilitysummary.py $processedscandir $outputdir'/3T/birn' epi_pace 
+    #stabilitysummary.py --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_pace 
 endif
 
 if( $singleslicename != '' ) then
     echo 'SS name: ' $singleslicename
+    echo 'SS doing dicom2nifti'
     dicom2nifti.py $sorteddicomdir/$session/$pacename $processedscandir/$session epi_singleslice
+echo 'SS doing studyinfo'
     studyinfo.py $sorteddicomdir'/'$session'/'$singleslicename'/'IM*0001.dcm > $processedscandir'/'$session'/epi_singleslice/studyinfo'
-    stabilitycalc $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
+echo 'SS doing stabilitycalc'
+    echo stabilitycalc.py $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
+    stabilitycalc.py $processedscandir/$session/epi_singleslice epi_singleslice.nii.gz 10
+echo 'SS did stabilitycalc'
     chmod -R a+r $processedscandir/$session/epi_singleslice
-    stabilitysummary $processedscandir $outputdir'/3T/birn' epi_singleslice &
-    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_singleslice &
+    stabilitysummary.py $processedscandir $outputdir'/3T/birn' epi_singleslice 
+    stabilitysummary.py --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_singleslice 
 endif
 
 if( $multiflip77name != '' ) then
     echo 'Multiflip_77 name: ' $multiflip77name
     dicom2nifti.py $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip77
     studyinfo.py $sorteddicomdir'/'$session'/'$multiflip77name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip77/studyinfo'
-    stabilitycalc $processedscandir/$session/epi_multiflip77 epi_multiflip77.nii.gz 10
+    stabilitycalc.py $processedscandir/$session/epi_multiflip77 epi_multiflip77.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip77 
-    stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip77 &
-    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 &
+    stabilitysummary.py $processedscandir $outputdir'/3T/birn' epi_multiflip77 
+    stabilitysummary.py --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip77 
 endif
 
 if( $multiflip10name != '' ) then
     echo 'Multiflip_10 name: ' $multiflip10name
     dicom2nifti.py $sorteddicomdir/$session/$pacename $processedscandir/$session epi_multiflip10
     studyinfo.py $sorteddicomdir'/'$session'/'$multiflip10name'/'IM*0001.dcm > $processedscandir'/'$session'/epi_multiflip10/studyinfo'
-    stabilitycalc $processedscandir/$session/epi_multiflip10 epi_multiflip10.nii.gz 10
+    stabilitycalc.py $processedscandir/$session/epi_multiflip10 epi_multiflip10.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_multiflip10 
-    stabilitysummary $processedscandir $outputdir'/3T/birn' epi_multiflip10 &
-    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 &
+    stabilitysummary.py $processedscandir $outputdir'/3T/birn' epi_multiflip10 
+    stabilitysummary.py --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_multiflip10 
 endif
 
 if( $boldname != '' ) then
     echo 'BOLD name: ' $boldname
     dicom2nifti.py $sorteddicomdir/$session/$pacename $processedscandir/$session epi_bold
     studyinfo.py $sorteddicomdir'/'$session'/'$boldname'/'IM*0001.dcm > $processedscandir'/'$session'/epi_bold/studyinfo'
-    stabilitycalc $processedscandir/$session/epi_bold epi_bold.nii.gz 10
+    stabilitycalc.py $processedscandir/$session/epi_bold epi_bold.nii.gz 10
     chmod -R a+r $processedscandir/$session/epi_bold 
-    stabilitysummary $processedscandir $outputdir'/3T/birn' epi_bold &
-    stabilitysummary --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_bold &
+    stabilitysummary.py $processedscandir $outputdir'/3T/birn' epi_bold 
+    stabilitysummary.py --nonbirn $processedscandir $outputdir'/3T/nonbirn' epi_bold 
 endif
 
 touch $processedscandir/$session

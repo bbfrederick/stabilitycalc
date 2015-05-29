@@ -16,6 +16,6 @@ setenv funcremap	'x -y z'
 if( -e $sorteddicomdir'/'$session'/'$elementinname ) then
     dicom2nifti.py $sorteddicomdir/$session/$elementinname $processedscandir/$session $elementoutbase'_'$elementoutsuffix 
     studyinfo.py $sorteddicomdir'/'$session'/'$elementinname'/'IM*0001.dcm > $processedscandir'/'$session'/'$elementoutbase'_'$elementoutsuffix'/studyinfo'
-    stabilitycalc $processedscandir/$session/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
+    stabilitycalc.py $processedscandir/$session/$elementoutbase'_'$elementoutsuffix $elementoutbase'_'$elementoutsuffix'.nii.gz' 0 $com_x $com_y $com_z
 endif
 
