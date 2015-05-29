@@ -1,9 +1,0 @@
-#!/bin/csh -f
-
-setenv rawdicomdir	`stabilityparms RAWDICOMDIR`
-setenv sorteddicomdir	`stabilityparms SORTEDDICOMDIR`
-setenv processedscandir	`stabilityparms PROCESSEDSCANDIR`
-setenv outputdir	`stabilityparms OUTPUTDIR`
-stabilitysummary $processedscandir $outputdir/3T/birn epi_pace &
-stabilitysummary $processedscandir $outputdir/3T/birn epi_singleslice &
-stabilitysummary $processedscandir $outputdir/3T/birn epi_bold &
