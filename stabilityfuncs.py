@@ -25,7 +25,7 @@ def stabilityparms(option, section='paths'):
     config = ConfigParser.ConfigParser()
 
     try:
-        config.read('config/config.ini')
+        config.read('config/stability.ini')
     except IOError:
         logging.critical('Failed to open configuration file.')
 
