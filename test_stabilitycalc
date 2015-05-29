@@ -11,8 +11,8 @@ fi
 for COIL in TxRx 32Ch; do
     rm -rf $DATA/test$COIL/procresults
 done
-./stabilitycalc $DATA/test32Ch epi_pace.nii.gz 0
-./stabilitycalc $DATA/testTxRx epi_short.nii.gz 0
+./stabilitycalc.py $DATA/test32Ch epi_pace.nii.gz 0
+./stabilitycalc.py $DATA/testTxRx epi_short.nii.gz 0
 failed=0
 for COIL in TxRx 32Ch; do
     echo ==================
