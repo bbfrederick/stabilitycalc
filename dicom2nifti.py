@@ -22,7 +22,6 @@ def dicom2nifti(dicomdir, niftidir, niftiname):
     c.inputs.date_in_filename = False
     c.run()
 
-    # TODO why the hell doesn't this print
     logging.info('dicom2nifti: wrote {}/{}'.format(niftidir, niftiname))
 
     # but, we're weird and we want a standardized name

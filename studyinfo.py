@@ -61,7 +61,7 @@ def studyinfo_write(studyinfo_file, info):
 if __name__ == '__main__':
     import argparse
 
-    logging.basicConfig(format='%(levelname)s:%(message)s')
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description='Pull header data from a DICOM file.')
     parser.add_argument('dicomfile', help='The dicom to examine.')
