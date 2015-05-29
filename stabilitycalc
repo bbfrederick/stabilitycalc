@@ -10,33 +10,19 @@ import matplotlib.pyplot as plt
 from htmltagutils import *
 import shutil
 import nibabel as nib
-import argparse
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
 from studyinfo import studyinfo
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
-    parser.add_argument('dirname', help='the directory where the 4D NIFTI file is located')
-    parser.add_argument('filename', help='the name of the 4D NIFTI file')
-    parser.add_argument('starttime', help='the number of tr periods to skip at the beginning of the file')
-
-    com = parser.add_argument_group('use this location as the center of mass of the phantom')
-    com.add_argument('initxcenter', nargs='?', metavar='xcenter')
-    com.add_argument('initycenter', nargs='?', metavar='ycenter')
-    com.add_argument('initzcenter', nargs='?', metavar='zcenter')
-
-    args = parser.parse_args()
-    if None in (args.initxcenter, args.initycenter, args.initzcenter) and not args.initxcenter == args.initycenter == args.initzcenter:
-        parser.error('If you set one center of mass parameter, you must set all three.')
-
-    dirname, filename, starttime = args.dirname, args.filename, int(args.starttime)
+def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=None, initzcenter=None):
+    """create the stability report for a scan"""
 
     isindividualcoil = False
-    if args.initxcenter is not None:
-        initxcenter, initycenter, initzcenter = [float(x) for x in (args.initxcenter, args.initycenter, args.initzcenter)]
+
+    if initxcenter is not None:
+        initxcenter, initycenter, initzcenter = [float(x) for x in (initxcenter, initycenter, initzcenter)]
         isindividualcoil = True
 
     nim = nib.load(pjoin(dirname, filename))
@@ -1107,5 +1093,21 @@ def main():
     sumfp.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
     outfp.writelines("</body>\n")
 
+if __name__ == '__main__':
+    import argparse
 
-main()
+    parser = argparse.ArgumentParser(description='Calculate stability values and create the output web page.')
+    parser.add_argument('dirname', help='the directory where the 4D NIFTI file is located')
+    parser.add_argument('filename', help='the name of the 4D NIFTI file')
+    parser.add_argument('starttime', help='the number of tr periods to skip at the beginning of the file')
+
+    com = parser.add_argument_group('use this location as the center of mass of the phantom')
+    com.add_argument('initxcenter', nargs='?', metavar='xcenter')
+    com.add_argument('initycenter', nargs='?', metavar='ycenter')
+    com.add_argument('initzcenter', nargs='?', metavar='zcenter')
+
+    args = parser.parse_args()
+    if None in (args.initxcenter, args.initycenter, args.initzcenter) and not args.initxcenter == args.initycenter == args.initzcenter:
+        parser.error('If you set one center of mass parameter, you must set all three.')
+
+    stabilitycalc(args.dirname, args.filename, int(args.starttime), args.initxcenter, args.initycenter, args.initzcenter)
