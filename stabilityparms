@@ -17,6 +17,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Retrieve a value from the configuration file.')
     parser.add_argument('option', help='The option to retrieve.')
     parser.add_argument('--section', '-s', default='paths')
-    f = parser.parse_args()
+    args = parser.parse_args()
 
-    print(stabilityparms(option=f.option, section=f.section))
+    print(stabilityparms(option=args.option, section=args.section))
