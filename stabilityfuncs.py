@@ -28,6 +28,7 @@ def stabilityparms(option, section='paths'):
         config.read('config/stability.ini')
     except IOError:
         logging.critical('Failed to open configuration file.')
+        exit(1)
 
     try:
         return config.get(section, option.lower())
