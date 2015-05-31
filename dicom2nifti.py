@@ -9,7 +9,7 @@ import logging
 from nipype.interfaces.dcm2nii import Dcm2nii
 import studyinfo as si
 
-def dicom2nifti(dicomdir, niftidir, niftiname):
+def dicom2nifti(dicomdir, niftidir, niftiname, studyinfo=True):
     # clean up anything we did earlier
     shutil.rmtree(pjoin(niftidir, niftiname), ignore_errors=True)
     os.makedirs(pjoin(niftidir, niftiname))
@@ -25,7 +25,13 @@ def dicom2nifti(dicomdir, niftidir, niftiname):
     logging.info('dicom2nifti: wrote {}/{}'.format(niftidir, niftiname))
 
     # but, we're weird and we want a standardized name
-    os.rename(glob(pjoin(niftidir, niftiname, '*nii.gz'))[0], pjoin(niftidir, niftiname, niftiname + '.nii.gz'))
+    dest = pjoin(niftidir, niftiname, niftiname + '.nii.gz')
+    os.rename(glob(pjoin(niftidir, niftiname, '*nii.gz'))[0], dest)
+
+    if studyinfo:
+        si.embed_studyinfo(dest, si.studyinfo_from_dicom(glob(pjoin(dicomdir, 'IM*000[1-9].dcm'))[0]))
+
+    return dest
 
 if __name__ == '__main__':
     import argparse
@@ -41,7 +47,7 @@ if __name__ == '__main__':
     dicom2nifti(args.dicomdir, args.niftidir, args.niftiname)
     
     try:
-        info = si.studyinfo_from_dicom(glob(pjoin(args.dicomdir, 'IM*0001.dcm'))[0])
+        info = si.studyinfo_from_dicom(glob(pjoin(args.dicomdir, 'IM*000[1-9].dcm'))[0])
         si.studyinfo_write(pjoin(args.niftidir, args.niftiname, 'studyinfo'), info)
     except IndexError:
         logging.warning('dicom2nifti: no IM*0001.dcm found, writing empty studyinfo file')
