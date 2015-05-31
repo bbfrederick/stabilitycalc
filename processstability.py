@@ -37,11 +37,11 @@ def processstability(session):
         else:
             return n[0]
 
-    for scantype, pattern in scantypes.iteritems():
+    for scantype, pattern in scantypes.items():
         scan = name(pattern)
         if scan:
             logging.debug('processstability: {}, {}'.format(scantype, scan))
-            dicom_to_stabilitycalc(dicomseries=scan, niftiname=scantype)
+            _dicom_to_stabilitycalc(dicomseries=scan, niftiname=scantype)
 
             if scantype == 'epi_pace':
                 analsum = dict_from_tsvfile(pjoin(processedscandir, session, scantype, 'procresults', 'analysissummary.txt'))
@@ -57,26 +57,26 @@ def processstability(session):
                     ele = 'element_' + ele
 
                     logging.debug('processstability: PACE: doing scan={}, unc={}, ele={}'.format(scan, bunc, ele))
-                    dicom_to_stabilitycalc(bunc, ele, starttime=0,
+                    _dicom_to_stabilitycalc(bunc, ele, starttime=0,
                                            initxcenter=analsum['center_of_mass_x'],
                                            initycenter=analsum['center_of_mass_y'],
                                            initzcenter=analsum['center_of_mass_z'])
 
-            stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'birn'), scantype, TargetisBIRNphantom=True)
+            if summ:
+                stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'birn'), scantype, TargetisBIRNphantom=True)
 
-            if scantype != 'epi_pace':
-                stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'nonbirn'), scantype, TargetisBIRNphantom=False)
+                if scantype != 'epi_pace':
+                    stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'nonbirn'), scantype, TargetisBIRNphantom=False)
 
 
-def dicom_to_stabilitycalc(dicomseries, niftiname, starttime=10, initxcenter=None, initycenter=None, initzcenter=None):
+def _dicom_to_stabilitycalc(dicomseries, niftiname, starttime=10, initxcenter=None, initycenter=None, initzcenter=None):
 
-    dicom2nifti(pjoin(sorteddicomdir, session, dicomseries),
-                pjoin(processedscandir, session), niftiname)
+    if dicom:
+        dicom2nifti(pjoin(sorteddicomdir, session, dicomseries),
+                    pjoin(processedscandir, session), niftiname)
 
-    # TODO ask Blaise about this.
-    # stability_tracking_raw/stability_20150406_070033_32Ch_Head/ep2d_pace_normalize_5/ has no IM*0001
-    si.studyinfo_write(pjoin(processedscandir, session, niftiname, 'studyinfo'),
-                       si.studyinfo_from_dicom(glob(pjoin(sorteddicomdir, session, dicomseries, 'IM*000[123].dcm'))[0]))
+        si.studyinfo_write(pjoin(processedscandir, session, niftiname, 'studyinfo'),
+                           si.studyinfo_from_dicom(glob(pjoin(sorteddicomdir, session, dicomseries, 'IM*000[1-9].dcm'))[0]))
 
     stabilitycalc(pjoin(processedscandir, session, niftiname), niftiname + '.nii.gz', starttime, initxcenter, initycenter, initzcenter)
 
@@ -85,9 +85,13 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Convert DICOMs, run stability{calc,summary}.')
-    parser.add_argument('session', help='The session to work on, relative to SORTEDDICOMDIR.')
+    parser.add_argument('session', help='The session to work on, relative to SORTEDDICOMDIR or PROCESSEDSCANDIR.')
+    parser.add_argument('--nodicom', help='Do not reprocess DICOM files; assume they are already done.', action='store_true')
+    parser.add_argument('--nosumm', help='Do not reprocess summaries.', action='store_true')
     args = parser.parse_args()
 
     session = args.session
+    dicom = not args.nodicom
+    summ = not args.nosumm
 
     processstability(session)
