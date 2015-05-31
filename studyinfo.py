@@ -1,8 +1,30 @@
 #!/usr/bin/env python
 
 import os
-import dicom
 import logging
+import dicom
+import nibabel as nib
+
+
+def embed_studyinfo(niftifile, studyinfo_dict):
+    """embed a studyinfo dict into a nifti image header extension comment (type 6)"""
+
+    NEinfo = nib.nifti1.Nifti1Extension('comment', str(studyinfo_dict))
+    image = nib.load(niftifile)
+    image.header.extensions.append(NEinfo)
+    nib.save(image, niftifile)
+
+
+def extract_studyinfo(niftifile):
+    """extract a studyinfo dict from a nifti image header extension comment"""
+
+    info = {'Coil': '', 'StudyDate': '', 'StudyTime': '', 'ElementName': ''}
+    image = nib.load(niftifile)
+    for extension in image.header.extensions:
+        content = extension.get_content()
+        if 'StabilityCalcStudyinfo' in content:
+            info = eval(content)
+    return info
 
 
 def studyinfo_from_dicom(dicomfilename):
@@ -25,7 +47,8 @@ def studyinfo_from_dicom(dicomfilename):
 
     info = {'Coil': siemensheader['asCoilSelectMeas[0].asList[0].sCoilElementID.tCoilID'].strip('"'),
             'StudyDate': plan.StudyDate,
-            'StudyTime': plan.StudyTime}
+            'StudyTime': plan.StudyTime,
+            'StabilityCalcStudyinfo': '1'}
 
     try:
         info['ElementName'] = plan[0x0051, 0x100f].value
@@ -33,29 +56,6 @@ def studyinfo_from_dicom(dicomfilename):
         info['ElementName'] = 'UNKNOWN'
 
     return info
-
-
-def studyinfo(studyinfo_file):
-    """read a studyinfo file"""
-
-    if not os.path.exists(studyinfo_file):
-        logging.info('studyinfo: studyinfo file {} not found, using empty one'.format(studyinfo_file))
-        return {'Coil': '', 'StudyDate': '', 'StudyTime': '', 'ElementName': ''}
-
-    info = {}
-    for line in open(studyinfo_file):
-        k, v = line.split(': ', 1)
-        info[k] = v.strip()
-
-    return info
-
-
-def studyinfo_write(studyinfo_file, info):
-    """write a studyinfo file"""
-
-    with open(studyinfo_file, 'w') as fp:
-        for pair in info.items():
-            fp.write(': '.join(pair) + '\n')
 
 
 if __name__ == '__main__':
