@@ -13,8 +13,7 @@ import nibabel as nib
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
-from studyinfo import studyinfo
-
+import studyinfo
 
 def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=None, initzcenter=None):
     """create the stability report for a scan"""
@@ -33,7 +32,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     selecteddata = np.transpose(nim.get_data()[:, :, :, starttime:], (3, 2, 1, 0))
 
-    info = studyinfo(os.path.join(dirname, 'studyinfo'))
+    info = studyinfo.extract_studyinfo(pjoin(dirname, filename))
 
     if info['ElementName'] == '':
         info['ElementName'] = 'unknown'

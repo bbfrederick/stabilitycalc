@@ -10,7 +10,6 @@ import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 from stabilityfuncs import stabilityparms, dict_from_tsvfile
-import studyinfo as si
 from dicom2nifti import dicom2nifti
 from stabilitycalc import stabilitycalc
 from stabilitysummary import stabilitysummary
@@ -74,9 +73,6 @@ def _dicom_to_stabilitycalc(dicomseries, niftiname, starttime=10, initxcenter=No
     if dicom:
         dicom2nifti(pjoin(sorteddicomdir, session, dicomseries),
                     pjoin(processedscandir, session), niftiname)
-
-        si.studyinfo_write(pjoin(processedscandir, session, niftiname, 'studyinfo'),
-                           si.studyinfo_from_dicom(glob(pjoin(sorteddicomdir, session, dicomseries, 'IM*000[1-9].dcm'))[0]))
 
     stabilitycalc(pjoin(processedscandir, session, niftiname), niftiname + '.nii.gz', starttime, initxcenter, initycenter, initzcenter)
 
