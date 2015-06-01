@@ -21,12 +21,10 @@ def doashellcmd(cmd):
 
 # read in the datafile
 stab_bindir = stabilityparms('bindir')
-print(">>>", stab_bindir, "<<<")
-if len(sys.argv) != 3:
-    print("usage: renamestabilitydata datadirectory outputdirectory")
-    exit()
-datadirectory = sys.argv[1]
-outputdirectory = sys.argv[2]
+
+# TODO convert to argparse
+datadirectory = stabilityparms('rawdicomdir')
+outputdirectory = stabilityparms('sorteddicomdir')
 
 #
 # scan the data directory for stability scans which haven't been renamed
