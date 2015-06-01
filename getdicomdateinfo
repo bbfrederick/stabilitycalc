@@ -14,14 +14,11 @@ def getsiemensmrheader(theplan):
 
     try:
         SeriesHeader = theplan[0x0029, 0x1020].value
-        # print SeriesHeader
     except KeyError:
         allheaderspresent = False
 
     try:
         ImageHeader = theplan[0x0029, 0x1010].value
-        # print "############################ IMAGE ####################################"
-        # print ImageHeader
     except KeyError:
         allheaderspresent = False
 
@@ -36,33 +33,19 @@ def getsiemensmrheader(theplan):
         InterestingSiemensHeader = SiemensCSAHeader2[startposition:endposition].splitlines()
         for theline in InterestingSiemensHeader[1:]:
             thepair = theline.split()
-            # print thepair
             datadict[thepair[0]] = thepair[2]
 
     return datadict
 
-# read in the datafile
 if len(sys.argv) != 2:
     print("usage: getdicominfo inputfile")
     exit()
 filename = sys.argv[1]
 plan = dicom.read_file(filename)
 
-# print 'Metadata:'
-# print plan.file_meta
-# print
-# print
-# print
-# print 'Dicom Header:'
-# print plan
-
-#
-# You don't want to look up here ^
 timestr = float(plan.AcquisitionTime)
 timeconv = 3600 * (int(timestr / 10000) % 100) + 60 * (int(timestr / 100) % 100) + timestr % 100 + (timestr - int(timestr))
 
-# this is how you get things from the dicom header
 date = plan[0x0040, 0x0244].value
 
-# this is a print statement
 print(filename, date, timestr)

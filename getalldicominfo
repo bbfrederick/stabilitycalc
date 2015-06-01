@@ -14,14 +14,11 @@ def getsiemensmrheader(theplan):
 
     try:
         SeriesHeader = theplan[0x0029, 0x1020].value
-        # print SeriesHeader
     except KeyError:
         allheaderspresent = False
 
     try:
         ImageHeader = theplan[0x0029, 0x1010].value
-        # print "############################ IMAGE ####################################"
-        # print ImageHeader
     except KeyError:
         allheaderspresent = False
 
@@ -36,12 +33,10 @@ def getsiemensmrheader(theplan):
         InterestingSiemensHeader = SiemensCSAHeader2[startposition:endposition].splitlines()
         for theline in InterestingSiemensHeader[1:]:
             thepair = theline.split()
-            print(thepair)
             datadict[thepair[0]] = thepair[2]
 
     return datadict
 
-# read in the datafile
 if len(sys.argv) != 2:
     print("usage: getdicominfo inputfile")
     exit()
