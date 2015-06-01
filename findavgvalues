@@ -90,8 +90,6 @@ datadirectory = sys.argv[1]
 outputdirectory = sys.argv[2]
 
 # initialize the outut directory if need be
-#doashellcmd("mkdir -p "+outputdirectory+"/32Ch_Head_summary")
-#doashellcmd("mkdir -p "+outputdirectory+"/HeadMatrix_summary")
 
 #
 # scan the data directory for stability scans
@@ -309,5 +307,3 @@ for i in range(filenumber):
         REPORTFILE.writelines("<p><a href=" + datadict[i]['datadir:'] + "/output.html>")
         REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
 
-#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/graphtemp")
-#doashellcmd("rm "+outputdirectory+"/"+whichscan+"/plotcmds")

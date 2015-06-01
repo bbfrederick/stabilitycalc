@@ -629,13 +629,3 @@ def makecaptionedimage(imagetitle, thestats, imagename, thewidth):
         imcapstring = paratag(boldtag(imagetitle) + breaktag(showstats(thestats)))
     return imcapstring + imagetag(imagename, thewidth)
 
-
-def doashellcmd(cmd):
-    # send a command to the shell
-    a = os.popen(cmd)
-    while True:
-        line = a.readline()
-        if not line:
-            break
-        retval = line[:-1]
-        return retval
