@@ -67,6 +67,7 @@ def processstability(session):
                 if scantype != 'epi_pace':
                     stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'nonbirn'), scantype, TargetisBIRNphantom=False)
 
+    logging.info('processstability done.')
 
 def _dicom_to_stabilitycalc(dicomseries, niftiname, starttime=10, initxcenter=None, initycenter=None, initzcenter=None):
 

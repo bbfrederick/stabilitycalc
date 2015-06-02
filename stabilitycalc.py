@@ -28,9 +28,19 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     nim_hdr = nim.get_header()
     xdim, ydim, slicethickness, tr = nim_hdr['pixdim'][1:5]
     xsize, ysize, numslices = nim_hdr['dim'][1:4]
-    numtimepoints = nim_hdr['dim'][4] - starttime
 
-    selecteddata = np.transpose(nim.get_data()[:, :, :, starttime:], (3, 2, 1, 0))
+    dims = nim.get_data().shape
+    if len(dims) == 4:
+        # normal case
+        selecteddata = nim.get_data()[:, :, :, starttime:].transpose(3, 2, 1, 0)
+    elif len(dims) == 3:
+        # single slice
+        selecteddata = nim.get_data()[:, :, starttime:]
+        # nifti loses the z dimension; we must reconstitute it
+        sdshape = selecteddata.shape
+        selecteddata = selecteddata.reshape(sdshape[0], sdshape[1], 1, sdshape[2]).transpose(3,2,1,0)
+
+    numtimepoints = selecteddata.shape[0]
 
     info = studyinfo.extract_studyinfo(pjoin(dirname, filename))
 
