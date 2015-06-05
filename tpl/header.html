@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<head>
+    <title>Stability report for ${info['Coil']} generated on ${thisdate}</title>
+    <style type="text/css">
+        h1 {
+            font-family: courier new;
+            text-decoration: underline;
+        }
+
+        h2 {
+            font-family: courier new;
+            color: teal;
+            text-decoration: underline;
+        }
+
+        h3 {
+            font-family: courier new;
+            color: maroon;
+            text-decoration: none;
+        }
+
+        h4 {
+            font-family: courier new;
+            text-decoration: none;
+        }
+
+        p {
+            font-family: courier new;
+            color: black;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        td {
+            font-family: courier new;
+            color: black;
+            font-size: 12px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+<h2>Stability analysis of ${filename}</h2>
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="700" cellpadding="2">
+    <tr>
+        <td style="font-size:20px">Coil:</td>
+        <td style="font-size:20px">${info['Coil']}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Element:</td>
+        <td style="font-size:20px">${info['ElementName']}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Date:</td>
+        <td style="font-size:20px">${formatteddate}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Time:</td>
+        <td style="font-size:20px">${formattedtime}</td>
+    </tr>
+</table>
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="700" cellpadding="2">
+    <tr>
+        <td style="font-size:20px">Object center of mass:</td>
+        <td style="font-size:20px">${xcenterf},${ycenterf},${zcenterf}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Object type:</td>
+        <td style="font-size:20px">${objecttypestr}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Object mean radius:</td>
+        <td style="font-size:20px">${object_radius_mm}</td>
+    </tr>
+    <tr>
+        <td style="font-size:20px">Object shape factor:</td>
+        <td style="font-size:20px">${object_shape}</td>
+    </tr>
+</table>
+% if is_birn_protocol:
+    <h3>Imaging protocol: BIRN stability</h3>
+% endif
+<!--- end of header --->

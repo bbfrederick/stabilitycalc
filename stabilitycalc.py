@@ -10,10 +10,16 @@ import matplotlib.pyplot as plt
 from htmltagutils import *
 import shutil
 import nibabel as nib
+
+from mako.template import Template
+from mako.lookup import TemplateLookup
+makolookup = TemplateLookup(directories=['./tpl'])
+
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
 import studyinfo
+
 
 def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=None, initzcenter=None):
     """create the stability report for a scan"""
@@ -38,7 +44,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         selecteddata = nim.get_data()[:, :, starttime:]
         # nifti loses the z dimension; we must reconstitute it
         sdshape = selecteddata.shape
-        selecteddata = selecteddata.reshape(sdshape[0], sdshape[1], 1, sdshape[2]).transpose(3,2,1,0)
+        selecteddata = selecteddata.reshape(sdshape[0], sdshape[1], 1, sdshape[2]).transpose(3, 2, 1, 0)
 
     numtimepoints = selecteddata.shape[0]
 
@@ -309,11 +315,13 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     centpp = np.ptp(centtc)
     centmeanstr = "mean=%4.4f" % float(centmean)
     centdriftstr = "drift=%4.4f" % float(centdrift)
+
     stddevquality = sf.limitcheck(centstddev / centmean * 100.0, limits['central_roi_raw_std%'])
-    centstddevstr = "stddev=%4.4f " % centstddev + boldtag(
-        qualitytag("(%4.4f%%)", stddevquality) % (centstddev / centmean * 100.0))
+    centstddev_qualitytag = qualitytag("(%4.4f%%)", stddevquality) % (centstddev / centmean * 100.0)
+    centstddevstr = "stddev=%4.4f " % centstddev + boldtag(centstddev_qualitytag)
     ppquality = sf.limitcheck(centpp / centmean * 100.0, limits['central_roi_raw_p-p%'])
-    centppstr = "p-p=%4.4f " % centpp + boldtag(qualitytag("(%4.4f%%)", ppquality) % (centpp / centmean * 100.0))
+    centpp_qualitytag = qualitytag("(%4.4f%%)", ppquality) % (centpp / centmean * 100.0)
+    centppstr = "p-p=%4.4f " % centpp + boldtag(centpp_qualitytag)
     centtc_summary = centmeanstr + breaktag(centstddevstr) + breaktag(centppstr) + breaktag(centdriftstr)
 
     centmean_dt = np.mean(detrendedcenttc)
@@ -321,13 +329,11 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     centmin_dt = np.min(detrendedcenttc)
     centmax_dt = np.max(detrendedcenttc)
     centpp_dt = np.ptp(detrendedcenttc)
-    stddevformat = qualitytag("(%4.4f%%)", sf.limitcheck(centstddev_dt / centmean_dt * 100.0,
-                                                         limits['central_roi_detrended_std%']))
-    ppformat = qualitytag("(%4.4f%%)",
-                          sf.limitcheck(centpp_dt / centmean_dt * 100.0, limits['central_roi_detrended_p-p%']))
-    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
-    centtc_dt_summary = tcstats_format % (
-        centmean_dt, centstddev_dt, centstddev_dt / centmean_dt * 100.0, centpp_dt, centpp_dt / centmean_dt * 100.0)
+
+    centstddev_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(centstddev_dt / centmean_dt * 100.0, limits['central_roi_detrended_std%']))
+    centpp_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(centpp_dt / centmean_dt * 100.0, limits['central_roi_detrended_p-p%']))
+    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + centstddev_dt_qualitytag) + breaktag("p-p=%4.4f " + centpp_dt_qualitytag)
+    centtc_dt_summary = tcstats_format % (centmean_dt, centstddev_dt, centstddev_dt / centmean_dt * 100.0, centpp_dt, centpp_dt / centmean_dt * 100.0)
 
     centsnr_summary = "mean=%4.4f" % centsnr
 
@@ -510,6 +516,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     #
     # Peripheral ROIs
     #
+    # TODO get these from config file
     peripheralroisize = 3
     peripheralradfrac = 0.8
     logging.debug("Analyzing peripheral ROIs...")
@@ -563,11 +570,11 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     periphmeanstr = "mean=%4.4f" % float(periphmean)
     periphdriftstr = "drift=%4.4f" % float(periphdrift)
     stddevquality = sf.limitcheck(periphstddev / periphmean * 100.0, limits['peripheral_roi_raw_std%'])
-    periphstddevstr = "stddev=%4.4f " % periphstddev + boldtag(
-        qualitytag("(%4.4f%%)", stddevquality) % (periphstddev / periphmean * 100.0))
-    ppquality = sf.limitcheck(periphpp / periphmean * 100.0, limits['peripheral_roi_raw_p-p%'])
-    periphppstr = "p-p=%4.4f " % periphpp + boldtag(
-        qualitytag("(%4.4f%%)", ppquality) % (periphpp / periphmean * 100.0))
+    periph_qualitytag = qualitytag("(%4.4f%%)", stddevquality) % (periphstddev / periphmean * 100.0)
+    periphstddevstr = "stddev=%4.4f " % periphstddev + boldtag(periph_qualitytag)
+    periphppquality = sf.limitcheck(periphpp / periphmean * 100.0, limits['peripheral_roi_raw_p-p%'])
+    periphpp_qualitytag = qualitytag("(%4.4f%%)", periphppquality) % (periphpp / periphmean * 100.0)
+    periphppstr = "p-p=%4.4f " % periphpp + boldtag(periphpp_qualitytag)
     periphtc_summary = periphmeanstr + breaktag(periphstddevstr) + breaktag(periphppstr) + breaktag(periphdriftstr)
 
     periphmean_dt = np.mean(detrendedperiphtc)
@@ -575,12 +582,9 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     periphmin_dt = np.min(detrendedperiphtc)
     periphmax_dt = np.max(detrendedperiphtc)
     periphpp_dt = np.ptp(detrendedperiphtc)
-    stddevformat = qualitytag("(%4.4f%%)", sf.limitcheck(periphstddev_dt / periphmean_dt * 100.0,
-                                                         limits['peripheral_roi_detrended_std%']))
-    ppformat = qualitytag("(%4.4f%%)",
-                          sf.limitcheck(periphpp_dt / periphmean_dt * 100.0,
-                                        limits['peripheral_roi_detrended_p-p%']))
-    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
+    periph_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(periphstddev_dt / periphmean_dt * 100.0, limits['peripheral_roi_detrended_std%']))
+    periphpp_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(periphpp_dt / periphmean_dt * 100.0, limits['peripheral_roi_detrended_p-p%']))
+    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + periph_dt_qualitytag) + breaktag("p-p=%4.4f " + periphpp_dt_qualitytag)
     periphtc_dt_summary = tcstats_format % (
         periphmean_dt, periphstddev_dt, periphstddev_dt / periphmean_dt * 100.0, periphpp_dt,
         periphpp_dt / periphmean_dt * 100.0)
@@ -592,18 +596,17 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     ptpangperiphval = np.ptp(periphangmeans)
     periphangintensitymeanstr = "mean=%4.4f" % meanangperiphval
-    periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0,
-                                                limits['peripheral_angle_p-p%'])
-    ptpangperiphvalstr = "p-p=%4.4f " % ptpangperiphval + boldtag(
-        qualitytag("(%4.4f%%)", periphangintensityppquality) % (ptpangperiphval / meanangperiphval * 100.0))
+    periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0, limits['peripheral_angle_p-p%'])
+    periphangintensity_qualitytag = qualitytag("(%4.4f%%)", periphangintensityppquality) % (ptpangperiphval / meanangperiphval * 100.0)
+    ptpangperiphvalstr = "p-p=%4.4f " % ptpangperiphval + boldtag(periphangintensity_qualitytag)
     periphangintensity_summary = periphangintensitymeanstr + breaktag(ptpangperiphvalstr)
 
     periphang_sfnr_ptp = np.ptp(periphangsfnrs)
     periphang_sfnr_meanstr = "mean=%4.4f" % meanangperiphsfnr
     periphang_sfnr_ppquality = sf.limitcheck((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0,
                                              limits['peripheral_angle_SFNR_p-p%'])
-    periphang_sfnr_ptpstr = "p-p=%4.4f " % periphang_sfnr_ptp + boldtag(
-        qualitytag("(%4.4f%%)", periphang_sfnr_ppquality) % ((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0))
+    periphang_sfnr_pp_qualitytag = qualitytag("(%4.4f%%)", periphang_sfnr_ppquality) % ((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0)
+    periphang_sfnr_ptpstr = "p-p=%4.4f " % periphang_sfnr_ptp + boldtag(periphang_sfnr_pp_qualitytag)
     periphang_sfnr_summary = periphang_sfnr_meanstr + breaktag(periphang_sfnr_ptpstr)
 
     periphsnr_summary = "mean=%4.4f" % meanangperiphsnr
@@ -1101,6 +1104,11 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     sumfp.writelines("central_roi_drift%	" + str(datadict['central_roi_drift%']) + "\n")
     sumfp.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
     outfp.writelines("</body>\n")
+
+    tpl = makolookup.get_template('stability.html')
+    with open(pjoin(dirname, 'procresults/mako.html'), 'w') as fp:
+        fp.write(tpl.render(**locals()))
+
 
 if __name__ == '__main__':
     import argparse

@@ -1,0 +1,65 @@
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Peripheral ROI Analysis</h3>
+
+    <p>This is an analysis of the image intensity and SFNR variation in a set of
+        ${peripheralroisize}x${peripheralroisize}x1 voxels at a fixed radius from the center of the object in the
+        central axial slice (${peripheralradfrac} of the distance from the center to the edge of the phantom). For phased array coils
+        this is likely to have better signal to noise than an ROI at the center of the coil. The variation in SNR as a
+        function of angle is also displayed. </p>
+    <tr>
+        <td><p><b>Raw peripheral ROI plot</b></p>
+
+            <p>mean=${periphmean}
+                <br/>
+                stddev=${periphstddev} <b>${periph_qualitytag}</b>
+
+                <br/>
+                p-p=${periphpp} <b>${periphpp_qualitytag}</b>
+
+                <br/>
+                drift=${periphdrift}
+            </p>
+
+            <p><a href="periphroitcplot.png"><IMG BORDER=0 SRC=periphroitcplot.png width="500"></a></p>
+        </td>
+        <td><p><b>Detrended peripheral ROI plot</b></p>
+
+            <p>mean=${periphmean_dt}
+                <br/>
+                stddev=${periphstddev_dt} ${periph_dt_qualitytag}
+
+                <br/>
+                p-p=${periphpp_dt} ${periphpp_dt_qualitytag}
+            </p>
+
+            <p><a href="periphroidttcplot.png"><IMG BORDER=0 SRC=periphroidttcplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>Peripheral ROI intensity plot</b></p>
+
+            <p>mean=${meanangperiphval}
+                <br/>
+                p-p=${ptpangperiphval} ${periphangintensity_qualitytag}</p>
+
+            <p><a href="periphroiplot.png"><IMG BORDER=0 SRC=periphroiplot.png width="500"></a></p>
+        </td>
+        <td><p><b>Peripheral ROI SFNR plot</b></p>
+
+            <p>mean=${meanangperiphsfnr}
+                <br/>
+                p-p=${periphang_sfnr_ptp} ${periphang_sfnr_pp_qualitytag}</p>
+
+            <p><a href="periphroisfnrplot.png"><IMG BORDER=0 SRC=periphroisfnrplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>Peripheral ROI SNR plot</b></p>
+
+            <p>mean=${meanangperiphsnr}</p>
+
+            <p><a href="periphroisnrplot.png"><IMG BORDER=0 SRC=periphroisnrplot.png width="500"></a></p>
+        </td>
+    </tr>
+</table>

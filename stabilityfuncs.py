@@ -14,8 +14,10 @@ import matplotlib.colors as colors
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 from htmltagutils import *
+from collections import namedtuple
 import ConfigParser
 
+Stats = namedtuple('Stats', 'mean stddev var max min ptp')
 
 def dict_from_tsvfile(filename):
     """open a tab separated two column file, return it as a str->str dict"""
@@ -178,32 +180,29 @@ def nzminmax(thearray):
 
 def completestats(thearray):
     # calculate the stats of the non-zero voxels
-    themean = np.mean(thearray)
-    thestddev = np.std(thearray)
-    thevar = np.var(thearray)
-    themax = np.max(thearray)
-    themin = np.min(thearray)
-    theptp = np.ptp(thearray)
-    return [themean, thestddev, thevar, themax, themin, theptp]
+    return Stats(np.mean(thearray),
+                 np.std(thearray),
+                 np.var(thearray),
+                 np.max(thearray),
+                 np.min(thearray),
+                 np.ptp(thearray))
 
 
 def nzstats(thearray):
     # calculate the stats of the non-zero voxels
     flatarray = np.ravel(thearray)
-    nzindices = np.nonzero(flatarray)
-    theflatarray = flatarray[nzindices]
-    themean = np.mean(theflatarray)
-    thestddev = np.std(theflatarray)
-    thevar = np.var(theflatarray)
-    themax = np.max(theflatarray)
-    themin = np.min(theflatarray)
-    theptp = np.ptp(theflatarray)
-    return [themean, thestddev, thevar, themax, themin, theptp]
+    nzindices = np.nonzero(np.ravel(thearray))
+    return Stats(np.mean(flatarray[nzindices]),
+                 np.std(flatarray[nzindices]),
+                 np.var(flatarray[nzindices]),
+                 np.max(flatarray[nzindices]),
+                 np.min(flatarray[nzindices]),
+                 np.ptp(flatarray[nzindices]))
 
 
 def showstats(thestats):
     formatstring = "mean = %2.2f, stddev = %2.2f, max = %2.2f, min = %2.2f"
-    interpstring = (thestats[0], thestats[1], thestats[3], thestats[4])
+    interpstring = (thestats.mean, thestats.stddev, thestats.max, thestats.min)
     return formatstring % interpstring
 
 
