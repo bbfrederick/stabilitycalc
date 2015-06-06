@@ -10,27 +10,27 @@
     <tr>
         <td><p><b>Raw central ROI plot</b></p>
 
-            <p>mean=${centmean}
+            <p>mean=${'%4.4f' % centmean}
                 <br/>
-                stddev=${centstddev} <b>${centstddev_qualitytag}</b>
+                stddev=${'%4.4f' % centstddev} <b>${centstddev_qualitytag}</b>
 
                 <br/>
-                p-p=5.3300 <b>${centpp_qualitytag}</b>
+                p-p=${'%4.4f' % centpp} <b>${centpp_qualitytag}</b>
 
                 <br/>
-                drift=${centdrift}
+                drift=${'%4.4f' % centdrift}
             </p>
 
             <p><a href="centroiplot.png"><IMG BORDER=0 SRC=centroiplot.png width="500"></a></p>
         </td>
         <td><p><b>Detrended central ROI plot</b></p>
 
-            <p>mean=${centmean_dt}
+            <p>mean=${'%4.4f' % centmean_dt}
                 <br/>
-                stddev=${centstddev_dt} ${centstddev_dt_qualitytag}</FONT>
+                stddev=${'%4.4f' % centstddev_dt} ${centstddev_dt_qualitytag}</FONT>
 
                 <br/>
-                p-p=${centpp_dt} ${centpp_dt_qualitytag}</FONT>
+                p-p=${'%4.4f' % centpp_dt} ${centpp_dt_qualitytag}</FONT>
             </p>
 
             <p><a href="centroidtplot.png"><IMG BORDER=0 SRC=centroidtplot.png width="500"></a></p>
@@ -39,7 +39,7 @@
     <tr>
         <td><p><b>Central ROI over time</b></p>
 
-            <p>mean=${centsnr}</p>
+            <p>mean=${'%4.4f' % centsnr}</p>
 
             <p><a href="centroisnrplot.png"><IMG BORDER=0 SRC=centroisnrplot.png width="500"></a></p>
         </td>

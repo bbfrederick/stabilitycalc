@@ -39,10 +39,6 @@ def smallheadertag(thestring):
     return("<h4>" + thestring + "</h4>")
 
 
-def smalltag(thestring):
-    return("<small>" + thestring + "</small>")
-
-
 def boldtag(thestring):
     return("<b>" + thestring + "</b>")
 

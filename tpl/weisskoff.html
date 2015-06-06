@@ -16,10 +16,10 @@
                     </tr>
                     % for i in range(roiareas.shape[0]):
                     <tr>
-                        <td>${roiareas[i]}</td>
-                        <td>${projcvs[i]}</td>
-                        <td>${weisscvs[i]}</td>
-                        <td>${weisscvs[i] / projcvs[i]}</td>
+                        <td>${'%d' % roiareas[i]}</td>
+                        <td>${'%4.4f' % projcvs[i]}</td>
+                        <td>${'%4.4f' % weisscvs[i]}</td>
+                        <td>${'%4.4f' % (weisscvs[i] / projcvs[i])}</td>
                     </tr>
                     % endfor
                 </table>

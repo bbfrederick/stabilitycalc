@@ -11,7 +11,6 @@ from htmltagutils import *
 import shutil
 import nibabel as nib
 
-from mako.template import Template
 from mako.lookup import TemplateLookup
 makolookup = TemplateLookup(directories=['./tpl'])
 
@@ -69,34 +68,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     shutil.rmtree(pjoin(dirname, 'procresults'), ignore_errors=True)
     os.mkdir(pjoin(dirname, 'procresults'))
 
-    # initialize the output files
-    outputfile = pjoin(dirname, "procresults/output.html")
     thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
-    outfp = open(outputfile, "w")
-
-    outfp.writelines(
-        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\n")
-
-    outfp.writelines("<head>\n")
-    outfp.writelines("<title>Stability report for " + info['Coil'] + " generated on " + thisdate + "</title>\n")
-    outfp.writelines("<style type=\"text/css\">\n")
-    outfp.writelines("h1 {font-family:courier new;text-decoration:underline;}\n")
-    outfp.writelines("h2 {font-family:courier new;color: teal; text-decoration:underline;}\n")
-    outfp.writelines("h3 {font-family:courier new;color: maroon; text-decoration:none;}\n")
-    outfp.writelines("h4 {font-family:courier new;text-decoration:none;}\n")
-    outfp.writelines("p {font-family:courier new;color:black; font-size:16px;text-decoration:none;}\n")
-    outfp.writelines("td {font-family:courier new;color:black; font-size:12px;text-decoration:none;}\n")
-    outfp.writelines("</style>\n")
-    outfp.writelines("</head>\n\n")
-
-    outfp.writelines("<body>\n")
-    outfp.writelines("<h2>Stability analysis of " + filename + "</h2>\n")
-    if info['Coil'] != '':
-        row1str = tablerowtag(bigtableentrytag("Coil:") + bigtableentrytag(info['Coil']))
-        row2str = tablerowtag(bigtableentrytag("Element:") + bigtableentrytag(info['ElementName']))
-        row3str = tablerowtag(bigtableentrytag("Date:") + bigtableentrytag(formatteddate))
-        row4str = tablerowtag(bigtableentrytag("Time:") + bigtableentrytag(formattedtime))
-        outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
 
     #############################
     #
@@ -173,10 +145,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     limits = sf.getlimits(info['Coil'])
 
     # Try to figure out what we're looking at
-    unknown = 0
-    birn_phantom = 1
-    head = 3
-    objecttype = unknown
     objectname = "Unknown"
 
     object_radius_mm = np.sqrt(objectradiusx_mm * objectradiusy_mm)
@@ -185,22 +153,21 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     birn_phantom_radiuscheck = sf.limitcheck(object_radius_mm, limits['BIRNphantom_rad'])
     birn_phantom_shapecheck = sf.limitcheck(object_shape, limits['BIRNphantom_shape'])
     if (birn_phantom_radiuscheck < 2) and (birn_phantom_shapecheck < 2):
-        objecttype = birn_phantom
-        objectname = "BIRN_phantom"
-        logging.debug("setting objecttype to birn_phantom")
+        objectname = "BIRN phantom"
+        logging.debug("setting objectname to BIRN phantom")
 
     head_radiuscheck = sf.limitcheck(object_radius_mm, limits['head_rad'])
     head_shapecheck = sf.limitcheck(object_shape, limits['head_shape'])
     if (head_radiuscheck < 2) or (head_shapecheck < 2):
-        objecttype = head
         objectname = "Head"
-        logging.debug("setting objecttype to head")
+        logging.debug("setting objectname to Head")
 
     is_birn_sequence = True
     is_birn_protocol = False
+
     if (xsize != 64) or (ysize != 64) or (numslices != 28) or (tr != 2.0):
         is_birn_sequence = False
-    if is_birn_sequence and (objecttype == birn_phantom):
+    if is_birn_sequence and (objectname == 'BIRN phantom'):
         logging.debug("Assuming this is a BIRN protocol")
         is_birn_protocol = True
         protocolname = "fBIRN"
@@ -313,16 +280,14 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     centmin = np.min(centtc)
     centmax = np.max(centtc)
     centpp = np.ptp(centtc)
-    centmeanstr = "mean=%4.4f" % float(centmean)
-    centdriftstr = "drift=%4.4f" % float(centdrift)
 
-    stddevquality = sf.limitcheck(centstddev / centmean * 100.0, limits['central_roi_raw_std%'])
-    centstddev_qualitytag = qualitytag("(%4.4f%%)", stddevquality) % (centstddev / centmean * 100.0)
-    centstddevstr = "stddev=%4.4f " % centstddev + boldtag(centstddev_qualitytag)
-    ppquality = sf.limitcheck(centpp / centmean * 100.0, limits['central_roi_raw_p-p%'])
-    centpp_qualitytag = qualitytag("(%4.4f%%)", ppquality) % (centpp / centmean * 100.0)
-    centppstr = "p-p=%4.4f " % centpp + boldtag(centpp_qualitytag)
-    centtc_summary = centmeanstr + breaktag(centstddevstr) + breaktag(centppstr) + breaktag(centdriftstr)
+    def qualitypercent(n, basis, lim):
+        percent = n / basis * 100.0
+        quality = sf.limitcheck(percent, limits[lim])
+        return qualitytag('(%4.4f%%)', quality) % percent
+
+    centstddev_qualitytag = qualitypercent(centstddev, centmean, 'central_roi_raw_std%')
+    centpp_qualitytag = qualitypercent(centpp, centmean, 'central_roi_raw_p-p%')
 
     centmean_dt = np.mean(detrendedcenttc)
     centstddev_dt = np.std(detrendedcenttc)
@@ -330,23 +295,16 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     centmax_dt = np.max(detrendedcenttc)
     centpp_dt = np.ptp(detrendedcenttc)
 
-    centstddev_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(centstddev_dt / centmean_dt * 100.0, limits['central_roi_detrended_std%']))
-    centpp_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(centpp_dt / centmean_dt * 100.0, limits['central_roi_detrended_p-p%']))
-    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + centstddev_dt_qualitytag) + breaktag("p-p=%4.4f " + centpp_dt_qualitytag)
-    centtc_dt_summary = tcstats_format % (centmean_dt, centstddev_dt, centstddev_dt / centmean_dt * 100.0, centpp_dt, centpp_dt / centmean_dt * 100.0)
+    centstddev_dt_qualitytag = qualitypercent(centstddev_dt, centmean_dt, 'central_roi_detrended_std%')
+    centpp_dt_qualitytag = qualitypercent(centpp_dt, centmean_dt, 'central_roi_detrended_p-p%')
 
-    centsnr_summary = "mean=%4.4f" % centsnr
 
     #############################
     #
     #       Maximum value ROI analysis
     #
     logging.debug("Finding and analyzing maximum signal ROI...")
-    # TODO get from config
-    maxlocroi_rawpplimits = ((0, 0.5), (0, 0.6))
-    maxlocroi_dtpplimits = ((0, 0.5), (0, 0.6))
-    maxlocroi_rawstddevlimits = ((0, 0.125), (0, 0.15))
-    maxlocroi_dtstddevlimits = ((0, 0.125), (0, 0.15))
+
     maxlocroisize = 5
     maxlocradfrac = 0.7
 
@@ -390,29 +348,20 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         maxlocmean = np.mean(maxloctc)
         maxlocstddev = np.std(maxloctc)
         maxlocpp = np.ptp(maxloctc)
-        maxlocmeanstr = "mean=%4.4f" % maxlocmean
-        stddevquality = sf.limitcheck(maxlocstddev / maxlocmean * 100.0, maxlocroi_rawstddevlimits)
-        maxlocstddevstr = "stddev=%4.4f " % maxlocstddev + boldtag(
-            qualitytag("(%4.4f%%)", stddevquality) % (maxlocstddev / maxlocmean * 100.0))
-        ppquality = sf.limitcheck(maxlocpp / maxlocmean * 100.0, maxlocroi_rawpplimits)
-        maxlocppstr = "p-p=%4.4f " % maxlocpp + boldtag(
-            qualitytag("(%4.4f%%)", ppquality) % (maxlocpp / maxlocmean * 100.0))
-        maxloctc_summary = maxlocmeanstr + breaktag(maxlocstddevstr) + breaktag(maxlocppstr)
+
+        # TODO these not yet used
+        maxloc_qualitytag = qualitypercent(maxlocstddev, maxlocmean, 'maxlocroi_rawstddev')
+        maxloc_pp_qualitytag = qualitypercent(maxlocpp,maxlocmean, 'maxlocroi_rawpp')
 
         maxlocmean_dt = np.mean(detrendedmaxloctc)
         maxlocstddev_dt = np.std(detrendedmaxloctc)
         maxlocmin_dt = np.min(detrendedmaxloctc)
         maxlocmax_dt = np.max(detrendedmaxloctc)
         maxlocpp_dt = np.ptp(detrendedmaxloctc)
-        stddevformat = qualitytag("(%4.4f%%)",
-                                  sf.limitcheck(maxlocstddev_dt / maxlocmean_dt * 100.0, maxlocroi_dtstddevlimits))
-        ppformat = qualitytag("(%4.4f%%)", sf.limitcheck(maxlocpp_dt / maxlocmean_dt * 100.0, maxlocroi_dtpplimits))
-        tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
-        maxloctc_dt_summary = tcstats_format % (
-            maxlocmean_dt, maxlocstddev_dt, maxlocstddev_dt / maxlocmean_dt * 100.0, maxlocpp_dt,
-            maxlocpp_dt / maxlocmean_dt * 100.0)
 
-        maxlocsnr_summary = "mean=%4.4f" % maxlocsnr
+        # TODO these not yet used
+        maxloc_dt_qualitytag = qualitypercent(maxlocstddev_dt, maxlocmean_dt, 'maxlocroi_dtstddev')
+        maxlocpp_dt_qualitytag = qualitypercent(maxlocpp_dt, maxlocmean_dt, 'maxlocroi_dtpp')
 
     #############################
     #
@@ -429,11 +378,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     if isphasedarray:
         paindices = np.arange(0.0, numphasedarray, 1.0)
-        # TODO move these into a config file
-        phasedarrayroi_rawpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
-        phasedarrayroi_dtpplimits = {'good_max': 0.5, 'good_min': 0, 'warn_max': 0.6, 'warn_min': 0}
-        phasedarrayroi_rawstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
-        phasedarrayroi_dtstddevlimits = {'good_max': 0.125, 'good_min': 0, 'warn_max': 0.15, 'warn_min': 0}
         phasedarraysize = 5
 
         phasedarrayroimeans = np.zeros(numphasedarray)
@@ -464,47 +408,13 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
             phasedarrayroisnrs[i] = np.mean(snrvec)
             phasedarrayroisfnrs[i] = sf.getroival(sfnrslice, roi, round(coildata[ele]['zloc']))
             phasedarrayroimeans[i] = np.mean(timecourse)
-            phasedarrayroistddevs[i] = np.std(timecourse)
-            phasedarrayroimins[i] = np.min(timecourse)
-            phasedarrayroimaxs[i] = np.max(timecourse)
             phasedarrayroipps[i] = np.ptp(timecourse)
             phasedarrayfitcoffs = np.polyfit(timepoints, timecourse, 2)
             phasedarrayfittcs[i, :] = sf.trendgen(timepoints, phasedarrayfitcoffs)
             phasedarraydttcs[i, :] = phasedarraytcs[i, :] - phasedarrayfittcs[i, :]
             phasedarrayroimeans_dt[i] = np.mean(phasedarraydttcs[i, :])
             phasedarraydttcs_demeaned[i, :] = phasedarraydttcs[i, :] - phasedarrayroimeans_dt[i]
-            phasedarrayroistddevs_dt[i] = np.std(phasedarraydttcs[i, :])
-            phasedarrayroimins_dt[i] = np.min(phasedarraydttcs[i, :])
-            phasedarrayroimaxs_dt[i] = np.max(phasedarraydttcs[i, :])
             phasedarrayroipps_dt[i] = np.ptp(phasedarraydttcs[i, :])
-
-            # do average timecourse calculations
-            phasedarraymeanstr = "mean=%4.4f" % phasedarrayroimeans[i]
-            stddevquality = sf.limitcheck(phasedarrayroistddevs[i] / phasedarrayroimeans[i] * 100.0,
-                                          phasedarrayroi_rawstddevlimits)
-            phasedarraystddevstr = "stddev=%4.4f " % (phasedarrayroistddevs[i]) + boldtag(qualitytag("(%4.4f%%)",
-                                                                                                     stddevquality) % (
-                phasedarrayroistddevs[i] /
-                phasedarrayroimeans[
-                    i] * 100.0))
-            ppquality = sf.limitcheck(phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0, phasedarrayroi_rawpplimits)
-            phasedarrayppstr = "p-p=%4.4f " % (phasedarrayroipps[i]) + boldtag(
-                qualitytag("(%4.4f%%)", ppquality) % (phasedarrayroipps[i] / phasedarrayroimeans[i] * 100.0))
-            phasedarraytc_summary.append(
-                phasedarraymeanstr + breaktag(phasedarraystddevstr) + breaktag(phasedarrayppstr))
-
-            stddevformat = qualitytag("(%4.4f%%)",
-                                      sf.limitcheck(phasedarrayroistddevs_dt[i] / phasedarrayroimeans_dt[i] * 100.0,
-                                                    phasedarrayroi_dtstddevlimits))
-            ppformat = qualitytag("(%4.4f%%)",
-                                  sf.limitcheck(phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[i] * 100.0,
-                                                phasedarrayroi_dtpplimits))
-            tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + stddevformat) + breaktag("p-p=%4.4f " + ppformat)
-            phasedarraytc_dt_summary.append(tcstats_format % (phasedarrayroimeans_dt[i], phasedarrayroistddevs_dt[i],
-                                                              phasedarrayroistddevs_dt[i] / phasedarrayroimeans_dt[
-                                                                  i] * 100.0, phasedarrayroipps_dt[i],
-                                                              phasedarrayroipps_dt[i] / phasedarrayroimeans_dt[
-                                                                  i] * 100.0))
 
         phasedarrayroipps_percent = 100.0 * phasedarrayroipps / phasedarrayroimeans
         phasedarrayroipps_dt_percent = 100.0 * phasedarrayroipps_dt / phasedarrayroimeans_dt
@@ -532,7 +442,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     ylocs = ycenterf + peripheralradiusy * np.cos(periphangles)
     periphangmeans = np.zeros(numperiph)
     periphangsfnrs = np.zeros(numperiph)
-    periphangsnrs = np.zeros(numperiph)
     avgperiphtc = centtc * 0.0
     avgperiphsnrvec = centtc * 0.0
     periphvoxels = np.zeros((selecteddata.shape[0], voxperroi * numperiph))
@@ -551,7 +460,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         sfnrval = sf.getroival(sfnrslice, roi, zcenter)
         periphangmeans[i] = 100.0 * np.mean(timecourse) / centmean
         periphangsfnrs[i] = sfnrval
-        periphangsnrs[i] = snr
 
     avgperiphtc2 = np.mean(periphvoxels, 1)
     avgperiphsnrvec = avgperiphtc2 / cornertc
@@ -567,27 +475,16 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     periphmin = np.min(avgperiphtc)
     periphmax = np.max(avgperiphtc)
     periphpp = np.ptp(avgperiphtc)
-    periphmeanstr = "mean=%4.4f" % float(periphmean)
-    periphdriftstr = "drift=%4.4f" % float(periphdrift)
-    stddevquality = sf.limitcheck(periphstddev / periphmean * 100.0, limits['peripheral_roi_raw_std%'])
-    periph_qualitytag = qualitytag("(%4.4f%%)", stddevquality) % (periphstddev / periphmean * 100.0)
-    periphstddevstr = "stddev=%4.4f " % periphstddev + boldtag(periph_qualitytag)
-    periphppquality = sf.limitcheck(periphpp / periphmean * 100.0, limits['peripheral_roi_raw_p-p%'])
-    periphpp_qualitytag = qualitytag("(%4.4f%%)", periphppquality) % (periphpp / periphmean * 100.0)
-    periphppstr = "p-p=%4.4f " % periphpp + boldtag(periphpp_qualitytag)
-    periphtc_summary = periphmeanstr + breaktag(periphstddevstr) + breaktag(periphppstr) + breaktag(periphdriftstr)
+    periph_qualitytag = qualitypercent(periphstddev, periphmean, 'peripheral_roi_raw_std%')
+    periphpp_qualitytag = qualitypercent(periphpp, periphmean, 'peripheral_roi_raw_p-p%')
 
     periphmean_dt = np.mean(detrendedperiphtc)
     periphstddev_dt = np.std(detrendedperiphtc)
     periphmin_dt = np.min(detrendedperiphtc)
     periphmax_dt = np.max(detrendedperiphtc)
     periphpp_dt = np.ptp(detrendedperiphtc)
-    periph_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(periphstddev_dt / periphmean_dt * 100.0, limits['peripheral_roi_detrended_std%']))
-    periphpp_dt_qualitytag = qualitytag("(%4.4f%%)", sf.limitcheck(periphpp_dt / periphmean_dt * 100.0, limits['peripheral_roi_detrended_p-p%']))
-    tcstats_format = "mean=%4.4f" + breaktag("stddev=%4.4f " + periph_dt_qualitytag) + breaktag("p-p=%4.4f " + periphpp_dt_qualitytag)
-    periphtc_dt_summary = tcstats_format % (
-        periphmean_dt, periphstddev_dt, periphstddev_dt / periphmean_dt * 100.0, periphpp_dt,
-        periphpp_dt / periphmean_dt * 100.0)
+    periph_dt_qualitytag = qualitypercent(periphstddev_dt, periphmean_dt, 'peripheral_roi_detrended_std%')
+    periphpp_dt_qualitytag = qualitypercent(periphpp_dt, periphmean_dt, 'peripheral_roi_detrended_p-p%')
 
     # do calculations regarding angular dependance
     meanangperiphval = np.mean(periphangmeans)
@@ -595,21 +492,10 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     meanangperiphsnr = np.mean(avgperiphsnrvec)
 
     ptpangperiphval = np.ptp(periphangmeans)
-    periphangintensitymeanstr = "mean=%4.4f" % meanangperiphval
-    periphangintensityppquality = sf.limitcheck(ptpangperiphval / meanangperiphval * 100.0, limits['peripheral_angle_p-p%'])
-    periphangintensity_qualitytag = qualitytag("(%4.4f%%)", periphangintensityppquality) % (ptpangperiphval / meanangperiphval * 100.0)
-    ptpangperiphvalstr = "p-p=%4.4f " % ptpangperiphval + boldtag(periphangintensity_qualitytag)
-    periphangintensity_summary = periphangintensitymeanstr + breaktag(ptpangperiphvalstr)
+    periphangintensity_qualitytag = qualitypercent(ptpangperiphval, meanangperiphval, 'peripheral_angle_p-p%')
 
     periphang_sfnr_ptp = np.ptp(periphangsfnrs)
-    periphang_sfnr_meanstr = "mean=%4.4f" % meanangperiphsfnr
-    periphang_sfnr_ppquality = sf.limitcheck((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0,
-                                             limits['peripheral_angle_SFNR_p-p%'])
-    periphang_sfnr_pp_qualitytag = qualitytag("(%4.4f%%)", periphang_sfnr_ppquality) % ((periphang_sfnr_ptp / meanangperiphsfnr) * 100.0)
-    periphang_sfnr_ptpstr = "p-p=%4.4f " % periphang_sfnr_ptp + boldtag(periphang_sfnr_pp_qualitytag)
-    periphang_sfnr_summary = periphang_sfnr_meanstr + breaktag(periphang_sfnr_ptpstr)
-
-    periphsnr_summary = "mean=%4.4f" % meanangperiphsnr
+    periphang_sfnr_pp_qualitytag = qualitypercent(periphang_sfnr_ptp, meanangperiphsfnr, 'peripheral_angle_SFNR_p-p%')
 
     #############################
     #
@@ -641,33 +527,11 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     evenghostmin = np.min(relevenghosttc)
     evenghostmax = np.max(relevenghosttc)
     evenghostpp = np.ptp(relevenghosttc)
-    tcstats_format2 = "mean=%4.4f" + breaktag("stddev=%4.4f") + breaktag("min=%4.4f") + breaktag(
-        "max=%4.4f") + breaktag(
-        "p-p=%4.4f ")
-    oddghosttc_summary = tcstats_format2 % (oddghostmean, oddghoststddev, oddghostmin, oddghostmax, oddghostpp)
-    evenghosttc_summary = tcstats_format2 % (evenghostmean, evenghoststddev, evenghostmin, evenghostmax, evenghostpp)
 
     #############################
     #
     # Output
     #
-
-    # sample type and protocol type description
-    if objecttype == unknown:
-        objecttypestr = "unknown"
-    elif objecttype == head:
-        objecttypestr = "head"
-    elif objecttype == birn_phantom:
-        objecttypestr = "BIRN phantom"
-
-    row1str = tablerowtag(bigtableentrytag("Object center of mass:") + bigtableentrytag(
-        str(xcenterf) + "," + str(ycenterf) + "," + str(zcenterf)))
-    row2str = tablerowtag(bigtableentrytag("Object type:") + bigtableentrytag(objecttypestr))
-    row3str = tablerowtag(bigtableentrytag("Object mean radius:") + bigtableentrytag(str(object_radius_mm)))
-    row4str = tablerowtag(bigtableentrytag("Object shape factor:") + bigtableentrytag(str(object_shape)))
-    outfp.writelines(tablepropstag(row1str + row2str + row3str + row4str, 700, "left"))
-    if is_birn_protocol:
-        outfp.writelines("<h3>Imaging protocol: BIRN stability</h3>\n")
 
     # statistical images section
 
@@ -736,187 +600,34 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     for k in figs:
         makefig(k)
 
-    ########################################################
-    #
-    # Compose the image table
-    #
-    calcimagehdrstr = hruletag() + headertag("Calculated images")
-    myimwidth = 500  # TODO get from config
+# TODO haven't done this one yet!
 
-    meanimagestr = sf.makecaptionedimage("Mean over time:", meanstats, "meanimage.png", myimwidth)
-    stddevimagestr = sf.makecaptionedimage("Standard deviation over time:", stddevstats, "stddevimage.png", myimwidth)
-    varianceimagestr = sf.makecaptionedimage("Variance over time:", varstats, "varimage.png", myimwidth)
-    normstdimagestr = sf.makecaptionedimage("Normalized % stddev over time:", normstdstats, "normstdimage.png",
-                                            myimwidth)
-    sfnrimagestr = sf.makecaptionedimage("SFNR:", sfnrstats, "sfnrimage.png", myimwidth)
-    eoimagestr = sf.makecaptionedimage("Even-odd difference:", eodiffstats, "eodiffimage.png", myimwidth)
-    eopcimagestr = sf.makecaptionedimage("Even-odd difference percent:", eodiffpcstats, "eodiffpcimage.png", myimwidth)
-    ppimagestr = sf.makecaptionedimage("Peak to peak:", ppstats, "ppimage.png", myimwidth)
-    objectstr = sf.makecaptionedimage("Object mask", [], "objectmaskimage.png", myimwidth)
-    roistr = sf.makecaptionedimage("ROI locations:", [], "roiimage.png", myimwidth)
+    # ########################################################
+    # #
+    # # Max sensitivity ROI output
+    # #
+    # if isindividualcoil:
+    #     maxlocroihdrstr = hruletag() + headertag("Maximum sensitivity region ROI Analysis")
+    #     maxlocroiparastr = paratag(
+    #         "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
+    #
+    #     rawroicellstr = tableentrytag(
+    #         paratag(boldtag("Raw max sensitivity ROI plot")) +
+    #         paratag(maxloctc_summary) +
+    #         imagetag("maxlocroiplot.png", myimwidth))
+    #     snrroicellstr = tableentrytag(
+    #         paratag(boldtag("Central ROI over time")) +
+    #         paratag(maxlocsnr_summary) +
+    #         imagetag("maxlocroisnrplot.png", myimwidth))
+    #     detrendedroicellstr = tableentrytag(
+    #         paratag(boldtag("Detrended max sensitivity ROI plot")) +
+    #         paratag(maxloctc_dt_summary) +
+    #         imagetag("maxlocroidtplot.png", myimwidth))
+    #     row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
+    #     row2str = tablerowtag(snrroicellstr)
+    #     outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
 
-    row1str = tablerowtag(tableentrytag(meanimagestr) + tableentrytag(stddevimagestr))
-    row2str = tablerowtag(tableentrytag(varianceimagestr) + tableentrytag(sfnrimagestr))
-    row3str = tablerowtag(tableentrytag(eoimagestr) + tableentrytag(eopcimagestr))
-    row4str = tablerowtag(tableentrytag(ppimagestr) + tableentrytag(normstdimagestr))
-    row5str = tablerowtag(tableentrytag(roistr) + tableentrytag(objectstr))
-    outfp.writelines(tablepropstag(calcimagehdrstr + row1str + row2str + row3str + row4str + row5str, 500, "left"))
-
-    ########################################################
-    #
-    # Central ROI output
-    #
-    centralroihdrstr = hruletag() + headertag("Central ROI Analysis")
-    croiparastr = paratag(
-        "This is an analysis of the temporal fluctuation in a central voxels. A " + str(centralroisize) + "x" + str(
-            centralroisize) +
-        "x1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
-
-    rawroicellstr = tableentrytag(
-        paratag(boldtag("Raw central ROI plot")) +
-        paratag(centtc_summary) +
-        imagetag("centroiplot.png", myimwidth))
-    snrroicellstr = tableentrytag(
-        paratag(boldtag("Central ROI over time")) +
-        paratag(centsnr_summary) +
-        imagetag("centroisnrplot.png", myimwidth))
-    detrendedroicellstr = tableentrytag(
-        paratag(boldtag("Detrended central ROI plot")) +
-        paratag(centtc_dt_summary) +
-        imagetag("centroidtplot.png", myimwidth))
-    row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
-    row2str = tablerowtag(snrroicellstr)
-    if not isindividualcoil:
-        outfp.writelines(tablepropstag(centralroihdrstr + croiparastr + row1str + row2str, 500, "left"))
-
-    ########################################################
-    #
-    # Peripheral ROI output
-    #
-    peripheralroihdrstr = hruletag() + headertag("Peripheral ROI Analysis")
-    periphroiparastr = paratag(
-        "This is an analysis of the image intensity and SFNR variation in a set of " + str(
-            peripheralroisize) + "x" + str(
-            peripheralroisize) + "x1 voxels at a fixed radius from the center of the object in the central axial slice (" +
-        str(
-            peripheralradfrac) + " of the distance from the center to the edge of the phantom). For phased array coils this is likely to have better signal to noise than an ROI at the center of the coil.  The variation in SNR as a function of angle is also displayed.\n")
-
-    rawperiphroicellstr = tableentrytag(
-        paratag(boldtag("Raw peripheral ROI plot")) +
-        paratag(periphtc_summary) +
-        imagetag("periphroitcplot.png", myimwidth))
-    detrendedperiphroicellstr = tableentrytag(
-        paratag(boldtag("Detrended peripheral ROI plot")) +
-        paratag(periphtc_dt_summary) +
-        imagetag("periphroidttcplot.png", myimwidth))
-    row1str = tablerowtag(rawperiphroicellstr + detrendedperiphroicellstr)
-    periphroicellstr = tableentrytag(
-        paratag(boldtag("Peripheral ROI intensity plot")) +
-        paratag(periphangintensity_summary) +
-        imagetag("periphroiplot.png", myimwidth))
-    periphsfnrcellstr = tableentrytag(
-        paratag(boldtag("Peripheral ROI SFNR plot")) +
-        paratag(periphang_sfnr_summary) +
-        imagetag("periphroisfnrplot.png", myimwidth))
-    row2str = tablerowtag(periphroicellstr + periphsfnrcellstr)
-    snrperiphroicellstr = tableentrytag(
-        paratag(boldtag("Peripheral ROI SNR plot")) +
-        paratag(periphsnr_summary) +
-        imagetag("periphroisnrplot.png", myimwidth))
-    row3str = tablerowtag(snrperiphroicellstr)
-    if not isindividualcoil:
-        outfp.writelines(
-            tablepropstag(peripheralroihdrstr + periphroiparastr + row1str + row2str + row3str, 500, "left"))
-
-    ########################################################
-    #
-    # Phased array ROI output
-    #
-    if isphasedarray:
-        phasedarrayroihdrstr = hruletag() + headertag("Phased array element maximum sensitivity region ROI Analysis")
-        phasedarrayroiparastr = paratag(
-            "This is an analysis of the variation in SNR, SFNR, and stability parameters across the individual coil elements in a phased array. A set of " + str(
-                maxlocroisize) + "x" + str(maxlocroisize) + "x1 voxels are positioned " + str(maxlocradfrac) +
-            " of the distance from the phantom center to the edge along the direction of maximum sensitivity for the coil element. The average voxel values are plotted a function of coil element. The timecourses from each location are then crosscorrelated to assess common mode noise. Non-zero off-diagonal elements indicate correlation between channels, either due to geometric overlap or common mode system noise.\n")
-
-        snrroicellstr = tableentrytag(
-            paratag(boldtag("SNR at region of maximum sensitivity for each phased array element")) +
-            imagetag("phasedarrayroisnrplot.png", myimwidth))
-        sfnrroicellstr = tableentrytag(
-            paratag(boldtag("SFNR at region of maximum sensitivity for each phased array element")) +
-            imagetag("phasedarrayroisfnrplot.png", myimwidth))
-        pproicellstr = tableentrytag(
-            paratag(boldtag("p-p% variation at region of maximum sensitivity for each phased array element")) +
-            imagetag("phasedarrayroippplot.png", myimwidth))
-        ppdtroicellstr = tableentrytag(
-            paratag(
-                boldtag(
-                    "p-p% variation after detrending at region of maximum sensitivity for each phased array element")) +
-            imagetag("phasedarrayroippdtplot.png", myimwidth))
-        crosscorrcellstr = tableentrytag(
-            paratag(boldtag("Cross correlation of time data at each coil element's region of max sensitivity")) +
-            imagetag("coilccmatrix.png", myimwidth))
-        row1str = tablerowtag(snrroicellstr + sfnrroicellstr)
-        row2str = tablerowtag(pproicellstr + ppdtroicellstr)
-        row3str = tablerowtag(crosscorrcellstr)
-        outfp.writelines(
-            tablepropstag(phasedarrayroihdrstr + phasedarrayroiparastr + row1str + row2str + row3str, 500, "left"))
-
-    ########################################################
-    #
-    # Max sensitivity ROI output
-    #
-    if isindividualcoil:
-        maxlocroihdrstr = hruletag() + headertag("Maximum sensitivity region ROI Analysis")
-        maxlocroiparastr = paratag(
-            "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
-
-        rawroicellstr = tableentrytag(
-            paratag(boldtag("Raw max sensitivity ROI plot")) +
-            paratag(maxloctc_summary) +
-            imagetag("maxlocroiplot.png", myimwidth))
-        snrroicellstr = tableentrytag(
-            paratag(boldtag("Central ROI over time")) +
-            paratag(maxlocsnr_summary) +
-            imagetag("maxlocroisnrplot.png", myimwidth))
-        detrendedroicellstr = tableentrytag(
-            paratag(boldtag("Detrended max sensitivity ROI plot")) +
-            paratag(maxloctc_dt_summary) +
-            imagetag("maxlocroidtplot.png", myimwidth))
-        row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
-        row2str = tablerowtag(snrroicellstr)
-        outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
-
-    ########################################################
-    #
-    # Ghost ROI output
-    #
-    ghostroihdrstr = hruletag() + headertag("Ghost ROI Analysis")
-    ghostroiparastr = paratag(
-        "This is an analysis of the amplitude and time variation of image ghosts.  Odd and even ghosts are assessed by calculating the ratio of the average signal in a " + str(
-            ghostroisize) + "x" + str(ghostroisize) +
-        "x1 ghost roi to the average amplitude in the center of the phantom. The ghost roi is placed at the edge of the field of view in the phase encode direction, outside the phantom, and in the center (even ghost) or at the edge (odd ghost) of the phantom position in the readout direction.\n")
-    oddghostroicellstr = tableentrytag(
-        paratag(boldtag("Odd ghost ROI plot")) +
-        paratag(oddghosttc_summary) +
-        imagetag("oddghostroiplot.png", myimwidth))
-    evenghostroicellstr = tableentrytag(
-        paratag(boldtag("Even ghost ROI plot")) +
-        paratag(evenghosttc_summary) +
-        imagetag("evenghostroiplot.png", myimwidth))
-    row1str = tablerowtag(oddghostroicellstr + evenghostroicellstr)
-    outfp.writelines(tablepropstag(ghostroihdrstr + ghostroiparastr + row1str, 500, "left"))
-
-    ########################################################
-    #
-    # Weisskoff output
-    #
-    weisshdrstr = hruletag() + headertag("Weisskoff analysis")
-    weissimagestr = imagetag("weisskoffplot.png", myimwidth)
-    weisstablestr = sf.weisstable(roiareas, weisscvs, projcvs)
-    row1str = tablerowtag(tableentrytag(weissimagestr) + tableentrytag(weisstablestr))
-    row2str = tablerowtag(tableentrytag(bigtag(boldtag("RDC=" + str(weissrdc)))))
-    outfp.writelines(tablepropstag(weisshdrstr + row1str + row2str, 500, "left"))
+    ##### data quality report
 
     datadict = {'Coil': info['Coil'],
                 'Date': formatteddate,
@@ -1103,10 +814,9 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     sumfp.writelines("weissrdc	" + str(datadict['weissrdc']) + "\n")
     sumfp.writelines("central_roi_drift%	" + str(datadict['central_roi_drift%']) + "\n")
     sumfp.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
-    outfp.writelines("</body>\n")
 
     tpl = makolookup.get_template('stability.html')
-    with open(pjoin(dirname, 'procresults/mako.html'), 'w') as fp:
+    with open(pjoin(dirname, 'procresults/output.html'), 'w') as fp:
         fp.write(tpl.render(**locals()))
 
 

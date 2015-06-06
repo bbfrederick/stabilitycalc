@@ -44,6 +44,7 @@
 
 <body>
 <h2>Stability analysis of ${filename}</h2>
+% if info['Coil'] != '':
 <table rules="none" style="margin-center: 20px; text-align: left" border="0" width="700" cellpadding="2">
     <tr>
         <td style="font-size:20px">Coil:</td>
@@ -62,6 +63,7 @@
         <td style="font-size:20px">${formattedtime}</td>
     </tr>
 </table>
+% endif
 <table rules="none" style="margin-center: 20px; text-align: left" border="0" width="700" cellpadding="2">
     <tr>
         <td style="font-size:20px">Object center of mass:</td>
@@ -69,7 +71,7 @@
     </tr>
     <tr>
         <td style="font-size:20px">Object type:</td>
-        <td style="font-size:20px">${objecttypestr}</td>
+        <td style="font-size:20px">${objectname}</td>
     </tr>
     <tr>
         <td style="font-size:20px">Object mean radius:</td>

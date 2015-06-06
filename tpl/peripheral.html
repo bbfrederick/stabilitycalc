@@ -10,27 +10,27 @@
     <tr>
         <td><p><b>Raw peripheral ROI plot</b></p>
 
-            <p>mean=${periphmean}
+            <p>mean=${'%4.4f' % periphmean}
                 <br/>
-                stddev=${periphstddev} <b>${periph_qualitytag}</b>
+                stddev=${'%4.4f' % periphstddev} <b>${periph_qualitytag}</b>
 
                 <br/>
-                p-p=${periphpp} <b>${periphpp_qualitytag}</b>
+                p-p=${'%4.4f' % periphpp} <b>${periphpp_qualitytag}</b>
 
                 <br/>
-                drift=${periphdrift}
+                drift=${'%4.4f' % periphdrift}
             </p>
 
             <p><a href="periphroitcplot.png"><IMG BORDER=0 SRC=periphroitcplot.png width="500"></a></p>
         </td>
         <td><p><b>Detrended peripheral ROI plot</b></p>
 
-            <p>mean=${periphmean_dt}
+            <p>mean=${'%4.4f' % periphmean_dt}
                 <br/>
-                stddev=${periphstddev_dt} ${periph_dt_qualitytag}
+                stddev=${'%4.4f' % periphstddev_dt} ${periph_dt_qualitytag}
 
                 <br/>
-                p-p=${periphpp_dt} ${periphpp_dt_qualitytag}
+                p-p=${'%4.4f' % periphpp_dt} ${periphpp_dt_qualitytag}
             </p>
 
             <p><a href="periphroidttcplot.png"><IMG BORDER=0 SRC=periphroidttcplot.png width="500"></a></p>
@@ -39,17 +39,17 @@
     <tr>
         <td><p><b>Peripheral ROI intensity plot</b></p>
 
-            <p>mean=${meanangperiphval}
+            <p>mean=${'%4.4f' % meanangperiphval}
                 <br/>
-                p-p=${ptpangperiphval} ${periphangintensity_qualitytag}</p>
+                p-p=${'%4.4f' % ptpangperiphval} ${periphangintensity_qualitytag}</p>
 
             <p><a href="periphroiplot.png"><IMG BORDER=0 SRC=periphroiplot.png width="500"></a></p>
         </td>
         <td><p><b>Peripheral ROI SFNR plot</b></p>
 
-            <p>mean=${meanangperiphsfnr}
+            <p>mean=${'%4.4f' % meanangperiphsfnr}
                 <br/>
-                p-p=${periphang_sfnr_ptp} ${periphang_sfnr_pp_qualitytag}</p>
+                p-p=${'%4.4f' % periphang_sfnr_ptp} ${periphang_sfnr_pp_qualitytag}</p>
 
             <p><a href="periphroisfnrplot.png"><IMG BORDER=0 SRC=periphroisfnrplot.png width="500"></a></p>
         </td>
@@ -57,7 +57,7 @@
     <tr>
         <td><p><b>Peripheral ROI SNR plot</b></p>
 
-            <p>mean=${meanangperiphsnr}</p>
+            <p>mean=${'%4.4f' % meanangperiphsnr}</p>
 
             <p><a href="periphroisnrplot.png"><IMG BORDER=0 SRC=periphroisnrplot.png width="500"></a></p>
         </td>

@@ -121,26 +121,6 @@ def limitcheck(n, lim):
     return retval
 
 
-def weisstable(roiareas, weisscvs, projcvs):
-    # generate a table of weisskoff data
-    theshape = roiareas.shape
-    numareas = theshape[0]
-
-    tablestring = tablerowtag(
-        tableentrytag("Region Size") +
-        tableentrytag("Predicted Std Dev") +
-        tableentrytag("Actual Std Dev") +
-        tableentrytag("Ratio")
-    )
-    for i in range(numareas):
-        tablestring = tablestring + tablerowtag(
-            tableentrytag("%d" % (roiareas[i])) +
-            tableentrytag("%.4f" % (projcvs[i])) +
-            tableentrytag("%.4f" % (weisscvs[i])) +
-            tableentrytag("%.4f" % (weisscvs[i] / projcvs[i])))
-    return smalltag(tablepropstag(tablestring, 300, "center"))
-
-
 def trendgen(thexvals, thefitcoffs):
     # generate the polynomial fit timecourse from the coefficients
     theshape = thefitcoffs.shape
@@ -178,16 +158,6 @@ def nzminmax(thearray):
     return [themin, themax]
 
 
-def completestats(thearray):
-    # calculate the stats of the non-zero voxels
-    return Stats(np.mean(thearray),
-                 np.std(thearray),
-                 np.var(thearray),
-                 np.max(thearray),
-                 np.min(thearray),
-                 np.ptp(thearray))
-
-
 def nzstats(thearray):
     # calculate the stats of the non-zero voxels
     flatarray = np.ravel(thearray)
@@ -200,24 +170,6 @@ def nzstats(thearray):
                  np.ptp(flatarray[nzindices]))
 
 
-def showstats(thestats):
-    formatstring = "mean = %2.2f, stddev = %2.2f, max = %2.2f, min = %2.2f"
-    interpstring = (thestats.mean, thestats.stddev, thestats.max, thestats.min)
-    return formatstring % interpstring
-
-
-def nzmean(thearray):
-    # calculate the mean of the non-zero voxels
-    flatarray = np.ravel(thearray)
-    nzindices = np.nonzero(flatarray)
-    return np.mean(flatarray[nzindices])
-
-
-def arrayspatialsum(thearray):
-    # calculate the sum of an array across space
-    return np.sum(thearray)
-
-
 def showtc(thexvals, theyvals, thelabel):
     # show an roi timecourse plot
     w, h = plt.figaspect(0.25)
@@ -226,67 +178,6 @@ def showtc(thexvals, theyvals, thelabel):
     roisubplot.plot(thexvals, theyvals, 'b')
     roisubplot.grid(True)
     # roisubplot.axes.Subplot.set_pad(0.1)
-    for tick in roisubplot.xaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    for tick in roisubplot.yaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    roisubplot.set_title(thelabel, fontsize=30)
-
-
-def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
-    # show an roi timecourse plot and a fit line
-    numxs = len(xvecs)
-    numys = len(yvecs)
-    numlegends = len(legendvec)
-    numspecvals = len(specvals)
-    if (numxs != numys) or (numxs != numlegends) or (numxs != numspecvals):
-        logging.warning("dimensions do not match")
-        exit(1)
-    w, h = plt.figaspect(0.50)
-    roiplot = plt.figure(figsize=(w, h))
-    roisubplot = roiplot.add_subplot(111)
-    if numys == 1:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 2:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 3:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 4:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 5:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 6:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4], xvecs[5],
-                        yvecs[5], specvals[5])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    roisubplot.grid(True)
     for tick in roisubplot.xaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
     for tick in roisubplot.yaxis.get_major_ticks():
@@ -374,17 +265,6 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
         }
         thecmap = colors.LinearSegmentedColormap('mycm', mycmdata1)
     plt.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
-
-
-def showslice(theslice):
-    # show a 2D slice from a dataset in greyscale
-    if plt.isinteractive():
-        plt.ioff()
-    plt.axis('off')
-    plt.axis('equal')
-    plt.axis('tight')
-    plt.imshow(theslice, interpolation='nearest', aspect='equal', cmap=cm.gray)
-    plt.colorbar()
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -618,13 +498,3 @@ def getroival(theimage, theroi, zpos):
     yend = theroi[1][1]
     theroival = np.mean(theimage[zpos, ystart:yend, xstart:xend])
     return theroival
-
-
-def makecaptionedimage(imagetitle, thestats, imagename, thewidth):
-    # make a captioned image with statistics
-    if not thestats:
-        imcapstring = paratag(boldtag(imagetitle))
-    else:
-        imcapstring = paratag(boldtag(imagetitle) + breaktag(showstats(thestats)))
-    return imcapstring + imagetag(imagename, thewidth)
-

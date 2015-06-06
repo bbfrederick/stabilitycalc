@@ -1,7 +1,14 @@
 <%include file="header.html" />
 <%include file="calculatedimages.html" />
-<%include file="central.html" />
-<%include file="peripheral.html" />
+
+% if not isindividualcoil:
+    <%include file="central.html" />
+    <%include file="peripheral.html" />
+% endif
+
+% if isphasedarray:
 <%include file="phased.html" />
+% endif
+
 <%include file="ghost.html" />
 <%include file="weisskoff.html" />
