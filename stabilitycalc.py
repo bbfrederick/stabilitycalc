@@ -3,7 +3,9 @@
 import os
 from os.path import join as pjoin
 import time
+
 import matplotlib
+
 matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,9 +14,11 @@ import shutil
 import nibabel as nib
 
 from mako.lookup import TemplateLookup
+
 makolookup = TemplateLookup(directories=['./tpl'])
 
 import logging
+
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
 import studyinfo
@@ -351,7 +355,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
         # TODO these not yet used
         maxloc_qualitytag = qualitypercent(maxlocstddev, maxlocmean, 'maxlocroi_rawstddev')
-        maxloc_pp_qualitytag = qualitypercent(maxlocpp,maxlocmean, 'maxlocroi_rawpp')
+        maxloc_pp_qualitytag = qualitypercent(maxlocpp, maxlocmean, 'maxlocroi_rawpp')
 
         maxlocmean_dt = np.mean(detrendedmaxloctc)
         maxlocstddev_dt = np.std(detrendedmaxloctc)
@@ -554,7 +558,8 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         slicepic(meanslice, "Mean image", meanmin, meanmax, dirname, 'meanimage', 0)
         slicepic(sfnrslice, "SFNR image", sfnrmin, sfnrmax, dirname, 'sfnrimage', 0)
         slicepic(eodiffimage, "Even odd diff image", eodiffmin, eodiffmax, dirname, 'eodiffimage', 0)
-        slicepic(np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin, eodiffpcmax, dirname, 'eodiffpcimage', 0)
+        slicepic(np.nan_to_num(objectmask * eodiffpcimage), "Even odd diff percent image", eodiffpcmin, eodiffpcmax,
+                 dirname, 'eodiffpcimage', 0)
         slicepic(ppslice, "Peak to peak image", ppmin, ppmax, dirname, 'ppimage', 0)
 
     def makefig(figk):
@@ -600,7 +605,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     for k in figs:
         makefig(k)
 
-# TODO haven't done this one yet!
+    # TODO haven't done this one yet!
 
     # ########################################################
     # #
@@ -644,75 +649,75 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
                 'center_of_mass_z': zcenterf}
 
     if not isindividualcoil:
-        datadict['central_roi_raw_mean'] = centmean
-        datadict['central_roi_raw_std'] = centstddev
-        datadict['central_roi_raw_std%'] = 100.0 * centstddev / centmean
-        datadict['central_roi_raw_min'] = centmin
-        datadict['central_roi_raw_max'] = centmax
-        datadict['central_roi_raw_p-p'] = centpp
-        datadict['central_roi_raw_p-p%'] = 100.0 * centpp / centmean
-        datadict['central_roi_detrended_mean'] = centmean_dt
-        datadict['central_roi_detrended_std'] = centstddev_dt
-        datadict['central_roi_detrended_std%'] = 100.0 * centstddev_dt / centmean_dt
-        datadict['central_roi_detrended_min'] = centmin_dt
-        datadict['central_roi_detrended_max'] = centmax_dt
-        datadict['central_roi_detrended_p-p'] = centpp_dt
-        datadict['central_roi_detrended_p-p%'] = 100.0 * centpp_dt / centmean_dt
-        datadict['central_roi_SNR'] = centsnr
-        datadict['central_roi_SFNR'] = centsfnr
-        datadict['central_roi_polyfit_lin'] = 100.0 * centfitcoffs[1] / centfitcoffs[2]
-        datadict['central_roi_polyfit_quad'] = 100.0 * centfitcoffs[0] / centfitcoffs[2]
-        datadict['peripheral_roi_raw_mean'] = periphmean
-        datadict['peripheral_roi_raw_std'] = periphstddev
-        datadict['peripheral_roi_raw_std%'] = 100.0 * periphstddev / periphmean
-        datadict['peripheral_roi_raw_min'] = periphmin
-        datadict['peripheral_roi_raw_max'] = periphmax
-        datadict['peripheral_roi_raw_p-p'] = periphpp
-        datadict['peripheral_roi_raw_p-p%'] = 100.0 * periphpp / periphmean
-        datadict['peripheral_roi_detrended_mean'] = periphmean_dt
-        datadict['peripheral_roi_detrended_std'] = periphstddev_dt
-        datadict['peripheral_roi_detrended_std%'] = 100.0 * periphstddev_dt / periphmean_dt
-        datadict['peripheral_roi_detrended_min'] = periphmin_dt
-        datadict['peripheral_roi_detrended_max'] = periphmax_dt
-        datadict['peripheral_roi_detrended_p-p'] = periphpp_dt
-        datadict['peripheral_roi_detrended_p-p%'] = 100.0 * periphpp_dt / periphmean_dt
-        datadict['peripheral_roi_SNR'] = meanangperiphsnr
-        datadict['peripheral_roi_SFNR'] = meanangperiphsfnr
-        datadict['peripheral_roi_polyfit_lin'] = 100.0 * periphfitcoffs[1] / periphfitcoffs[2]
-        datadict['peripheral_roi_polyfit_quad'] = 100.0 * periphfitcoffs[0] / periphfitcoffs[2]
+        datadict.update({'central_roi_raw_mean': centmean,
+                         'central_roi_raw_std': centstddev,
+                         'central_roi_raw_std%': 100.0 * centstddev / centmean,
+                         'central_roi_raw_min': centmin,
+                         'central_roi_raw_max': centmax,
+                         'central_roi_raw_p-p': centpp,
+                         'central_roi_raw_p-p%': 100.0 * centpp / centmean,
+                         'central_roi_detrended_mean': centmean_dt,
+                         'central_roi_detrended_std': centstddev_dt,
+                         'central_roi_detrended_std%': 100.0 * centstddev_dt / centmean_dt,
+                         'central_roi_detrended_min': centmin_dt,
+                         'central_roi_detrended_max': centmax_dt,
+                         'central_roi_detrended_p-p': centpp_dt,
+                         'central_roi_detrended_p-p%': 100.0 * centpp_dt / centmean_dt,
+                         'central_roi_SNR': centsnr,
+                         'central_roi_SFNR': centsfnr,
+                         'central_roi_polyfit_lin': 100.0 * centfitcoffs[1] / centfitcoffs[2],
+                         'central_roi_polyfit_quad': 100.0 * centfitcoffs[0] / centfitcoffs[2],
+                         'peripheral_roi_raw_mean': periphmean,
+                         'peripheral_roi_raw_std': periphstddev,
+                         'peripheral_roi_raw_std%': 100.0 * periphstddev / periphmean,
+                         'peripheral_roi_raw_min': periphmin,
+                         'peripheral_roi_raw_max': periphmax,
+                         'peripheral_roi_raw_p-p': periphpp,
+                         'peripheral_roi_raw_p-p%': 100.0 * periphpp / periphmean,
+                         'peripheral_roi_detrended_mean': periphmean_dt,
+                         'peripheral_roi_detrended_std': periphstddev_dt,
+                         'peripheral_roi_detrended_std%': 100.0 * periphstddev_dt / periphmean_dt,
+                         'peripheral_roi_detrended_min': periphmin_dt,
+                         'peripheral_roi_detrended_max': periphmax_dt,
+                         'peripheral_roi_detrended_p-p': periphpp_dt,
+                         'peripheral_roi_detrended_p-p%': 100.0 * periphpp_dt / periphmean_dt,
+                         'peripheral_roi_SNR': meanangperiphsnr,
+                         'peripheral_roi_SFNR': meanangperiphsfnr,
+                         'peripheral_roi_polyfit_lin': 100.0 * periphfitcoffs[1] / periphfitcoffs[2],
+                         'peripheral_roi_polyfit_quad': 100.0 * periphfitcoffs[0] / periphfitcoffs[2]})
     else:
-        datadict['maxloc_roi_x'] = elementmaxpos[0]
-        datadict['maxloc_roi_y'] = elementmaxpos[1]
-        datadict['maxloc_roi_z'] = elementmaxpos[2]
-        datadict['maxloc_roi_dirvec_x'] = elementdirvec[0] / elementdirnormfac
-        datadict['maxloc_roi_dirvec_y'] = elementdirvec[1] / elementdirnormfac
-        datadict['maxloc_roi_dirvec_z'] = elementdirvec[2] / elementdirnormfac
-        datadict['maxloc_roi_mean'] = maxlocmean_dt
-        datadict['maxloc_roi_std'] = maxlocstddev_dt
-        datadict['maxloc_roi_std%'] = 100.0 * maxlocstddev_dt / maxlocmean_dt
-        datadict['maxloc_roi_min'] = maxlocmin_dt
-        datadict['maxloc_roi_max'] = maxlocmax_dt
-        datadict['maxloc_roi_p-p'] = maxlocpp_dt
-        datadict['maxloc_roi_p-p%'] = 100.0 * maxlocpp_dt / maxlocmean_dt
-        datadict['maxloc_roi_SNR'] = maxlocsnr
-        datadict['maxloc_roi_SFNR'] = maxlocsfnr
-        datadict['maxloc_roi_polyfit_lin'] = 100.0 * maxlocfitcoffs[1] / maxlocfitcoffs[2]
-        datadict['maxloc_roi_polyfit_quad'] = 100.0 * maxlocfitcoffs[0] / maxlocfitcoffs[2]
-    datadict['odd_ghost_mean'] = oddghostmean
-    datadict['odd_ghost_std'] = oddghoststddev
-    datadict['odd_ghost_min'] = oddghostmin
-    datadict['odd_ghost_max'] = oddghostmax
-    datadict['odd_ghost_p-p'] = oddghostpp
-    datadict['odd_ghost_p-p%'] = 100.0 * oddghostpp / oddghostmean
-    datadict['even_ghost_mean'] = evenghostmean
-    datadict['even_ghost_std'] = evenghoststddev
-    datadict['even_ghost_min'] = evenghostmin
-    datadict['even_ghost_max'] = evenghostmax
-    datadict['even_ghost_p-p'] = evenghostpp
-    datadict['even_ghost_p-p%'] = 100.0 * evenghostpp / evenghostmean
-    datadict['weissrdc'] = weissrdc
-    datadict['central_roi_drift%'] = centdrift
-    datadict['peripheral_roi_drift%'] = periphdrift
+        datadict.update({'maxloc_roi_x': elementmaxpos[0],
+                         'maxloc_roi_y': elementmaxpos[1],
+                         'maxloc_roi_z': elementmaxpos[2],
+                         'maxloc_roi_dirvec_x': elementdirvec[0] / elementdirnormfac,
+                         'maxloc_roi_dirvec_y': elementdirvec[1] / elementdirnormfac,
+                         'maxloc_roi_dirvec_z': elementdirvec[2] / elementdirnormfac,
+                         'maxloc_roi_mean': maxlocmean_dt,
+                         'maxloc_roi_std': maxlocstddev_dt,
+                         'maxloc_roi_std%': 100.0 * maxlocstddev_dt / maxlocmean_dt,
+                         'maxloc_roi_min': maxlocmin_dt,
+                         'maxloc_roi_max': maxlocmax_dt,
+                         'maxloc_roi_p-p': maxlocpp_dt,
+                         'maxloc_roi_p-p%': 100.0 * maxlocpp_dt / maxlocmean_dt,
+                         'maxloc_roi_SNR': maxlocsnr,
+                         'maxloc_roi_SFNR': maxlocsfnr,
+                         'maxloc_roi_polyfit_lin': 100.0 * maxlocfitcoffs[1] / maxlocfitcoffs[2],
+                         'maxloc_roi_polyfit_quad': 100.0 * maxlocfitcoffs[0] / maxlocfitcoffs[2]})
+    datadict.update({'odd_ghost_mean': oddghostmean,
+                     'odd_ghost_std': oddghoststddev,
+                     'odd_ghost_min': oddghostmin,
+                     'odd_ghost_max': oddghostmax,
+                     'odd_ghost_p-p': oddghostpp,
+                     'odd_ghost_p-p%': 100.0 * oddghostpp / oddghostmean,
+                     'even_ghost_mean': evenghostmean,
+                     'even_ghost_std': evenghoststddev,
+                     'even_ghost_min': evenghostmin,
+                     'even_ghost_max': evenghostmax,
+                     'even_ghost_p-p': evenghostpp,
+                     'even_ghost_p-p%': 100.0 * evenghostpp / evenghostmean,
+                     'weissrdc': weissrdc,
+                     'central_roi_drift%': centdrift,
+                     'peripheral_roi_drift%': periphdrift})
 
     afp = open(pjoin(dirname, "procresults/dataquality.txt"), "w")
     for k in datadict:
@@ -726,94 +731,12 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     ########################################################
     #
-    # Write summary text file
-    summaryfile = pjoin(dirname, "procresults/analysissummary.txt")
+    # Write summary text file and report
 
-    sumfp = open(summaryfile, "w")
-    sumfp.writelines("Filename	" + summaryfile + "\n")
-    sumfp.writelines("Coil	" + datadict['Coil'] + "\n")
-    sumfp.writelines("Date	" + datadict['Date'] + "\n")
-    sumfp.writelines("Time	" + datadict['Time'] + "\n")
-    sumfp.writelines("DateTime	" + datadict['DateTime'] + "\n")
-    sumfp.writelines("Object	" + datadict['Object'] + "\n")
-    sumfp.writelines("Protocol	" + datadict['Protocol'] + "\n")
-    sumfp.writelines("Element	" + datadict['Element'] + "\n")
-    sumfp.writelines("processed_as_individual	" + str(datadict['processed_as_individual']) + "\n")
-    sumfp.writelines("object_radius_mm	" + str(datadict['object_radius_mm']) + "\n")
-    sumfp.writelines("object_shape	" + str(datadict['object_shape']) + "\n")
-    sumfp.writelines("center_of_mass_x	" + str(datadict['center_of_mass_x']) + "\n")
-    sumfp.writelines("center_of_mass_y	" + str(datadict['center_of_mass_y']) + "\n")
-    sumfp.writelines("center_of_mass_z	" + str(datadict['center_of_mass_z']) + "\n")
-    if not isindividualcoil:
-        sumfp.writelines("central_roi_raw_mean	" + str(datadict['central_roi_raw_mean']) + "\n")
-        sumfp.writelines("central_roi_raw_std	" + str(datadict['central_roi_raw_std']) + "\n")
-        sumfp.writelines("central_roi_raw_std%	" + str(datadict['central_roi_raw_std%']) + "\n")
-        sumfp.writelines("central_roi_raw_min	" + str(datadict['central_roi_raw_min']) + "\n")
-        sumfp.writelines("central_roi_raw_max	" + str(datadict['central_roi_raw_max']) + "\n")
-        sumfp.writelines("central_roi_raw_p-p	" + str(datadict['central_roi_raw_p-p']) + "\n")
-        sumfp.writelines("central_roi_raw_p-p%	" + str(datadict['central_roi_raw_p-p%']) + "\n")
-        sumfp.writelines("central_roi_detrended_mean	" + str(datadict['central_roi_detrended_mean']) + "\n")
-        sumfp.writelines("central_roi_detrended_std	" + str(datadict['central_roi_detrended_std']) + "\n")
-        sumfp.writelines("central_roi_detrended_std%	" + str(datadict['central_roi_detrended_std%']) + "\n")
-        sumfp.writelines("central_roi_detrended_min	" + str(datadict['central_roi_detrended_min']) + "\n")
-        sumfp.writelines("central_roi_detrended_max	" + str(datadict['central_roi_detrended_max']) + "\n")
-        sumfp.writelines("central_roi_detrended_p-p	" + str(datadict['central_roi_detrended_p-p']) + "\n")
-        sumfp.writelines("central_roi_detrended_p-p%	" + str(datadict['central_roi_detrended_p-p%']) + "\n")
-        sumfp.writelines("central_roi_SNR	" + str(datadict['central_roi_SNR']) + "\n")
-        sumfp.writelines("central_roi_SFNR	" + str(datadict['central_roi_SFNR']) + "\n")
-        sumfp.writelines("central_roi_polyfit_lin	" + str(datadict['central_roi_polyfit_lin']) + "\n")
-        sumfp.writelines("central_roi_polyfit_quad	" + str(datadict['central_roi_polyfit_quad']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_mean	" + str(datadict['peripheral_roi_raw_mean']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_std	" + str(datadict['peripheral_roi_raw_std']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_std%	" + str(datadict['peripheral_roi_raw_std%']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_min	" + str(datadict['peripheral_roi_raw_min']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_max	" + str(datadict['peripheral_roi_raw_max']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_p-p	" + str(datadict['peripheral_roi_raw_p-p']) + "\n")
-        sumfp.writelines("peripheral_roi_raw_p-p%	" + str(datadict['peripheral_roi_raw_p-p%']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_mean	" + str(datadict['peripheral_roi_detrended_mean']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_std	" + str(datadict['peripheral_roi_detrended_std']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_std%	" + str(datadict['peripheral_roi_detrended_std%']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_min	" + str(datadict['peripheral_roi_detrended_min']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_max	" + str(datadict['peripheral_roi_detrended_max']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_p-p	" + str(datadict['peripheral_roi_detrended_p-p']) + "\n")
-        sumfp.writelines("peripheral_roi_detrended_p-p%	" + str(datadict['peripheral_roi_detrended_p-p%']) + "\n")
-        sumfp.writelines("peripheral_roi_SNR	" + str(datadict['peripheral_roi_SNR']) + "\n")
-        sumfp.writelines("peripheral_roi_SFNR	" + str(datadict['peripheral_roi_SFNR']) + "\n")
-        sumfp.writelines("peripheral_roi_polyfit_lin	" + str(datadict['peripheral_roi_polyfit_lin']) + "\n")
-        sumfp.writelines("peripheral_roi_polyfit_quad	" + str(datadict['peripheral_roi_polyfit_quad']) + "\n")
-    else:
-        sumfp.writelines("maxloc_roi_x	" + str(datadict['maxloc_roi_x']) + "\n")
-        sumfp.writelines("maxloc_roi_y	" + str(datadict['maxloc_roi_y']) + "\n")
-        sumfp.writelines("maxloc_roi_z	" + str(datadict['maxloc_roi_z']) + "\n")
-        sumfp.writelines("maxloc_roi_dirvec_x	" + str(datadict['maxloc_roi_dirvec_x']) + "\n")
-        sumfp.writelines("maxloc_roi_dirvec_y	" + str(datadict['maxloc_roi_dirvec_y']) + "\n")
-        sumfp.writelines("maxloc_roi_dirvec_z	" + str(datadict['maxloc_roi_dirvec_z']) + "\n")
-        sumfp.writelines("maxloc_roi_mean	" + str(datadict['maxloc_roi_mean']) + "\n")
-        sumfp.writelines("maxloc_roi_std	" + str(datadict['maxloc_roi_std']) + "\n")
-        sumfp.writelines("maxloc_roi_std%	" + str(datadict['maxloc_roi_std%']) + "\n")
-        sumfp.writelines("maxloc_roi_min	" + str(datadict['maxloc_roi_min']) + "\n")
-        sumfp.writelines("maxloc_roi_max	" + str(datadict['maxloc_roi_max']) + "\n")
-        sumfp.writelines("maxloc_roi_p-p	" + str(datadict['maxloc_roi_p-p']) + "\n")
-        sumfp.writelines("maxloc_roi_p-p%	" + str(datadict['maxloc_roi_p-p%']) + "\n")
-        sumfp.writelines("maxloc_roi_SNR	" + str(datadict['maxloc_roi_SNR']) + "\n")
-        sumfp.writelines("maxloc_roi_SFNR	" + str(datadict['maxloc_roi_SFNR']) + "\n")
-        sumfp.writelines("maxloc_roi_polyfit_lin	" + str(datadict['maxloc_roi_polyfit_lin']) + "\n")
-        sumfp.writelines("maxloc_roi_polyfit_quad	" + str(datadict['maxloc_roi_polyfit_quad']) + "\n")
-    sumfp.writelines("odd_ghost_mean	" + str(datadict['odd_ghost_mean']) + "\n")
-    sumfp.writelines("odd_ghost_std	" + str(datadict['odd_ghost_std']) + "\n")
-    sumfp.writelines("odd_ghost_min	" + str(datadict['odd_ghost_min']) + "\n")
-    sumfp.writelines("odd_ghost_max	" + str(datadict['odd_ghost_max']) + "\n")
-    sumfp.writelines("odd_ghost_p-p	" + str(datadict['odd_ghost_p-p']) + "\n")
-    sumfp.writelines("odd_ghost_p-p%	" + str(datadict['odd_ghost_p-p%']) + "\n")
-    sumfp.writelines("even_ghost_mean	" + str(datadict['even_ghost_mean']) + "\n")
-    sumfp.writelines("even_ghost_std	" + str(datadict['even_ghost_std']) + "\n")
-    sumfp.writelines("even_ghost_min	" + str(datadict['even_ghost_min']) + "\n")
-    sumfp.writelines("even_ghost_max	" + str(datadict['even_ghost_max']) + "\n")
-    sumfp.writelines("even_ghost_p-p	" + str(datadict['even_ghost_p-p']) + "\n")
-    sumfp.writelines("even_ghost_p-p%	" + str(datadict['even_ghost_p-p%']) + "\n")
-    sumfp.writelines("weissrdc	" + str(datadict['weissrdc']) + "\n")
-    sumfp.writelines("central_roi_drift%	" + str(datadict['central_roi_drift%']) + "\n")
-    sumfp.writelines("peripheral_roi_drift%	" + str(datadict['peripheral_roi_drift%']) + "\n")
+    tpl = makolookup.get_template('analysissummary.txt')
+    summaryfile = pjoin(dirname, "procresults/analysissummary.txt")
+    with open(summaryfile, 'w') as fp:
+        fp.write(tpl.render(**locals()))
 
     tpl = makolookup.get_template('stability.html')
     with open(pjoin(dirname, 'procresults/output.html'), 'w') as fp:
@@ -834,7 +757,9 @@ if __name__ == '__main__':
     com.add_argument('initzcenter', nargs='?', metavar='zcenter')
 
     args = parser.parse_args()
-    if None in (args.initxcenter, args.initycenter, args.initzcenter) and not args.initxcenter == args.initycenter == args.initzcenter:
+    if None in (args.initxcenter, args.initycenter,
+                args.initzcenter) and not args.initxcenter == args.initycenter == args.initzcenter:
         parser.error('If you set one center of mass parameter, you must set all three.')
 
-    stabilitycalc(args.dirname, args.filename, int(args.starttime), args.initxcenter, args.initycenter, args.initzcenter)
+    stabilitycalc(args.dirname, args.filename, int(args.starttime), args.initxcenter, args.initycenter,
+                  args.initzcenter)
