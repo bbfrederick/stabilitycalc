@@ -496,8 +496,6 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                             if thedataquality[theentry]['critical']:
                                 if thedataquality[theentry]['quality'] > flag:
                                     flag = thedataquality[theentry]['quality']
-                                    # print "flag set to ",str(flag), " for ",thedataquality[theentry]['varname']," = ",str(thedataquality[theentry]['value'])
-                                    # print "           ",thedataquality[theentry]['warnrange'],thedataquality[theentry]['failrange']
                                 if thedataquality[theentry]['quality'] > 0:
                                     themarker = themarker + sf.qualitytag(thedataquality[theentry]['symbol'], flag)
                                 else:
