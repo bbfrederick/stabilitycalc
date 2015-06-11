@@ -1,0 +1,32 @@
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Weisskoff analysis</h3>
+    <tr>
+        <td><p><a href="weisskoffplot.png"><IMG BORDER=0 SRC=weisskoffplot.png width="500"></a></p>
+        </td>
+        <td>
+            <small>
+                <table rules="none" style="margin-center: 20px; text-align: center" border="0" width="300"
+                       cellpadding="2">
+                    <tr>
+                        <td>Region Size</td>
+                        <td>Predicted Std Dev</td>
+                        <td>Actual Std Dev</td>
+                        <td>Ratio</td>
+                    </tr>
+                    % for i in range(roiareas.shape[0]):
+                    <tr>
+                        <td>${'%d' % roiareas[i]}</td>
+                        <td>${'%4.4f' % projcvs[i]}</td>
+                        <td>${'%4.4f' % weisscvs[i]}</td>
+                        <td>${'%4.4f' % (weisscvs[i] / projcvs[i])}</td>
+                    </tr>
+                    % endfor
+                </table>
+            </small>
+        </td>
+    </tr>
+    <tr>
+        <td><big><b>RDC=${weissrdc}</b></big></td>
+    </tr>
+</table>

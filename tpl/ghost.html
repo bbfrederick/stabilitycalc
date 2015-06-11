@@ -1,0 +1,42 @@
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Ghost ROI Analysis</h3>
+
+    <p>This is an analysis of the amplitude and time variation of image ghosts. Odd and even ghosts are assessed by
+        calculating the ratio of the average signal in a ${ghostroisize}x${ghostroisize}x1 ghost roi to the average
+        amplitude in the center of the phantom. The ghost roi is placed at the edge of the field of view in the phase
+        encode direction, outside the phantom, and in the center (even ghost) or at the edge (odd ghost) of the phantom
+        position in the readout direction. </p>
+    <tr>
+        <td><p><b>Odd ghost ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % oddghostmean}
+                <br/>
+                stddev=${'%4.4f' % oddghoststddev}
+                <br/>
+                min=${'%4.4f' % oddghostmin}
+                <br/>
+                max=${'%4.4f' % oddghostmax}
+                <br/>
+                p-p=${'%4.4f' % oddghostpp}
+            </p>
+
+            <p><a href="oddghostroiplot.png"><IMG BORDER=0 SRC=oddghostroiplot.png width="500"></a></p>
+        </td>
+        <td><p><b>Even ghost ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % evenghostmean}
+                <br/>
+                stddev=${'%4.4f' % evenghoststddev}
+                <br/>
+                min=${'%4.4f' % evenghostmin}
+                <br/>
+                max=${'%4.4f' % evenghostmax}
+                <br/>
+                p-p=${'%4.4f' % evenghostpp}
+            </p>
+
+            <p><a href="evenghostroiplot.png"><IMG BORDER=0 SRC=evenghostroiplot.png width="500"></a></p>
+        </td>
+    </tr>
+</table>

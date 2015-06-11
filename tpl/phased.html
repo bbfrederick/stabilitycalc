@@ -1,0 +1,37 @@
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Phased array element maximum sensitivity region ROI Analysis</h3>
+
+    <p>This is an analysis of the variation in SNR, SFNR, and stability parameters across the individual coil elements
+        in a phased array. A set of ${maxlocroisize}x${maxlocroisize}x1 voxels are positioned ${maxlocradfrac} of the distance from the phantom center to the edge
+        along the direction of maximum sensitivity for the coil element. The average voxel values are plotted a function
+        of coil element. The timecourses from each location are then crosscorrelated to assess common mode noise.
+        Non-zero off-diagonal elements indicate correlation between channels, either due to geometric overlap or common
+        mode system noise. </p>
+    <tr>
+        <td><p><b>SNR at region of maximum sensitivity for each phased array element</b></p>
+
+            <p><a href="phasedarrayroisnrplot.png"><IMG BORDER=0 SRC=phasedarrayroisnrplot.png width="500"></a></p>
+        </td>
+        <td><p><b>SFNR at region of maximum sensitivity for each phased array element</b></p>
+
+            <p><a href="phasedarrayroisfnrplot.png"><IMG BORDER=0 SRC=phasedarrayroisfnrplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>p-p% variation at region of maximum sensitivity for each phased array element</b></p>
+
+            <p><a href="phasedarrayroippplot.png"><IMG BORDER=0 SRC=phasedarrayroippplot.png width="500"></a></p>
+        </td>
+        <td><p><b>p-p% variation after detrending at region of maximum sensitivity for each phased array element</b></p>
+
+            <p><a href="phasedarrayroippdtplot.png"><IMG BORDER=0 SRC=phasedarrayroippdtplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>Cross correlation of time data at each coil element's region of max sensitivity</b></p>
+
+            <p><a href="coilccmatrix.png"><IMG BORDER=0 SRC=coilccmatrix.png width="500"></a></p>
+        </td>
+    </tr>
+</table>

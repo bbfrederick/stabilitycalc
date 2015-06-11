@@ -14,8 +14,10 @@ import matplotlib.colors as colors
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 from htmltagutils import *
+from collections import namedtuple
 import ConfigParser
 
+Stats = namedtuple('Stats', 'mean stddev var max min ptp')
 
 def dict_from_tsvfile(filename):
     """open a tab separated two column file, return it as a str->str dict"""
@@ -119,26 +121,6 @@ def limitcheck(n, lim):
     return retval
 
 
-def weisstable(roiareas, weisscvs, projcvs):
-    # generate a table of weisskoff data
-    theshape = roiareas.shape
-    numareas = theshape[0]
-
-    tablestring = tablerowtag(
-        tableentrytag("Region Size") +
-        tableentrytag("Predicted Std Dev") +
-        tableentrytag("Actual Std Dev") +
-        tableentrytag("Ratio")
-    )
-    for i in range(numareas):
-        tablestring = tablestring + tablerowtag(
-            tableentrytag("%d" % (roiareas[i])) +
-            tableentrytag("%.4f" % (projcvs[i])) +
-            tableentrytag("%.4f" % (weisscvs[i])) +
-            tableentrytag("%.4f" % (weisscvs[i] / projcvs[i])))
-    return smalltag(tablepropstag(tablestring, 300, "center"))
-
-
 def trendgen(thexvals, thefitcoffs):
     # generate the polynomial fit timecourse from the coefficients
     theshape = thefitcoffs.shape
@@ -176,47 +158,16 @@ def nzminmax(thearray):
     return [themin, themax]
 
 
-def completestats(thearray):
-    # calculate the stats of the non-zero voxels
-    themean = np.mean(thearray)
-    thestddev = np.std(thearray)
-    thevar = np.var(thearray)
-    themax = np.max(thearray)
-    themin = np.min(thearray)
-    theptp = np.ptp(thearray)
-    return [themean, thestddev, thevar, themax, themin, theptp]
-
-
 def nzstats(thearray):
     # calculate the stats of the non-zero voxels
     flatarray = np.ravel(thearray)
-    nzindices = np.nonzero(flatarray)
-    theflatarray = flatarray[nzindices]
-    themean = np.mean(theflatarray)
-    thestddev = np.std(theflatarray)
-    thevar = np.var(theflatarray)
-    themax = np.max(theflatarray)
-    themin = np.min(theflatarray)
-    theptp = np.ptp(theflatarray)
-    return [themean, thestddev, thevar, themax, themin, theptp]
-
-
-def showstats(thestats):
-    formatstring = "mean = %2.2f, stddev = %2.2f, max = %2.2f, min = %2.2f"
-    interpstring = (thestats[0], thestats[1], thestats[3], thestats[4])
-    return formatstring % interpstring
-
-
-def nzmean(thearray):
-    # calculate the mean of the non-zero voxels
-    flatarray = np.ravel(thearray)
-    nzindices = np.nonzero(flatarray)
-    return np.mean(flatarray[nzindices])
-
-
-def arrayspatialsum(thearray):
-    # calculate the sum of an array across space
-    return np.sum(thearray)
+    nzindices = np.nonzero(np.ravel(thearray))
+    return Stats(np.mean(flatarray[nzindices]),
+                 np.std(flatarray[nzindices]),
+                 np.var(flatarray[nzindices]),
+                 np.max(flatarray[nzindices]),
+                 np.min(flatarray[nzindices]),
+                 np.ptp(flatarray[nzindices]))
 
 
 def showtc(thexvals, theyvals, thelabel):
@@ -227,67 +178,6 @@ def showtc(thexvals, theyvals, thelabel):
     roisubplot.plot(thexvals, theyvals, 'b')
     roisubplot.grid(True)
     # roisubplot.axes.Subplot.set_pad(0.1)
-    for tick in roisubplot.xaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    for tick in roisubplot.yaxis.get_major_ticks():
-        tick.label1.set_fontsize(20)
-    roisubplot.set_title(thelabel, fontsize=30)
-
-
-def showvals(xvecs, yvecs, legendvec, specvals, thelabel, dolegend):
-    # show an roi timecourse plot and a fit line
-    numxs = len(xvecs)
-    numys = len(yvecs)
-    numlegends = len(legendvec)
-    numspecvals = len(specvals)
-    if (numxs != numys) or (numxs != numlegends) or (numxs != numspecvals):
-        logging.warning("dimensions do not match")
-        exit(1)
-    w, h = plt.figaspect(0.50)
-    roiplot = plt.figure(figsize=(w, h))
-    roisubplot = roiplot.add_subplot(111)
-    if numys == 1:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 2:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 3:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 4:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 5:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    if numys == 6:
-        roisubplot.plot(xvecs[0], yvecs[0], specvals[0], xvecs[1], yvecs[1], specvals[1], xvecs[2], yvecs[2],
-                        specvals[2], xvecs[3], yvecs[3], specvals[3], xvecs[4], yvecs[4], specvals[4], xvecs[5],
-                        yvecs[5], specvals[5])
-        plt.hold(True)
-        if dolegend:
-            plt.legend(legendvec)
-        plt.hold(False)
-    roisubplot.grid(True)
     for tick in roisubplot.xaxis.get_major_ticks():
         tick.label1.set_fontsize(20)
     for tick in roisubplot.yaxis.get_major_ticks():
@@ -375,17 +265,6 @@ def showslice3(thedata, thelabel, minval, maxval, colormap):
         }
         thecmap = colors.LinearSegmentedColormap('mycm', mycmdata1)
     plt.imshow(thedata, vmin=minval, vmax=maxval, interpolation='nearest', label=thelabel, aspect='equal', cmap=thecmap)
-
-
-def showslice(theslice):
-    # show a 2D slice from a dataset in greyscale
-    if plt.isinteractive():
-        plt.ioff()
-    plt.axis('off')
-    plt.axis('equal')
-    plt.axis('tight')
-    plt.imshow(theslice, interpolation='nearest', aspect='equal', cmap=cm.gray)
-    plt.colorbar()
 
 
 def smooth(x, window_len=11, window='hanning'):
@@ -619,13 +498,3 @@ def getroival(theimage, theroi, zpos):
     yend = theroi[1][1]
     theroival = np.mean(theimage[zpos, ystart:yend, xstart:xend])
     return theroival
-
-
-def makecaptionedimage(imagetitle, thestats, imagename, thewidth):
-    # make a captioned image with statistics
-    if not thestats:
-        imcapstring = paratag(boldtag(imagetitle))
-    else:
-        imcapstring = paratag(boldtag(imagetitle) + breaktag(showstats(thestats)))
-    return imcapstring + imagetag(imagename, thewidth)
-
