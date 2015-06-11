@@ -302,7 +302,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     centstddev_dt_qualitytag = qualitypercent(centstddev_dt, centmean_dt, 'central_roi_detrended_std%')
     centpp_dt_qualitytag = qualitypercent(centpp_dt, centmean_dt, 'central_roi_detrended_p-p%')
 
-
     #############################
     #
     #       Maximum value ROI analysis
@@ -605,34 +604,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     for k in figs:
         makefig(k)
 
-    # TODO haven't done this one yet!
-
-    # ########################################################
-    # #
-    # # Max sensitivity ROI output
-    # #
-    # if isindividualcoil:
-    #     maxlocroihdrstr = hruletag() + headertag("Maximum sensitivity region ROI Analysis")
-    #     maxlocroiparastr = paratag(
-    #         "This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil element. A 3 x 3 x 1 voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the drift removed.\n")
-    #
-    #     rawroicellstr = tableentrytag(
-    #         paratag(boldtag("Raw max sensitivity ROI plot")) +
-    #         paratag(maxloctc_summary) +
-    #         imagetag("maxlocroiplot.png", myimwidth))
-    #     snrroicellstr = tableentrytag(
-    #         paratag(boldtag("Central ROI over time")) +
-    #         paratag(maxlocsnr_summary) +
-    #         imagetag("maxlocroisnrplot.png", myimwidth))
-    #     detrendedroicellstr = tableentrytag(
-    #         paratag(boldtag("Detrended max sensitivity ROI plot")) +
-    #         paratag(maxloctc_dt_summary) +
-    #         imagetag("maxlocroidtplot.png", myimwidth))
-    #     row1str = tablerowtag(rawroicellstr + detrendedroicellstr)
-    #     row2str = tablerowtag(snrroicellstr)
-    #     outfp.writelines(tablepropstag(maxlocroihdrstr + maxlocroiparastr + row1str + row2str, 500, "left"))
-
-    ##### data quality report
+    # data quality report
 
     datadict = {'Coil': info['Coil'],
                 'Date': formatteddate,

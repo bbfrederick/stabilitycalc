@@ -1,0 +1,37 @@
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Maximum sensitivity region ROI Analysis</h3>
+
+    <p>This is an analysis of the temporal fluctuation in the ROI of maximum sensitivity for the individual coil
+        element. A 3 x 3 x 1 voxel is automatically postioned at the center of gravity, and the average voxel value is
+        plotted a function of time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported
+        with and without the drift removed. </p>
+    <tr>
+        <td><p><b>Raw max sensitivity ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % maxlocmean}
+                <br/>
+                stddev=${'%4.4f' % maxlocstddev} <b>${maxloc_qualitytag}</b>
+                <br/>
+                p-p=${'%4.4f' % maxlocpp} <b>${maxloc_pp_qualitytag}</b></p>
+            <p><a href="maxlocroiplot.png"><IMG BORDER=0 SRC=maxlocroiplot.png width="500"></a></p>
+        </td>
+        <td><p><b>Detrended max sensitivity ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % maxlocmean_dt}
+                <br/>
+                stddev=${'%4.4f' % maxlocstddev_dt} ${maxloc_dt_qualitytag}
+                <br/>
+                p-p=${'%4.4f' % maxlocpp_dt} ${maxlocpp_dt_qualitytag}</p>
+            <p><a href="maxlocroidtplot.png"><IMG BORDER=0 SRC=maxlocroidtplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>Central ROI over time</b></p>
+
+            <p>mean=${'%4.4f' % maxlocsnr}</p>
+
+            <p><a href="maxlocroisnrplot.png"><IMG BORDER=0 SRC=maxlocroisnrplot.png width="500"></a></p>
+        </td>
+    </tr>
+</table>
