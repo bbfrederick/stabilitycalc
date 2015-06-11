@@ -4,17 +4,19 @@
 # numbers come out different on unix and mac so we
 # have separate baseline dirs
 DATA=/Users/dmd/mcldata
+#COILS="TxRx 32Ch"
+COILS="32Ch"
 if [ -z "$DATA" ]; then
     # out of an abundance of caution because of next line
     exit 1
 fi
-for COIL in TxRx 32Ch; do
+for COIL in $COILS; do
     rm -rf $DATA/test$COIL/procresults
 done
 ./stabilitycalc.py $DATA/test32Ch epi_pace.nii.gz 0
-./stabilitycalc.py $DATA/testTxRx epi_short.nii.gz 0
+#./stabilitycalc.py $DATA/testTxRx epi_short.nii.gz 0
 failed=0
-for COIL in TxRx 32Ch; do
+for COIL in $COILS; do
     echo ==================
     echo diff $COIL
     echo ==================
