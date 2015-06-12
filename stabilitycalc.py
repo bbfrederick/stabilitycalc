@@ -27,6 +27,11 @@ import studyinfo
 def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=None, initzcenter=None):
     """create the stability report for a scan"""
 
+    logging.debug('dirname: {}\n'
+                  'filename: {}\n'
+                  'starttime: {}\n'
+                  'centers: {}, {}, {}'.format(dirname, filename, starttime, initxcenter, initycenter, initzcenter))
+
     isindividualcoil = False
 
     if initxcenter is not None:
@@ -352,7 +357,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         maxlocstddev = np.std(maxloctc)
         maxlocpp = np.ptp(maxloctc)
 
-        # TODO these not yet used
         maxloc_qualitytag = qualitypercent(maxlocstddev, maxlocmean, 'maxlocroi_rawstddev')
         maxloc_pp_qualitytag = qualitypercent(maxlocpp, maxlocmean, 'maxlocroi_rawpp')
 
@@ -362,7 +366,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         maxlocmax_dt = np.max(detrendedmaxloctc)
         maxlocpp_dt = np.ptp(detrendedmaxloctc)
 
-        # TODO these not yet used
         maxloc_dt_qualitytag = qualitypercent(maxlocstddev_dt, maxlocmean_dt, 'maxlocroi_dtstddev')
         maxlocpp_dt_qualitytag = qualitypercent(maxlocpp_dt, maxlocmean_dt, 'maxlocroi_dtpp')
 
@@ -540,7 +543,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     # noinspection PyShadowingNames
     def slicepic(inputslice, caption, minp, maxp, dirname, outputname, colormap):
-        plt.figure(figsize=plt.figaspect(1.0))
         sf.showslice2(inputslice, caption, minp, maxp, colormap)
         plt.savefig(pjoin(dirname, 'procresults', outputname + '.png'), format='png')
         plt.close()
@@ -563,7 +565,6 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
 
     def makefig(figk):
         """make a figure using the figure dictionary"""
-        plt.figure()
         # noinspection PyCallingNonCallable
         figs[figk]['fn'](*figs[figk]['args'])
         plt.savefig(pjoin(dirname, 'procresults', figk + '.png'), format='png')
