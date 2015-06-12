@@ -214,6 +214,7 @@ def showweisskoff(theareas, thestddevs, theprojstddevs, thelabel):
 
 def showslice2(thedata, thelabel, minval, maxval, colormap):
     # initialize and show a 2D slice from a dataset in greyscale
+    plt.figure(figsize=plt.figaspect(1.0))
     theshape = thedata.shape
     numslices = theshape[0]
     ysize = theshape[1]
