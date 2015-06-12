@@ -407,8 +407,8 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
         for i, ele in enumerate(coildata):
             if selecteddata.shape[1] == 1 and coildata[ele]['zloc'] != 0:
                 # single slice
-                coildata[ele]['zloc'] = 0
                 logging.debug('single slice data, changing zloc from {} to 0'.format(coildata[ele]['zloc']))
+                coildata[ele]['zloc'] = 0
             roi = sf.setroilims(round(coildata[ele]['xloc']), round(coildata[ele]['yloc']), phasedarraysize)
             if not isindividualcoil:
                 sf.markroi(roi, round(coildata[ele]['zloc']), roislice, 0.95 * rawmeanmax)
