@@ -1,34 +1,166 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import dicom
+import numpy as np
+
+
+def clean(instring):
+    return instring.replace(" ", "_").replace('"', '').replace("'", "").replace(", ", " ")
+
+
+def getslicepositions(theplan):
+    siemenscsaheader2 = theplan[0x0029, 0x1020].value
+    startposition = siemenscsaheader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
+    endposition = siemenscsaheader2.find('### ASCCONV END ###')
+    interestingsiemensheader = siemenscsaheader2[startposition:endposition].splitlines()
+    saglist = []
+    tralist = []
+    corlist = []
+    for theline in interestingsiemensheader[1:]:
+        thepair = theline.split()
+        if thepair[0][0:len('sSliceArray.asSlice')] == 'sSliceArray.asSlice':
+            if thepair[0][-len('sPosition.dSag'):] == 'sPosition.dSag':
+                saglist.append(thepair[2])
+            if thepair[0][-len('sPosition.dTra'):] == 'sPosition.dTra':
+                tralist.append(thepair[2])
+            if thepair[0][-len('sPosition.dCor'):] == 'sPosition.dCor':
+                corlist.append(thepair[2])
+    return saglist, tralist, corlist
 
 
 def getsiemensmrheader(theplan):
     datadict = {}
-    SiemensCSAHeader2 = theplan[0x0029, 0x1020].value
-    startposition = SiemensCSAHeader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
-    endposition = SiemensCSAHeader2.find('### ASCCONV END ###')
-    InterestingSiemensHeader = SiemensCSAHeader2[startposition:endposition].splitlines()
-    for theline in InterestingSiemensHeader[1:]:
+    if (0x0029, 0x0010) not in theplan \
+            or (0x0029, 0x1020) not in theplan \
+            or (0x0029, 0x1010) not in theplan \
+            or (0x0029, 0x1020) not in theplan:
+        return {}
+
+    siemenscsaheader2 = theplan[0x0029, 0x1020].value
+    startposition = siemenscsaheader2.find('### ASCCONV BEGIN ###') + len('### ASCCONV BEGIN ###')
+    endposition = siemenscsaheader2.find('### ASCCONV END ###')
+    interestingsiemensheader = siemenscsaheader2[startposition:endposition].splitlines()
+    for theline in interestingsiemensheader[1:]:
         thepair = theline.split()
         datadict[thepair[0]] = thepair[2]
 
     return datadict
+
 
 if len(sys.argv) != 2:
     print("usage: getdicominfo inputfile")
     exit()
 filename = sys.argv[1]
 plan = dicom.read_file(filename)
+
 timestr = float(plan.AcquisitionTime)
 thetr = float(plan.RepetitionTime)
-timeconv = 3600 * (int(timestr / 10000) % 100) + 60 * (int(timestr / 100) % 100) + timestr % 100 + (timestr - int(timestr))
+thete = float(plan.EchoTime)
+timeconv = 3600 * (int(timestr / 10000) % 100) + 60 * (int(timestr / 100) % 100) + timestr % 100 + (
+    timestr - int(timestr))
 acqnum = plan.AcquisitionNumber
+thesiemensheader = getsiemensmrheader(plan)
+if thesiemensheader != {}:
+    slicethickness = thesiemensheader['sSliceArray.asSlice[0].dThickness']
+    patmode = thesiemensheader['sPat.ucPATMode']
+    imagingfreq = thesiemensheader['sTXSPEC.asNucleusInfo[0].lFrequency']
+    refamplitude = thesiemensheader['sTXSPEC.asNucleusInfo[0].flReferenceAmplitude']
+
+flip = plan[0x0018, 0x1314].value
+rows = plan[0x0028, 0x0010].value
+columns = plan[0x0028, 0x0011].value
+vres = plan[0x0028, 0x0030].value
+vresx, vresy = vres[0], vres[1]
+pixelbw = plan[0x0018, 0x0095].value
+pedir = plan[0x0018, 0x1312].value
+orientation = plan[0x0051, 0x100e].value
+posdirs = plan[0x0051, 0x1013].value
+tablepos = plan[0x0019, 0x1014].value
+imsinmosaic = plan[0x0019, 0x100a].value
+coil = plan[0x0051, 0x100f].value
+sex = plan[0x0010, 0x0040].value
+age = plan[0x0010, 0x1010].value
+weight = plan[0x0010, 0x1030].value
+sar = plan[0x0018, 0x1316].value
+protocol = clean(plan[0x0018, 0x1030].value)
+sequence = clean(plan[0x0018, 0x0024].value)
+reqproc = clean(plan[0x0032, 0x1060].value)
+thepath = os.path.dirname(filename)
+
+print('filename={}'.format(filename))
+print('name={}'.format(plan[0x0010, 0x0010].value))
+print('columns={}'.format(columns))
+print('flip={}'.format(flip))
+print('rows={}'.format(rows))
+print('vresx={}'.format(vresx))
+print('vresy={}'.format(vresy))
+print('slicethickness={}'.format(slicethickness))
+print('TR={}'.format(thetr))
+print('TE={}'.format(thete))
+print('pixelbw={}'.format(pixelbw))
+print('pedir={}'.format(pedir))
+print('orientation={}'.format(orientation))
+print('posdirs={}'.format(posdirs))
+print('tablepos={}'.format(tablepos))
+print('imsinmosaic={}'.format(imsinmosaic))
+print('coil={}'.format(coil))
+
+try:
+    date = plan[0x0008, 0x0012].value
+    print('date={}'.format(date))
+except KeyError:
+    pass
+
+print('AcquisitionTime={}'.format(timestr))
+print('AcqNum={}'.format(acqnum))
+print('protocol={}'.format(protocol))
+print('sex={}'.format(sex))
+print('age={}'.format(age))
+print('weight={}'.format(weight))
+
+print('\n============= Metadata:')
+print(plan.file_meta)
+print('\n============= Dicom Header:')
+print(plan)
+
+thesiemensheader = getsiemensmrheader(plan)
+if thesiemensheader != {}:
+    slicethickness = thesiemensheader['sSliceArray.asSlice[0].dThickness']
+
+try:
+    transmotion = plan[0x0019, 0x1025].value
+    print('transmotion={}'.format(transmotion))
+except KeyError:
+    pass
+
+try:
+    rotmotion = plan[0x0019, 0x1026].value
+    print('rotmotion={}'.format(rotmotion))
+except KeyError:
+    pass
 
 try:
     elementnumber = plan[0x0051, 0x100f].value
+    print('elementnumber={}'.format(elementnumber))
 except KeyError:
-    print(timestr, thetr, acqnum)
-else:
-    print(timestr, thetr, acqnum, elementnumber)
+    pass
+
+
+print('\n============= Mosaicinfo:')
+thesaglist, thetralist, thecorlist = getslicepositions(plan)
+
+numslices = len(thesaglist)
+locs = np.zeros((4, numslices), dtype='float')
+locs[0, :] = thetralist
+locs[1, :] = thesaglist
+locs[2, :] = thecorlist
+
+try:
+    mosaicinfo = plan[0x0019, 0x1029].value
+    whichslice = 0
+    for whichslice, slicetime in enumerate(mosaicinfo):
+        print('slice {} time = {}'.format(whichslice, (slicetime % thetr) / 1000.0))
+except KeyError:
+    print('key error getting mosaicinfo')
