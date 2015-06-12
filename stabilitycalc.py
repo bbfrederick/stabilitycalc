@@ -6,7 +6,7 @@ import time
 
 import matplotlib
 
-matplotlib.use('Agg')
+matplotlib.use('Agg', warn=False)
 import numpy as np
 import matplotlib.pyplot as plt
 from htmltagutils import *
