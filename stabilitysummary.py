@@ -63,9 +63,9 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         logging.info('Beginning processing for ' + summaryfile)
         datadict[filenumber_TARGET] = {}
         try:
-            datadict[filenumber_TARGET]['datadir'] = summaryfile + "/" + whichscan + "/procresults"
+            datadict[filenumber_TARGET]['datadir'] = pjoin(summaryfile, whichscan, 'procresults')
             try:
-                theanalysisfile = open(datadirectory + "/" + summaryfile + "/" + whichscan + "/procresults/analysissummary.txt")
+                theanalysisfile = open(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt'))
                 for line in theanalysisfile:
                     thepair = line.split()
                     datadict[filenumber_TARGET][thepair[0]] = thepair[1]
@@ -83,12 +83,9 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                 pass
         except KeyError:
             pass
-    logging.debug(
-        str(num_cp_TARGET) + " CP coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-    logging.debug(
-        str(num_12_TARGET) + " 12 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-    logging.debug(
-        str(num_32_TARGET) + " 32 channel coil runs ({} phantom)".format('BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+    logging.debug("{} CP coil runs ({} phantom)".format(num_cp_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+    logging.debug("{} 12 channel coil runs ({} phantom)".format(num_12_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+    logging.debug("{} 32 channel coil runs ({} phantom)".format(num_32_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
 
     #######################################################################################
     #
