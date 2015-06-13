@@ -89,41 +89,42 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
     #
     mostrecenttimes = {}
     for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
-        with open(outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt", "w") as fp:
+        with open(pjoin(outputdirectory, whichscan, targetcoil + '_vals.txt'), 'w') as fp:
             for i in range(filenumber_TARGET):
-                if datadict[i]['Coil'] == targetcoil:
-                    ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN phantom')
-                    if ObjectisBIRNphantom == TargetisBIRNphantom:
-                        try:
-                            # TODO use get, not try/catch
-                            if datadict[i]['Protocol'] != 'nothing':
-                                fp.writelines(datadict[i]['Coil'] + " " + datadict[i]['DateTime'] + " ")
-                                fp.writelines(datadict[i]['central_roi_detrended_p-p%'] + " ")
-                                fp.writelines(datadict[i]['peripheral_roi_detrended_p-p%'] + " ")
-                                fp.writelines(datadict[i]['central_roi_SNR'] + " ")
-                                fp.writelines(datadict[i]['peripheral_roi_SNR'] + " ")
-                                fp.writelines(datadict[i]['central_roi_SFNR'] + " ")
-                                fp.writelines(datadict[i]['peripheral_roi_SFNR'] + " ")
-                                fp.writelines(datadict[i]['odd_ghost_mean'] + " ")
-                                fp.writelines(datadict[i]['odd_ghost_max'] + " ")
-                                fp.writelines(datadict[i]['odd_ghost_min'] + " ")
-                                fp.writelines(datadict[i]['even_ghost_mean'] + " ")
-                                fp.writelines(datadict[i]['even_ghost_max'] + " ")
-                                fp.writelines(datadict[i]['even_ghost_min'] + " ")
-                                fp.writelines(datadict[i]['object_radius_mm'] + " ")
-                                fp.writelines(datadict[i]['object_shape'] + " ")
-                                fp.writelines(datadict[i]['center_of_mass_x'] + " ")
-                                fp.writelines(datadict[i]['center_of_mass_y'] + " ")
-                                fp.writelines(datadict[i]['center_of_mass_z'] + " ")
-                                fp.writelines(datadict[i]['central_roi_detrended_mean'] + " ")
-                                fp.writelines(datadict[i]['central_roi_drift%'] + " ")
-                                fp.writelines(datadict[i]['peripheral_roi_drift%'] + " ")
-                                fp.writelines(datadict[i]['weissrdc'] + " ")
-                                fp.writelines(datadict[i]['central_roi_detrended_mean'] + " ")
-                                fp.writelines("\n")
-                                mostrecenttimes[targetcoil] = datadict[i]['DateTime']
-                        except KeyError:
-                            pass
+                ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN phantom')
+                if datadict[i]['Coil'] == targetcoil and ObjectisBIRNphantom == TargetisBIRNphantom:
+                    try:
+                        if datadict[i]['Protocol'] != 'nothing':
+                            mostrecenttimes[targetcoil] = datadict[i]['DateTime']
+                            fp.write(' '.join([datadict[i][k] for k in ('Coil',
+                                         'DateTime',
+                                         'central_roi_detrended_p-p%',
+                                         'peripheral_roi_detrended_p-p%',
+                                         'central_roi_SNR',
+                                         'peripheral_roi_SNR',
+                                         'central_roi_SFNR',
+                                         'peripheral_roi_SFNR',
+                                         'odd_ghost_mean',
+                                         'odd_ghost_max',
+                                         'odd_ghost_min',
+                                         'even_ghost_mean',
+                                         'even_ghost_max',
+                                         'even_ghost_min',
+                                         'object_radius_mm',
+                                         'object_shape',
+                                         'center_of_mass_x',
+                                         'center_of_mass_y',
+                                         'center_of_mass_z',
+                                         'central_roi_detrended_mean',
+                                         'central_roi_drift%',
+                                         'peripheral_roi_drift%',
+                                         'weissrdc',
+                                         'central_roi_detrended_mean',)]))
+                            fp.write('\n')
+                    except KeyError:
+                        pass
+
+                        
 
     #######################################################################################
     # generate plot control files to graph all interesting stability parameters
