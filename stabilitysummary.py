@@ -65,7 +65,7 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         try:
             datadict[filenumber_TARGET]['datadir'] = pjoin(summaryfile, whichscan, 'procresults')
             try:
-                datadict = sf.dict_from_tsvfile(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt'))
+                datadict[filenumber_TARGET].update(sf.dict_from_tsvfile(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt')))
                 ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN phantom')
                 if ObjectisBIRNphantom == TargetisBIRNphantom:
                     if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
