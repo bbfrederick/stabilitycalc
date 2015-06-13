@@ -2,10 +2,8 @@
 
 """stabilityfuncs.py: provides general helper functions, especially for stabilitycalc"""
 
-import os
 import csv
 from collections import OrderedDict
-
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
@@ -13,11 +11,12 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 import logging
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-from htmltagutils import *
 from collections import namedtuple
 import ConfigParser
 
+
 Stats = namedtuple('Stats', 'mean stddev var max min ptp')
+
 
 def dict_from_tsvfile(filename):
     """open a tab separated two column file, return it as a str->str dict"""

@@ -26,7 +26,7 @@ scantypes = {'epi_bold': 'ep2d_bold_normalize_*',
              'epi_singleslice': 'epi_stability_single*sPlot*'}
 
 
-def processstability(session):
+def processstability(session, dicom=True, summ=True, recalc=True):
     """main"""
 
     def name(pattern):
@@ -40,7 +40,8 @@ def processstability(session):
         scan = name(pattern)
         if scan:
             logging.debug('processstability: {}, {}'.format(scantype, scan))
-            _dicom_to_stabilitycalc(dicomseries=scan, niftiname=scantype)
+            if recalc:
+                _dicom_to_stabilitycalc(dicomseries=scan, niftiname=scantype, dicom=dicom)
 
             if scantype == 'epi_pace':
                 analsum = dict_from_tsvfile(pjoin(processedscandir, session, scantype, 'procresults', 'analysissummary.txt'))
@@ -56,10 +57,11 @@ def processstability(session):
                     ele = 'element_' + ele
 
                     logging.debug('processstability: PACE: doing scan={}, unc={}, ele={}'.format(scan, bunc, ele))
-                    _dicom_to_stabilitycalc(bunc, ele, starttime=0,
-                                           initxcenter=analsum['center_of_mass_x'],
-                                           initycenter=analsum['center_of_mass_y'],
-                                           initzcenter=analsum['center_of_mass_z'])
+                    if recalc:
+                        _dicom_to_stabilitycalc(dicomseries=bunc, niftiname=ele, dicom=dicom, starttime=0,
+                                               initxcenter=analsum['center_of_mass_x'],
+                                               initycenter=analsum['center_of_mass_y'],
+                                               initzcenter=analsum['center_of_mass_z'])
 
             if summ:
                 stabilitysummary(processedscandir, pjoin(outputdir, '3T', 'birn'), scantype, TargetisBIRNphantom=True)
@@ -69,7 +71,7 @@ def processstability(session):
 
     logging.info('processstability done.')
 
-def _dicom_to_stabilitycalc(dicomseries, niftiname, starttime=10, initxcenter=None, initycenter=None, initzcenter=None):
+def _dicom_to_stabilitycalc(dicomseries, niftiname, dicom=True, starttime=10, initxcenter=None, initycenter=None, initzcenter=None):
 
     if dicom:
         dicom2nifti(pjoin(sorteddicomdir, session, dicomseries),
@@ -84,11 +86,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert DICOMs, run stability{calc,summary}.')
     parser.add_argument('session', help='The session to work on, relative to SORTEDDICOMDIR or PROCESSEDSCANDIR.')
     parser.add_argument('--nodicom', help='Do not reprocess DICOM files; assume they are already done.', action='store_true')
+    parser.add_argument('--norecalc', help='Do not reprocess stability; assume it is already done. (Just do summary.)', action='store_true')
     parser.add_argument('--nosumm', help='Do not reprocess summaries.', action='store_true')
     args = parser.parse_args()
 
     session = args.session
-    dicom = not args.nodicom
-    summ = not args.nosumm
 
-    processstability(session)
+    processstability(session, not args.nodicom, not args.nosumm, not args.norecalc)

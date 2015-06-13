@@ -65,12 +65,8 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         try:
             datadict[filenumber_TARGET]['datadir'] = pjoin(summaryfile, whichscan, 'procresults')
             try:
-                theanalysisfile = open(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt'))
-                for line in theanalysisfile:
-                    thepair = line.split()
-                    datadict[filenumber_TARGET][thepair[0]] = thepair[1]
-                theanalysisfile.close()
-                ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN_phantom')
+                datadict = sf.dict_from_tsvfile(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt'))
+                ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN phantom')
                 if ObjectisBIRNphantom == TargetisBIRNphantom:
                     if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
                         num_cp_TARGET += 1
@@ -96,7 +92,7 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         with open(outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt", "w") as fp:
             for i in range(filenumber_TARGET):
                 if datadict[i]['Coil'] == targetcoil:
-                    ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN_phantom')
+                    ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN phantom')
                     if ObjectisBIRNphantom == TargetisBIRNphantom:
                         try:
                             # TODO use get, not try/catch
