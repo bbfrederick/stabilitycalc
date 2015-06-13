@@ -1,0 +1,15 @@
+set terminal jpeg
+ set autoscale
+ unset log
+ unset label
+ set xdata time
+ set xtics autofreq rotate
+ set ytic auto
+ set timefmt "%Y%m%dT%H:%M:%S"
+set xrange ["20091120T00:00:00":]
+set yrange [0:15.0]
+set title "Ghost percentage"
+set xlabel "Date"
+set ylabel "Ghost amplitude (%)"
+plot    "${outputdirectory}/${whichscan}/graphtemp" using 2:9:11:10 title 'Odd ghost' with yerrorbars ps 1 pt 3, \
+"/${outputdirectory}/${whichscan}/graphtemp" using 2:12:14:13 title 'Even ghost' with yerrorbars ps 1 pt 4

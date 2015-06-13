@@ -14,11 +14,9 @@ import shutil
 import nibabel as nib
 
 from mako.lookup import TemplateLookup
-
 makolookup = TemplateLookup(directories=['./tpl'])
 
 import logging
-
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 import stabilityfuncs as sf
 import studyinfo

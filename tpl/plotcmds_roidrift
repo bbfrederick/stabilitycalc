@@ -1,0 +1,15 @@
+set terminal jpeg
+ set autoscale
+ unset log
+ unset label
+ set xdata time
+ set xtics autofreq rotate
+ set ytic auto
+ set timefmt "%Y%m%dT%H:%M:%S"
+set xrange ["20091120T00:00:00":]
+set yrange [0:1.0]
+set title "ROI linear and quadratic drift: p-p amplitude in percent"
+set xlabel "Date"
+set ylabel "p-p percent"
+plot    "${outputdirectory}/${whichscan}/graphtemp" using 2:21 title 'Central ROI' with ${wlp} ps 2 pt 3, \
+"${outputdirectory}/${whichscan}/graphtemp" using 2:22 title 'Peripheral ROI' with ${wlp} ps 2 pt 4

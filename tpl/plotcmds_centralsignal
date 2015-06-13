@@ -1,0 +1,14 @@
+set terminal jpeg
+ set autoscale
+ unset log
+ unset label
+ set xdata time
+ set xtics autofreq rotate
+ set ytic auto
+ set timefmt "%Y%m%dT%H:%M:%S"
+set xrange ["20091120T00:00:00":]
+set yrange [0:2000.0]
+set title "Detrended mean central signal intensity"
+set xlabel "Date"
+set ylabel "Mean signal intensity"
+plot    "${outputdirectory}/${whichscan}/graphtemp" using 2:24 title 'Mean central signal intensity' with ${wlp} ps 2 pt 3

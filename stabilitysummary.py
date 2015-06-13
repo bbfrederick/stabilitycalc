@@ -7,6 +7,9 @@ import time
 import logging
 import subprocess
 
+from mako.lookup import TemplateLookup
+
+makolookup = TemplateLookup(directories=['./tpl'])
 from htmltagutils import *
 import stabilityfuncs as sf
 
@@ -18,13 +21,13 @@ def stability_eval(specs, thedictionary):
         try:
             entrydata = specs[theentry]
             if entrydata[2][0] == 1:
-                stability_results[theentry] = {}
-                stability_results[theentry]['key'] = theentry
-                stability_results[theentry]['varname'] = entrydata[3]
-                stability_results[theentry]['value'] = thedictionary[theentry]
-                stability_results[theentry]['warnrange'] = entrydata[0]
-                stability_results[theentry]['failrange'] = entrydata[1]
-                stability_results[theentry]['quality'] = sf.limitcheck(thedictionary[theentry], specs[theentry])
+                stability_results[theentry] = {
+                    'key': theentry,
+                    'varname': entrydata[3],
+                    'value': thedictionary[theentry],
+                    'warnrange': entrydata[0],
+                    'failrange': entrydata[1],
+                    'quality': sf.limitcheck(thedictionary[theentry], specs[theentry])}
                 if entrydata[2][1] == 1:
                     stability_results[theentry]['critical'] = True
                 else:
@@ -36,6 +39,7 @@ def stability_eval(specs, thedictionary):
     return stability_results
 
 
+# noinspection PyPep8Naming,PyPep8Naming
 def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphantom):
     # initialize the outut directory if need be
     if not os.path.exists(pjoin(outputdirectory, whichscan)):
@@ -65,7 +69,8 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         try:
             datadict[filenumber_TARGET]['datadir'] = pjoin(summaryfile, whichscan, 'procresults')
             try:
-                datadict[filenumber_TARGET].update(sf.dict_from_tsvfile(pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt')))
+                datadict[filenumber_TARGET].update(sf.dict_from_tsvfile(
+                    pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt')))
                 ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN phantom')
                 if ObjectisBIRNphantom == TargetisBIRNphantom:
                     if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
@@ -80,8 +85,10 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         except KeyError:
             pass
     logging.debug("{} CP coil runs ({} phantom)".format(num_cp_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-    logging.debug("{} 12 channel coil runs ({} phantom)".format(num_12_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
-    logging.debug("{} 32 channel coil runs ({} phantom)".format(num_32_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+    logging.debug(
+        "{} 12 channel coil runs ({} phantom)".format(num_12_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
+    logging.debug(
+        "{} 32 channel coil runs ({} phantom)".format(num_32_TARGET, 'BIRN' if TargetisBIRNphantom else 'NONBIRN'))
 
     #######################################################################################
     #
@@ -97,34 +104,32 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                         if datadict[i]['Protocol'] != 'nothing':
                             mostrecenttimes[targetcoil] = datadict[i]['DateTime']
                             fp.write(' '.join([datadict[i][k] for k in ('Coil',
-                                         'DateTime',
-                                         'central_roi_detrended_p-p%',
-                                         'peripheral_roi_detrended_p-p%',
-                                         'central_roi_SNR',
-                                         'peripheral_roi_SNR',
-                                         'central_roi_SFNR',
-                                         'peripheral_roi_SFNR',
-                                         'odd_ghost_mean',
-                                         'odd_ghost_max',
-                                         'odd_ghost_min',
-                                         'even_ghost_mean',
-                                         'even_ghost_max',
-                                         'even_ghost_min',
-                                         'object_radius_mm',
-                                         'object_shape',
-                                         'center_of_mass_x',
-                                         'center_of_mass_y',
-                                         'center_of_mass_z',
-                                         'central_roi_detrended_mean',
-                                         'central_roi_drift%',
-                                         'peripheral_roi_drift%',
-                                         'weissrdc',
-                                         'central_roi_detrended_mean',)]))
+                                                                        'DateTime',
+                                                                        'central_roi_detrended_p-p%',
+                                                                        'peripheral_roi_detrended_p-p%',
+                                                                        'central_roi_SNR',
+                                                                        'peripheral_roi_SNR',
+                                                                        'central_roi_SFNR',
+                                                                        'peripheral_roi_SFNR',
+                                                                        'odd_ghost_mean',
+                                                                        'odd_ghost_max',
+                                                                        'odd_ghost_min',
+                                                                        'even_ghost_mean',
+                                                                        'even_ghost_max',
+                                                                        'even_ghost_min',
+                                                                        'object_radius_mm',
+                                                                        'object_shape',
+                                                                        'center_of_mass_x',
+                                                                        'center_of_mass_y',
+                                                                        'center_of_mass_z',
+                                                                        'central_roi_detrended_mean',
+                                                                        'central_roi_drift%',
+                                                                        'peripheral_roi_drift%',
+                                                                        'weissrdc',
+                                                                        'central_roi_detrended_mean',)]))
                             fp.write('\n')
                     except KeyError:
                         pass
-
-                        
 
     #######################################################################################
     # generate plot control files to graph all interesting stability parameters
@@ -137,127 +142,19 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
     else:
         wlp = 'linespoints'
 
-    pointsize = 'ps 2'
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0:800]\n")
-        fp.writelines("set title \"Absolute SNR and SFNR\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"p-p percent\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:5 title 'Central ROI SNR' with " + wlp + " " + pointsize + " pt 3, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:6 title 'Peripheral ROI SNR' with " + wlp + " " + pointsize + " pt 4, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:7 title 'Central ROI SFNR' with " + wlp + " " + pointsize + " pt 4, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:8 title 'Peripheral ROI SFNR' with " + wlp + " " + pointsize + " pt 4\n")
-
-    #
-    # central and peripheral stability
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_roistab", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0:1.0]\n")
-        fp.writelines("set title \"ROI stability: p-p variation in percent\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"p-p percent\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:3 title 'Central ROI' with " + wlp + " " + pointsize + " pt 3, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:4 title 'Peripheral ROI' with " + wlp + " " + pointsize + " pt 4\n")
-
-    #
-    # central and peripheral drift
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_roidrift", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0:1.0]\n")
-        fp.writelines("set title \"ROI linear and quadratic drift: p-p amplitude in percent\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"p-p percent\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:21 title 'Central ROI' with " + wlp + " " + pointsize + " pt 3, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:22 title 'Peripheral ROI' with " + wlp + " " + pointsize + " pt 4\n")
-
-    #
-    # ghosts
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_ghost", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0:15.0]\n")
-        fp.writelines("set title \"Ghost percentage\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"Ghost amplitude (%)\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:9:11:10 title 'Odd ghost' with yerrorbars ps 1 pt 3, \\\n")
-        fp.writelines(
-            "\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:12:14:13 title 'Even ghost' with yerrorbars ps 1 pt 4\n")
-
-    #
-    # object radius
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_objradius", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [75.0:90.0]\n")
-        fp.writelines("set title \"Phantom radius\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"Phantom radius (mm)\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:15 title 'Object radius in mm' with " + wlp + " " + pointsize + " pt 3\n")
-
-    #
-    # object shape
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_objshape", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0.9:1.1]\n")
-        fp.writelines("set title \"Phantom shape (y/x)\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"Phantom shape (y/x)\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:16 title 'Object shape (y/x)' with " + wlp + " " + pointsize + " pt 3\n")
-
-    #
-    # weisskoff
-    #
-    with open(outputdirectory + "/" + whichscan + "/plotcmds_weissrdc", "w") as fp:
-        fp.writelines(
-            "set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
-        fp.writelines("set xrange [\"20091120T00:00:00\":]\n")
-        fp.writelines("set yrange [0:12.0]\n")
-        fp.writelines("set title \"Weisskoff Radius of decorrelation\"\n")
-        fp.writelines("set xlabel \"Date\"\n")
-        fp.writelines("set ylabel \"Weisskoff RDC\"\n")
-        fp.writelines(
-            "plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:23 title 'Weisskoff RDC' with " + wlp + " " + pointsize + " pt 3\n")
-
-    #
-    # central mean signal intensity
-    #
-    with open(pjoin(outputdirectory, whichscan, 'plotcmds_centralsignal'), 'w') as fp:
-        fp.writelines(
-            'set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtics autofreq rotate\n set ytic auto\n set timefmt "%Y%m%dT%H:%M:%S"\n')
-        fp.writelines('set xrange ["20091120T00:00:00":]\n')
-        fp.writelines('set yrange [0:2000.0]\n')
-        fp.writelines('set title "Detrended mean central signal intensity"\n')
-        fp.writelines('set xlabel "Date"\n')
-        fp.writelines('set ylabel "Mean signal intensity"\n')
-        fp.writelines(
-            'plot    "' + outputdirectory + '/' + whichscan + '/graphtemp" using 2:24 title \'Mean central signal intensity\' with ' + wlp + ' ' + pointsize + ' pt 3\n')
+    outplotnames = ('plotcmds_centralsignal',
+                    'plotcmds_ghost',
+                    'plotcmds_objradius',
+                    'plotcmds_objshape',
+                    'plotcmds_roidrift',
+                    'plotcmds_roistab',
+                    'plotcmds_snrsfnr',
+                    'plotcmds_weissrdc')
+    for outplotname in outplotnames:
+        tpl = makolookup.get_template(outplotname)
+        outplotfile = pjoin(outputdirectory, whichscan, outplotname)
+        with open(outplotfile, 'w') as fp:
+            fp.write(tpl.render(outputdirectory=outputdirectory, whichscan=whichscan, wlp=wlp))
 
     for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
         outscandir = pjoin(outputdirectory, whichscan)
@@ -290,15 +187,9 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         date32 = mostrecenttimes.get('32Ch_Head', '19700101T000000')
         date12 = mostrecenttimes.get('HeadMatrix', '19700101T000000')
         datecp = mostrecenttimes.get('TxRx_Head', '19700101T000000')
-        args32 = date32[0:4] + "," + str(int(date32[4:6]) - 1) + "," + date32[6:8] + "," + date32[9:11] + "," + date32[
-                                                                                                                11:13] + "," + date32[
-                                                                                                                               13:15]
-        args12 = date12[0:4] + "," + str(int(date12[4:6]) - 1) + "," + date12[6:8] + "," + date12[9:11] + "," + date12[
-                                                                                                                11:13] + "," + date12[
-                                                                                                                               13:15]
-        argscp = datecp[0:4] + "," + str(int(datecp[4:6]) - 1) + "," + datecp[6:8] + "," + datecp[9:11] + "," + datecp[
-                                                                                                                11:13] + "," + datecp[
-                                                                                                                               13:15]
+        args32 = ','.join((date32[0:4], str(int(date32[4:6]) - 1), date32[6:8], date32[9:11], date32[11:13], date32[13:15]))
+        args12 = ','.join((date12[0:4], str(int(date12[4:6]) - 1), date12[6:8], date12[9:11], date12[11:13], date12[13:15]))
+        argscp = ','.join((datecp[0:4], str(int(datecp[4:6]) - 1), datecp[6:8], datecp[9:11], datecp[11:13], datecp[13:15]))
         fp.writelines("            head32time = new Date(" + args32 + ");\n")
         fp.writelines("            head12time = new Date(" + args12 + ");\n")
         fp.writelines("            headcptime = new Date(" + argscp + ");\n")
@@ -368,7 +259,8 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         # Compose the image table
         myimwidth = 400
         imagehdrstr = bigheadertag(
-            "{} phantom stability tests".format('BIRN' if TargetisBIRNphantom else 'NONBIRN')) + headertag("Summary images")
+            "{} phantom stability tests".format('BIRN' if TargetisBIRNphantom else 'NONBIRN')) + headertag(
+            "Summary images")
 
         ROIstab_headerstr = headertag("ROI p-p% variation:")
         ROIdrift_headerstr = headertag("ROI lin-quad drift % amplitude:")
@@ -423,8 +315,9 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
             the12chsnrsfnr_imagestr) + tableentrytag(the32chsnrsfnr_imagestr))
         row4str = tablerowtag(tableentrytag(ghostamp_headerstr) + tableentrytag(thecpghost_imagestr) + tableentrytag(
             the12chghost_imagestr) + tableentrytag(the32chghost_imagestr))
-        row5str = tablerowtag(tableentrytag(objradius_headerstr) + tableentrytag(thecpobjradius_imagestr) + tableentrytag(
-            the12chobjradius_imagestr) + tableentrytag(the32chobjradius_imagestr))
+        row5str = tablerowtag(
+            tableentrytag(objradius_headerstr) + tableentrytag(thecpobjradius_imagestr) + tableentrytag(
+                the12chobjradius_imagestr) + tableentrytag(the32chobjradius_imagestr))
         row6str = tablerowtag(tableentrytag(objshape_headerstr) + tableentrytag(thecpobjshape_imagestr) + tableentrytag(
             the12chobjshape_imagestr) + tableentrytag(the32chobjshape_imagestr))
         row7str = tablerowtag(tableentrytag(weissrdc_headerstr) + tableentrytag(thecpweissrdc_imagestr) + tableentrytag(
@@ -491,7 +384,7 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                                 if thedataquality[theentry]['quality'] > flag:
                                     flag = thedataquality[theentry]['quality']
                                 if thedataquality[theentry]['quality'] > 0:
-                                    themarker = themarker + sf.qualitytag(thedataquality[theentry]['symbol'], flag)
+                                    themarker = themarker + qualitytag(thedataquality[theentry]['symbol'], flag)
                                 else:
                                     themarker += " "
 

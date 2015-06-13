@@ -1,0 +1,17 @@
+set terminal jpeg
+ set autoscale
+ unset log
+ unset label
+ set xdata time
+ set xtics autofreq rotate
+ set ytic auto
+ set timefmt "%Y%m%dT%H:%M:%S"
+set xrange ["20091120T00:00:00":]
+set yrange [0:800]
+set title "Absolute SNR and SFNR"
+set xlabel "Date"
+set ylabel "p-p percent"
+plot    "${outputdirectory}/${whichscan}/graphtemp" using 2:5 title 'Central ROI SNR' with ${wlp} ps 2 pt 3, \
+"${outputdirectory}/${whichscan}/graphtemp" using 2:6 title 'Peripheral ROI SNR' with ${wlp} ps 2 pt 4, \
+"${outputdirectory}/${whichscan}/graphtemp" using 2:7 title 'Central ROI SFNR' with ${wlp} ps 2 pt 4, \
+"${outputdirectory}/${whichscan}/graphtemp" using 2:8 title 'Peripheral ROI SFNR' with ${wlp} ps 2 pt 4

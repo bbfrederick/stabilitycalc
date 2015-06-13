@@ -1,0 +1,14 @@
+set terminal jpeg
+ set autoscale
+ unset log
+ unset label
+ set xdata time
+ set xtics autofreq rotate
+ set ytic auto
+ set timefmt "%Y%m%dT%H:%M:%S"
+set xrange ["20091120T00:00:00":]
+set yrange [75.0:90.0]
+set title "Phantom radius"
+set xlabel "Date"
+set ylabel "Phantom radius (mm)"
+plot    "${outputdirectory}/${whichscan}/graphtemp" using 2:15 title 'Object radius in mm' with ${wlp} ps 2 pt 3
