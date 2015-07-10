@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!-- mako -->
+<head>
+    <%include file="stabilityreport_js.html" />
+    <title>Stability summary generated on ${thisdate}</title>
+    <meta http-equiv="Refresh" content="600">
+
+    <style type="text/css">
+        h1 {
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: teal;
+            text-decoration: underline;
+        }
+
+        h3 {
+            color: maroon;
+            text-decoration: none;
+        }
+
+        h4 {
+            text-decoration: none;
+        }
+
+        p {
+            color: black;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        td {
+            color: black;
+            font-size: 12px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+<%include file="stabilityreport_plots.html" />
+
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="400" cellpadding="2">
+    <big><h3>Key:</h3>
+        <td><FONT COLOR="ffff00">Warning, </FONT><FONT COLOR="ff0000">Out of spec</FONT></td>
+        <td></td>
+        <tr>
+            <td>p</td>
+            <td>Peripheral ROI detrended p-p %</td>
+        </tr>
+        <tr>
+            <td>P</td>
+            <td>Central ROI detrended p-p %</td>
+        </tr>
+        <tr>
+            <td>S</td>
+            <td>Central ROI SNR</td>
+        </tr>
+        <tr>
+            <td>M</td>
+            <td>Central ROI detrended mean</td>
+        </tr>
+    </big>
+</table>
+
+
+<%include file="stabilityreport_individual.html" />
+</table>
+</body>
+</html>
