@@ -6,9 +6,9 @@
         var one_minute = 1000 * 60;
         var one_hour = one_minute * 60;
         var one_day = one_hour * 24;
-        var head32time = new Date(${args32});
-        var head12time = new Date(${args12});
-        var headcptime = new Date(${argscp});
+        var head32time = new Date('${args32}');
+        var head12time = new Date('${args12}');
+        var headcptime = new Date('${argscp}');
         var now = new Date();
         var time32 = now - head32time;
         var time12 = now - head12time;

@@ -1,7 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<!-- mako -->
+<html>
 <head>
     <%include file="stabilityreport_js.html" />
     <title>Stability summary generated on ${thisdate}</title>
@@ -67,7 +66,20 @@
 </table>
 
 
-<%include file="stabilityreport_individual.html" />
+<h3>Links to individual reports</h3>
+<table rules="none" style="margin-center: 20px; text-align: left"border="0" width="1400" cellpadding="2">
+<tr>
+    <td width="14%"></td>
+    % for targetcoil, datalist in coiltemplatedata.items():
+    <td width="28%" valign="baseline"><big><h4>${targetcoil}</h4></big>
+        <p>
+            % for scan in datalist:
+        <p><a href="${scan['path']}/output.html">${scan['datetime']}</a> ${scan['marker']}</p>
+        % endfor
+    </td>
+    % endfor
+</tr>
+
 </table>
 </body>
 </html>

@@ -1,0 +1,8 @@
+"plot","title","ylabel","variables","legends","ymin","ymax"
+"centralsignal","Detrended mean central signal intensity","Mean signal intensity","central_roi_detrended_mean","Mean central signal intensity",0,2000
+"objradius","Phantom radius","Phantom radius (mm)","object_radius_mm","Object radius in mm",75,90
+"objshape","Phantom shape (y/x)","Phantom shape (y/x)","object_shape","Object shape (y/x)",0.9,1.1
+"roidrift","ROI linear and quadratic drift: p-p amplitude in percent","p-p percent","central_roi_drift%;peripheral_roi_drift%","Central ROI;Peripheral ROI",0,1
+"roistab","ROI stability: p-p variation in percent","p-p percent","central_roi_detrended_p-p%;peripheral_roi_detrended_p-p%","Central ROI;Peripheral ROI",0,1
+"snrsfnr","Absolute SNR and SFNR","p-p percent","central_roi_SNR;peripheral_roi_SNR;central_roi_SFNR;peripheral_roi_SFNR","Central ROI SNR;Peripheral ROI SNR;Central ROI SFNR;Peripheral ROI SFNR",0,800
+"weissrdc","Weisskoff Radius of decorrelation","Weisskoff RDC","weissrdc","Weisskoff RDC",0,12

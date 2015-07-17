@@ -5,14 +5,20 @@ from os.path import join as pjoin
 import shutil
 import time
 import logging
-import subprocess
+import matplotlib
+matplotlib.use('Agg', warn=False)
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn
+import pandas as pd
 from collections import OrderedDict
-
-from mako.lookup import TemplateLookup
-
-makolookup = TemplateLookup(directories=['./tpl'])
+from datetime import datetime
+import csv
+import itertools
 from htmltagutils import *
 import stabilityfuncs as sf
+from mako.lookup import TemplateLookup
+makolookup = TemplateLookup(directories=['./tpl'])
 
 
 # noinspection PyPep8Naming
@@ -26,18 +32,14 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
     if not os.path.exists(pjoin(outputdirectory, whichscan)):
         os.makedirs(pjoin(outputdirectory, whichscan))
 
-    # scan the data directory for stability scans
+    phantomtype = 'BIRN' if TargetisBIRNphantom else 'NONBIRN'
 
+    # scan the data directory for stability scans and populate the dict
     stabilitydirs = os.listdir(datadirectory)
     stabilitydirs = sorted([filename for filename in stabilitydirs if filename.startswith("stability_")])
 
-    # pull all the data files into a dictionary array
-
     datadict = {}
     filenumber_TARGET = 0
-    num_cp_TARGET = 0
-    num_12_TARGET = 0
-    num_32_TARGET = 0
     for summaryfile in stabilitydirs:
         logging.info('Beginning processing for ' + summaryfile)
         datadict[filenumber_TARGET] = {}
@@ -48,88 +50,73 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                     pjoin(datadirectory, datadict[filenumber_TARGET]['datadir'], 'analysissummary.txt')))
                 ObjectisBIRNphantom = (datadict[filenumber_TARGET]['Object'] == 'BIRN phantom')
                 if ObjectisBIRNphantom == TargetisBIRNphantom:
-                    if datadict[filenumber_TARGET]['Coil'] == 'TxRx_Head':
-                        num_cp_TARGET += 1
-                    if datadict[filenumber_TARGET]['Coil'] == '32Ch_Head':
-                        num_32_TARGET += 1
-                    if datadict[filenumber_TARGET]['Coil'] == 'HeadMatrix':
-                        num_12_TARGET += 1
                     filenumber_TARGET += 1
             except IOError:
                 pass
         except KeyError:
             pass
-    phantomtype = 'BIRN' if TargetisBIRNphantom else 'NONBIRN'
-    logging.debug("{} CP coil runs ({} phantom)".format(num_cp_TARGET, phantomtype))
-    logging.debug("{} 12 channel coil runs ({} phantom)".format(num_12_TARGET, phantomtype))
-    logging.debug("{} 32 channel coil runs ({} phantom)".format(num_32_TARGET, phantomtype))
 
-    # sort the data up by coil and write to files
+    plot_epoch = pd.Timestamp(sf.stabilityparms('epoch', 'plots'))
+    plot_timelims = (plot_epoch, pd.Timestamp(datetime.now()))
+    df = pd.DataFrame.from_dict(datadict, orient='index', dtype=float)
+    df.DateTime = pd.to_datetime(df.DateTime)
+
+    # normalize the min and max error values by the means
+    df.odd_ghost_min -= df.odd_ghost_mean
+    df.odd_ghost_max -= df.odd_ghost_mean
+    df.even_ghost_min -= df.even_ghost_mean
+    df.even_ghost_max -= df.even_ghost_mean
+
+    # read the plot config file
+    plotconfig = {}
+    for row in csv.DictReader(open('config/plots.csv')):
+        key = row.pop('plot')
+        row['variables'] = row['variables'].split(';')
+        row['legends'] = row['legends'].split(';')
+        plotconfig[key] = row
 
     mostrecenttimes = {}
+
     for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
-        with open(pjoin(outputdirectory, whichscan, targetcoil + '_vals.txt'), 'w') as fp:
-            for i in range(filenumber_TARGET):
-                ObjectisBIRNphantom = (datadict[i]['Object'] == 'BIRN phantom')
-                if datadict[i]['Coil'] == targetcoil and ObjectisBIRNphantom == TargetisBIRNphantom:
-                    try:
-                        if datadict[i]['Protocol'] != 'nothing':
-                            mostrecenttimes[targetcoil] = datadict[i]['DateTime']
-                            fp.write(' '.join([datadict[i][k] for k in ('Coil',
-                                                                        'DateTime',
-                                                                        'central_roi_detrended_p-p%',
-                                                                        'peripheral_roi_detrended_p-p%',
-                                                                        'central_roi_SNR',
-                                                                        'peripheral_roi_SNR',
-                                                                        'central_roi_SFNR',
-                                                                        'peripheral_roi_SFNR',
-                                                                        'odd_ghost_mean',
-                                                                        'odd_ghost_max',
-                                                                        'odd_ghost_min',
-                                                                        'even_ghost_mean',
-                                                                        'even_ghost_max',
-                                                                        'even_ghost_min',
-                                                                        'object_radius_mm',
-                                                                        'object_shape',
-                                                                        'center_of_mass_x',
-                                                                        'center_of_mass_y',
-                                                                        'center_of_mass_z',
-                                                                        'central_roi_detrended_mean',
-                                                                        'central_roi_drift%',
-                                                                        'peripheral_roi_drift%',
-                                                                        'weissrdc',
-                                                                        'central_roi_detrended_mean',)]))
-                            fp.write('\n')
-                    except KeyError:
-                        pass
+        mostrecenttimes[targetcoil] = df[df.Coil == targetcoil].DateTime.max()
 
-    # generate plot control files to graph all interesting stability parameters
-    # central and peripheral SNR and SFNR
+        dftc = df[df.Coil == targetcoil].groupby('DateTime')
 
-    outplotnames = ('plotcmds_centralsignal',
-                    'plotcmds_ghost',
-                    'plotcmds_objradius',
-                    'plotcmds_objshape',
-                    'plotcmds_roidrift',
-                    'plotcmds_roistab',
-                    'plotcmds_snrsfnr',
-                    'plotcmds_weissrdc')
-    for outplotname in outplotnames:
-        tpl = makolookup.get_template(outplotname)
-        outplotfile = pjoin(outputdirectory, whichscan, outplotname)
-        with open(outplotfile, 'w') as fp:
-            fp.write(tpl.render(outputdirectory=outputdirectory,
-                                whichscan=whichscan,
-                                wlp='points' if TargetisBIRNphantom else 'linespoints'))
+        # plot ghost. this one is a little special because of the error bars, so we do it manually
+        even_errors = np.array(df.ix[df.Coil == targetcoil, ['even_ghost_min', 'even_ghost_max']]).T
+        odd_errors = np.array(df.ix[df.Coil == targetcoil, ['odd_ghost_min', 'odd_ghost_max']]).T
+        plt.hold(True)
+        dftc['even_ghost_mean'].mean().plot(yerr=even_errors, marker='*', linestyle='None')
+        dftc['odd_ghost_mean'].mean().plot(yerr=odd_errors, marker='.', linestyle='None')
+        plt.xlim(plot_timelims)
+        plt.ylim(0, 15)
+        plt.title('Ghost percentage')
+        plt.xlabel('Date')
+        plt.ylabel('Ghost amplitude (%)')
+        plt.savefig(pjoin(outputdirectory, whichscan, '{}_ghost.png'.format(targetcoil)), format='png')
+        plt.hold(False)
+        plt.close()
+
+        # now let's do the rest from the config file.
+        for plotfilename, config in plotconfig.items():
+            plt.hold(True)
+            marker = itertools.cycle(('*', '.', 'o', '+', 'h'))
+            for i, variable in enumerate(config['variables']):
+                dftc[variable].mean().plot(marker=marker.next(), linestyle='None', label=config['legends'][i])
+            plt.xlim(plot_timelims)
+            plt.ylim(float(config['ymin']), float(config['ymax']))
+            plt.xlabel('Date')
+            plt.ylabel(config['ylabel'])
+            plt.title(config['title'])
+            plt.legend()
+            plt.hold(False)
+            plt.savefig(pjoin(outputdirectory, whichscan, '{}_{}.png'.format(targetcoil, plotfilename)), format='png')
+            plt.close()
 
     for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
         outscandir = pjoin(outputdirectory, whichscan)
-        shutil.copyfile(pjoin(outscandir, targetcoil + '_vals.txt'), pjoin(outscandir, 'graphtemp'))
-        for plottype in ['snrsfnr', 'roistab', 'roidrift', 'ghost', 'objradius', 'objshape', 'weissrdc',
-                         'centralsignal']:
-            subprocess.Popen(['gnuplot', pjoin(outscandir, 'plotcmds_' + plottype)],
-                             stdout=open(pjoin(outscandir, '{}_{}.jpg'.format(targetcoil, plottype)), 'wb'))
 
+        # TODO there's a simpler way to do this.
         for i in range(filenumber_TARGET - 1, -1, -1):
             if datadict[i]['Coil'] == targetcoil:
                 # copy the individual scan data if necessary
@@ -151,14 +138,10 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                     shutil.copytree(dat_procresults, out_procresults)
 
     # generate a report file
-
     thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
-    date32 = mostrecenttimes.get('32Ch_Head', '19700101T000000')
-    date12 = mostrecenttimes.get('HeadMatrix', '19700101T000000')
-    datecp = mostrecenttimes.get('TxRx_Head', '19700101T000000')
-    args32 = ','.join((date32[0:4], str(int(date32[4:6]) - 1), date32[6:8], date32[9:11], date32[11:13], date32[13:15]))
-    args12 = ','.join((date12[0:4], str(int(date12[4:6]) - 1), date12[6:8], date12[9:11], date12[11:13], date12[13:15]))
-    argscp = ','.join((datecp[0:4], str(int(datecp[4:6]) - 1), datecp[6:8], datecp[9:11], datecp[11:13], datecp[13:15]))
+    args32 = str(mostrecenttimes.get('32Ch_Head', '1970')).replace(' ', 'T')
+    args12 = str(mostrecenttimes.get('HeadMatrix', '1970')).replace(' ', 'T')
+    argscp = str(mostrecenttimes.get('TxRx_Head', '1970')).replace(' ', 'T')
 
     tpl = makolookup.get_template('stabilityreport.html')
     tplindividual = makolookup.get_template('stabilityreport_individual.html')
