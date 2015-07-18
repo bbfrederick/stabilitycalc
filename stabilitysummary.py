@@ -86,13 +86,14 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
         even_errors = np.array(df.ix[df.Coil == targetcoil, ['even_ghost_min', 'even_ghost_max']]).T
         odd_errors = np.array(df.ix[df.Coil == targetcoil, ['odd_ghost_min', 'odd_ghost_max']]).T
         plt.hold(True)
-        dftc['even_ghost_mean'].mean().plot(yerr=even_errors, marker='*', linestyle='None')
-        dftc['odd_ghost_mean'].mean().plot(yerr=odd_errors, marker='.', linestyle='None')
+        dftc['even_ghost_mean'].mean().plot(yerr=even_errors, marker='*', linestyle='None', label='Evens')
+        dftc['odd_ghost_mean'].mean().plot(yerr=odd_errors, marker='.', linestyle='None', label='Odds')
         plt.xlim(plot_timelims)
         plt.ylim(0, 15)
         plt.title('Ghost percentage')
         plt.xlabel('Date')
         plt.ylabel('Ghost amplitude (%)')
+        plt.legend()
         plt.savefig(pjoin(outputdirectory, whichscan, '{}_ghost.png'.format(targetcoil)), format='png')
         plt.hold(False)
         plt.close()
