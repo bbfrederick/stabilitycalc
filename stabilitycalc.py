@@ -5,7 +5,8 @@ from os.path import join as pjoin
 import time
 
 import matplotlib
-
+import seaborn
+seaborn.set_style("dark")
 matplotlib.use('Agg', warn=False)
 import numpy as np
 import matplotlib.pyplot as plt

@@ -10,6 +10,7 @@ matplotlib.use('Agg', warn=False)
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn
+seaborn.set_style("dark")
 import pandas as pd
 from collections import OrderedDict
 from datetime import datetime
