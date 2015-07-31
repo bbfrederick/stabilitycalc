@@ -146,7 +146,6 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
     argscp = str(mostrecenttimes.get('TxRx_Head', '1970')).replace(' ', 'T')
 
     tpl = makolookup.get_template('stabilityreport.html')
-    tplindividual = makolookup.get_template('stabilityreport_individual.html')
     with open(pjoin(outputdirectory, whichscan, 'stabilityreport.html'), 'w') as fp:
         coiltemplatedata = OrderedDict()
         for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
@@ -176,11 +175,11 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
 if __name__ == '__main__':
     import argparse
 
-parser = argparse.ArgumentParser(description='Create the stability summary.')
-parser.add_argument('--nonbirn', action='store_true', help='process as non-BIRN data')
-parser.add_argument('datadirectory')
-parser.add_argument('outputdirectory')
-parser.add_argument('whichscan')
-args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Create the stability summary.')
+    parser.add_argument('--nonbirn', action='store_true', help='process as non-BIRN data')
+    parser.add_argument('datadirectory')
+    parser.add_argument('outputdirectory')
+    parser.add_argument('whichscan')
+    args = parser.parse_args()
 
-stabilitysummary(args.datadirectory, args.outputdirectory, args.whichscan, not args.nonbirn)
+    stabilitysummary(args.datadirectory, args.outputdirectory, args.whichscan, not args.nonbirn)
