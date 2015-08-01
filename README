@@ -23,8 +23,3 @@ development effort is to remove some rather ghastly kludges in the
 code.  I released the code in large measure to shame myself into
 improving it (and, if possible, provide a service for anybody else
 trying to set up a QA procedure).
-
-One of the design goals of the set of tools is to use pure python to
-minimize machine architecture and compilation headaches, and to avoid
-costly proprietary environments such as matlab.
-
