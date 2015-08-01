@@ -498,3 +498,8 @@ def getroival(theimage, theroi, zpos):
     yend = theroi[1][1]
     theroival = np.mean(theimage[zpos, ystart:yend, xstart:xend])
     return theroival
+
+def qualitytag(thestring, thequality):
+    colors = ('00ff00', 'ffff00', 'ff0000')
+    return '<FONT COLOR="{}">{}</FONT>'.format(colors[thequality], thestring)
+

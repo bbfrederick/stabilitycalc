@@ -16,7 +16,6 @@ from collections import OrderedDict
 from datetime import datetime
 import csv
 import itertools
-from htmltagutils import *
 import stabilityfuncs as sf
 from mako.lookup import TemplateLookup
 makolookup = TemplateLookup(directories=['./tpl'])
@@ -160,7 +159,7 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                             if sf.limitcheck(datadict[i][specid], spec) > flag:
                                 flag = sf.limitcheck(datadict[i][specid], spec)
                             if sf.limitcheck(datadict[i][specid], spec) > 0:
-                                themarker = themarker + qualitytag(spec['flag'], flag)
+                                themarker = themarker + sf.qualitytag(spec['flag'], flag)
                             else:
                                 themarker += " "
 

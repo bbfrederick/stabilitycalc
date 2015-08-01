@@ -10,7 +10,6 @@ seaborn.set_style("dark")
 matplotlib.use('Agg', warn=False)
 import numpy as np
 import matplotlib.pyplot as plt
-from htmltagutils import *
 import shutil
 import nibabel as nib
 
@@ -292,7 +291,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     def qualitypercent(n, basis, lim):
         percent = n / basis * 100.0
         quality = sf.limitcheck(percent, limits[lim])
-        return qualitytag('(%4.4f%%)', quality) % percent
+        return sf.qualitytag('(%4.4f%%)', quality) % percent
 
     centstddev_qualitytag = qualitypercent(centstddev, centmean, 'central_roi_raw_std%')
     centpp_qualitytag = qualitypercent(centpp, centmean, 'central_roi_raw_p-p%')
