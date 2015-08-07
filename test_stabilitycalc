@@ -3,7 +3,7 @@
 # test to make sure nothing has changed.
 # numbers come out different on unix and mac so we
 # have separate baseline dirs
-DATA=/Users/dmd/mcldata
+DATA=${1:-/Users/dmd/mcldata}
 #COILS="TxRx 32Ch"
 COILS="32Ch"
 if [ -z "$DATA" ]; then
@@ -14,7 +14,7 @@ for COIL in $COILS; do
     rm -rf $DATA/test$COIL/procresults
 done
 ./stabilitycalc.py $DATA/test32Ch epi_pace.nii.gz 0
-#./stabilitycalc.py $DATA/testTxRx epi_short.nii.gz 0
+
 failed=0
 for COIL in $COILS; do
     echo ==================
@@ -26,12 +26,19 @@ for COIL in $COILS; do
     if [ $? -ne 0 ]; then failed=1; fi
     diff <(grep -v "generated on" $DATA/test$COIL/procresults/output.html) <(grep -v "generated on" $DATA/test$COIL.orig/procresults/output.html)
     if [ $? -ne 0 ]; then failed=1; fi
-    echo 
-    echo Image diffs:
+    IMAGEDIFFFILE=$(mktemp -t imagediff)
     for IMAGE in $DATA/test$COIL/procresults/*png; do
-        gm compare -metric mse $IMAGE $DATA/test$COIL.orig/procresults/$(basename $IMAGE) | grep Total | grep -v "Total: 0.0000000000        0.0"
+        gm compare -metric mse $IMAGE $DATA/test$COIL.orig/procresults/$(basename $IMAGE) | grep Total | grep -v "Total: 0.0000000000        0.0" >> $IMAGEDIFFFILE
     done
+    if [ -s $IMAGEDIFFFILE ]; then
+    	echo images differ $IMAGEDIFFFILE
+    	failed=1
+    fi
+    rm -f $IMAGEDIFFFILE
 done
 if [ $failed -ne 0 ]; then
-    echo TESTS FAILED
+    echo FAILED
+    exit 1
+else
+	echo PASSED
 fi
