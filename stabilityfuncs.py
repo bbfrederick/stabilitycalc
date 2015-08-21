@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 
 """stabilityfuncs.py: provides general helper functions, especially for stabilitycalc"""
+import pkg_resources
+from distutils.version import LooseVersion
+
+def ASSERTVERSION(module, minver):
+    # check requirements
+    if not LooseVersion(pkg_resources.get_distribution(module).version) >= LooseVersion(minver):
+        raise ImportError('Module {} is too old, need at least version {}.'.format(module, minver))
+
+ASSERTVERSION('seaborn', '0.5.1')
+ASSERTVERSION('mako', '1.0.0')
+ASSERTVERSION('nibabel', '2.0.0')
 
 import csv
 from collections import OrderedDict

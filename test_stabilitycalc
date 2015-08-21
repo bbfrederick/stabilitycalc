@@ -6,6 +6,10 @@
 DATA=${1:-/Users/dmd/mcldata}
 #COILS="TxRx 32Ch"
 COILS="32Ch"
+if ! which gm > /dev/null; then
+    echo Graphicsmagick not found, aborting.
+    exit 1
+fi
 if [ -z "$DATA" ]; then
     # out of an abundance of caution because of next line
     exit 1
@@ -14,6 +18,7 @@ for COIL in $COILS; do
     rm -rf $DATA/test$COIL/procresults
 done
 ./stabilitycalc.py $DATA/test32Ch epi_pace.nii.gz 0
+
 
 failed=0
 for COIL in $COILS; do
@@ -26,7 +31,7 @@ for COIL in $COILS; do
     if [ $? -ne 0 ]; then failed=1; fi
     diff <(grep -v "generated on" $DATA/test$COIL/procresults/output.html) <(grep -v "generated on" $DATA/test$COIL.orig/procresults/output.html)
     if [ $? -ne 0 ]; then failed=1; fi
-    IMAGEDIFFFILE=$(mktemp -t imagediff)
+    IMAGEDIFFFILE=$(mktemp -t imagediffXXXX)
     for IMAGE in $DATA/test$COIL/procresults/*png; do
         gm compare -metric mse $IMAGE $DATA/test$COIL.orig/procresults/$(basename $IMAGE) | grep Total | grep -v "Total: 0.0000000000        0.0" >> $IMAGEDIFFFILE
     done
