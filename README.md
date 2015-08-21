@@ -15,3 +15,9 @@ current performance into the context of normal operation.  We use this
 to quickly identify scanner problems, and the individual reports give
 a good indication of what sort of problem we are having, which in turn
 helps us troubleshoot much more effectively.
+
+## Requirements
+
+Stabilitycalc checks for some of its requirements before running. In general,
+it requires a standard numpy/scipy/matplotlib environment, as well as
+`nibabel`, `nipype`, `dicom`, `pandas`, and `seaborn`.
