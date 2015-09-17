@@ -1,0 +1,6 @@
+nibabel
+nipype
+dicom
+pandas
+seaborn
+matplotlib
