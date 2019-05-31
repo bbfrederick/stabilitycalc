@@ -43,7 +43,7 @@ dirstorenamefilt = [examname for examname in dirstorename
                     if (not(examname.startswith('.'))
                         and not(examname.startswith('duplicates'))
                         and not(examname.startswith('notstability'))
-                        and not((now - os.stat(pjoin(datadirectory, examname)).st_mtime) < 3))]
+                        and not((now - os.stat(pjoin(datadirectory, examname)).st_mtime) < 300))]
 
 print('dirstorenamefilt=', dirstorenamefilt)
 
