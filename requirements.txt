@@ -1,3 +1,4 @@
+mako
 nibabel
 nipype
 dicom
