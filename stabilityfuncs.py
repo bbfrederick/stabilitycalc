@@ -414,7 +414,7 @@ def markroi(theinputroi, zpos, roislice, theval):
     xend = theinputroi[1][0]
     ystart = theinputroi[0][1]
     yend = theinputroi[1][1]
-    roislice[zpos, ystart:yend, xstart:xend] = theval
+    roislice[int(zpos), ystart:yend, xstart:xend] = theval
 
 
 def setroilims(xpos, ypos, size):
@@ -435,7 +435,7 @@ def getroisnr(theimage, theroi, zpos):
     xend = theroi[1][0]
     ystart = theroi[0][1]
     yend = theroi[1][1]
-    thesubreg = theimage[:, zpos, ystart:yend, xstart:xend]
+    thesubreg = theimage[:, int(zpos), ystart:yend, xstart:xend]
     theshape = thesubreg.shape
     numtimepoints = theshape[0]
     themeans = np.zeros(numtimepoints)
@@ -507,7 +507,7 @@ def getroival(theimage, theroi, zpos):
     xend = theroi[1][0]
     ystart = theroi[0][1]
     yend = theroi[1][1]
-    theroival = np.mean(theimage[zpos, ystart:yend, xstart:xend])
+    theroival = np.mean(theimage[int(zpos), ystart:yend, xstart:xend])
     return theroival
 
 def qualitytag(thestring, thequality):
