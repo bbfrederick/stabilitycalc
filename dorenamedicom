@@ -2,7 +2,7 @@
 
 import os
 import sys
-import dicom
+import pydicom
 from string import maketrans   # Required to call maketrans function.
 
 # read in the datafile
@@ -11,7 +11,7 @@ if len(sys.argv) != 2:
     exit()
 indirname = sys.argv[1]
 infilename = sys.argv[2]
-plan = dicom.read_file(indirname + "/" + infilename)
+plan = pydicom.read_file(indirname + "/" + infilename)
 # print plan
 seriesnostr = plan.SeriesNumber
 imagenostr = plan.AcquisitionNumber

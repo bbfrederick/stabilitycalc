@@ -1,7 +1,7 @@
 mako
 nibabel
 nipype
-dicom
+pydicom
 pandas
 seaborn
 matplotlib

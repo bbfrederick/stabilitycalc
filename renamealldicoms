@@ -2,7 +2,7 @@
 
 import os
 import sys
-import dicom
+import pydicom
 from string import maketrans   # Required to call maketrans function.
 
 # read in the datafile
@@ -17,7 +17,7 @@ dicomstorename = [thefilename for thefilename in alldirfiles if (thefilename.sta
 
 # first rename files at the top level to get rid of spaces
 for thename in dicomstorename:
-    plan = dicom.read_file(datadirectory + "/" + thename)
+    plan = pydicom.read_file(datadirectory + "/" + thename)
     seriesnostr = plan.SeriesNumber
     imagenostr = plan.AcquisitionNumber
     protocolname = plan.SeriesDescription

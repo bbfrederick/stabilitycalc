@@ -2,7 +2,7 @@
 
 import os
 import logging
-import dicom
+import pydicom
 import nibabel as nib
 
 
@@ -42,7 +42,7 @@ def studyinfo_from_dicom(dicomfilename):
             d[pair[0]] = pair[2]
         return d
 
-    plan = dicom.read_file(dicomfilename)
+    plan = pydicom.read_file(dicomfilename)
     siemensheader = getsiemensmrheader(plan)
 
     info = {'Coil': siemensheader['asCoilSelectMeas[0].asList[0].sCoilElementID.tCoilID'].strip('"'),
