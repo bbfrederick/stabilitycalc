@@ -1,4 +1,0 @@
-# Compulsory line, this is a version 3 file
-version=3
-opts="filenamemangle=s/.*\/(.*)/stabilitycalc-$1\.tar\.gz/" \
-  http://github.com/bbfrederick/stabilitycalc/downloads .*tarball/release-([\d\.a-z]+)

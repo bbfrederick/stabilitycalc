@@ -1,0 +1,2 @@
+# run this periodically
+renamestability_dicomlistener $(stabilityparms rawdicomdir) $(stabilityparms sorteddicomdir)

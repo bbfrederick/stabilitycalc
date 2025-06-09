@@ -1,0 +1,50 @@
+<script type="text/javascript" language="javascript1.5">
+
+    window.onload = theClock;
+
+    function theClock() {
+        var one_minute = 1000 * 60;
+        var one_hour = one_minute * 60;
+        var one_day = one_hour * 24;
+        var head32time = new Date('${args32}');
+        var head12time = new Date('${args12}');
+        var headcptime = new Date('${argscp}');
+        var now = new Date();
+        var time32 = now - head32time;
+        var time12 = now - head12time;
+        var timecp = now - headcptime;
+        var days32 = Math.floor(time32 / one_day);
+        var days12 = Math.floor(time12 / one_day);
+        var dayscp = Math.floor(timecp / one_day);
+        var hours32 = Math.floor((time32 - days32 * one_day) / one_hour);
+        var hours12 = Math.floor((time12 - days12 * one_day) / one_hour);
+        var hourscp = Math.floor((timecp - dayscp * one_day) / one_hour);
+        var minutes32 = Math.floor((time32 - days32 * one_day - hours32 * one_hour) / one_minute);
+        var minutes12 = Math.floor((time12 - days12 * one_day - hours12 * one_hour) / one_minute);
+        var minutescp = Math.floor((timecp - dayscp * one_day - hourscp * one_hour) / one_minute);
+        var mindays = Math.min(dayscp, days12, days32);
+
+        var fmttime32 = days32 + "d " + hours32 + "h " + minutes32 + "m";
+        var fmttime12 = days12 + "d " + hours12 + "h " + minutes12 + "m";
+        var fmttimecp = dayscp + "d " + hourscp + "h " + minutescp + "m";
+
+        if (mindays > 4) {
+            document.body.style.backgroundColor = '#ffaaaa';
+        }
+        else {
+            document.body.style.backgroundColor = '#cccccc';
+        }
+
+        var time32Span = document.getElementById("formtime32");
+        time32Span.replaceChild(document.createTextNode(fmttime32), time32Span.firstChild);
+
+        var time12Span = document.getElementById("formtime12");
+        time12Span.replaceChild(document.createTextNode(fmttime12), time12Span.firstChild);
+
+        var timecpSpan = document.getElementById("formtimecp");
+        timecpSpan.replaceChild(document.createTextNode(fmttimecp), timecpSpan.firstChild);
+
+        setTimeout("theClock()", 1000);
+    }
+
+</script>

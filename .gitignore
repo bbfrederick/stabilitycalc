@@ -1,0 +1,6 @@
+venv
+config.ini
+TODO.txt
+*.pyc
+/data
+/.idea

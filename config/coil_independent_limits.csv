@@ -1,0 +1,12 @@
+"var","good_min","good_max","warn_min","warn_max","description","flag","idk","critical"
+"center_of_mass_y",28.0140073333838,32.9638687728109,27.1890304268127,33.788845679382,"Center of mass y","",0,0
+"center_of_mass_x",30.0528824213927,34.071011383917,29.383194260972,34.7406995443377,"Center of mass x","",0,0
+"center_of_mass_z",12.8178829000925,14.5672481911823,12.5263220182442,14.8588090730306,"Center of mass z","",0,0
+"maxlocroi_rawpp",0,0.5,0,0.6,"maxlocroi_rawpp","",0,0
+"maxlocroi_dtpp",0,0.5,0,0.6,"maxlocroi_dtpp","",0,0
+"maxlocroi_rawstddev",0,0.125,0,0.15,"maxlocroi_rawstddev","",0,0
+"maxlocroi_dtstddev",0,0.125,0,0.15,"maxlocroi_dtstddev","",0,0
+"phasedarrayroi_rawpp",0,0.5,0,0.6,"phasedarrayroi_rawpp","",0,0
+"phasedarrayroi_dtpp",0,0.5,0,0.6,"phasedarrayroi_dtpp","",0,0
+"phasedarrayroi_rawstddev",0,0.125,0,0.15,"phasedarrayroi_rawstddev","",0,0
+"phasedarrayroi_dtstddev",0,0.125,0,0.15,"phasedarrayroi_dtstddev","",0,0

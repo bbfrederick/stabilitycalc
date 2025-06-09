@@ -1,6 +1,0 @@
-stabilitycalc (0.1-1) UNRELEASED; urgency=low
-
-  * Initial Debian packaging based on debhelper's "dh" and using source
-    package format 3.0 (quilt).
-
- -- Michael Hanke <mih@debian.org>  Thu, 08 Sep 2011 21:44:05 +0200

@@ -1,0 +1,49 @@
+<!-- begin central ROI -->
+<table rules="none" style="margin-center: 20px; text-align: left" border="0" width="500" cellpadding="2">
+    <hr>
+    <h3>Central ROI Analysis</h3>
+
+    <p>This is an analysis of the temporal fluctuation in a central voxels. A ${centralroisize}x${centralroisize}x1
+        voxel is automatically positioned at the center of gravity, and the average voxel value is plotted a function of
+        time. Linear and quadratic terms are fit to the drift. The voxel statistics are reported with and without the
+        drift removed. </p>
+    <tr>
+        <td><p><b>Raw central ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % centmean}
+                <br/>
+                stddev=${'%4.4f' % centstddev} <b>${centstddev_qualitytag}</b>
+
+                <br/>
+                p-p=${'%4.4f' % centpp} <b>${centpp_qualitytag}</b>
+
+                <br/>
+                drift=${'%4.4f' % centdrift}
+            </p>
+
+            <p><a href="centroiplot.png"><IMG BORDER=0 SRC=centroiplot.png width="500"></a></p>
+        </td>
+        <td><p><b>Detrended central ROI plot</b></p>
+
+            <p>mean=${'%4.4f' % centmean_dt}
+                <br/>
+                stddev=${'%4.4f' % centstddev_dt} ${centstddev_dt_qualitytag}</FONT>
+
+                <br/>
+                p-p=${'%4.4f' % centpp_dt} ${centpp_dt_qualitytag}</FONT>
+            </p>
+
+            <p><a href="centroidtplot.png"><IMG BORDER=0 SRC=centroidtplot.png width="500"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td><p><b>Central ROI over time</b></p>
+
+            <p>mean=${'%4.4f' % centsnr}</p>
+
+            <p><a href="centroisnrplot.png"><IMG BORDER=0 SRC=centroisnrplot.png width="500"></a></p>
+        </td>
+    </tr>
+</table>
+
+<!-- end central ROI -->

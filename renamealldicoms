@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import pydicom
+from string import maketrans   # Required to call maketrans function.
+
+# read in the datafile
+if len(sys.argv) != 2:
+    print("usage: renamealldicoms directoryname")
+    exit()
+datadirectory = sys.argv[1]
+print("renamealldicoms: processing ", datadirectory)
+
+alldirfiles = os.listdir(datadirectory)
+dicomstorename = [thefilename for thefilename in alldirfiles if (thefilename.startswith("MR"))]
+
+# first rename files at the top level to get rid of spaces
+for thename in dicomstorename:
+    plan = pydicom.read_file(datadirectory + "/" + thename)
+    seriesnostr = plan.SeriesNumber
+    imagenostr = plan.AcquisitionNumber
+    protocolname = plan.SeriesDescription
+    tempstring = protocolname + "_" + str(seriesnostr)
+    thelist = tempstring.split()
+    dirname = datadirectory + "/" + ''.join(thelist)
+    outfilename = "IM-" + str(seriesnostr).rjust(4, '0') + "-" + str(imagenostr).rjust(4, '0') + ".dcm"
+    print(dirname, outfilename)
+    if not os.path.isdir(dirname + "/"):
+        os.mkdir(dirname + "/")
+    namestring = dirname + "/" + outfilename
+    os.rename(datadirectory + "/" + thename, namestring)

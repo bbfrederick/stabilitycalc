@@ -1,0 +1,10 @@
+"var","good_min","good_max","warn_min","warn_max","description","flag","idk","critical"
+"DopedWaterPhantom_shape",0.97,1.03,0.95,1.05,"Doped water phantom shape","",0,0
+"DopedWaterPhantom_snr",0.97,1.03,0.95,1.05,"Doped water phantom SNR","",0,0
+"DopedWaterPhantom_rad",82.0,84.5,81.0,86.5,"Doped water phantom radius","",0,0
+"BIRNphantom_shape",0.941427953309648,1.05175367332324,0.923040333307383,1.07014129332551,"BIRN phantom shape","",0,0
+"BIRNphantom_rad",80.9209448163338,86.6421984038845,79.967402551742,87.5957406684762,"BIRN phantom radius","",0,0
+"BIRNphantom_snr",0.97,1.03,0.95,1.05,"BIRN phantom SNR","",0,0
+"head_snr",1.4,1.5,1.2,1.7,"Head SNR","",0,0
+"head_shape",1.4,1.5,1.2,1.7,"Head shape","",0,0
+"head_rad",60.0,70.0,50.0,80.0,"Head radius","",0,0

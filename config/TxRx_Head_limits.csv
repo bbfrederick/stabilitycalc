@@ -1,0 +1,40 @@
+"var","good_min","good_max","warn_min","warn_max","description","flag","idk","critical"
+"peripheral_roi_detrended_p-p%",0.0,0.5,0.0,0.6,"Peripheral ROI detrended p-p %","p",1,0
+"even_ghost_p-p%",0.0,5.0,0.0,10.0,"Even ghost p-p %","E",1,0
+"peripheral_roi_raw_std%",0.0,0.125,0.0,0.15,"Peripheral ROI raw stddev %","",0,0
+"weissrdc",0.0,5.0,0.0,10.0,"Weisskoff radius of decorrelation","W",1,1
+"peripheral_roi_drift%",0.0,0.397,0.0,0.507,"Peripheral ROI drift %","d",1,1
+"central_roi_drift%",0.0,0.536,0.0,0.688,"Central ROI drift %","D",1,0
+"odd_ghost_mean",0.0,5.0,0.0,10.0,"Odd ghost mean","",1,0
+"even_ghost_mean",0.0,5.0,0.0,10.0,"Even ghost mean","",0,0
+"even_ghost_std",0.0,5.0,0.0,10.0,"Even ghost stddev","",0,0
+"central_roi_detrended_p-p%",0.0,0.5,0.0,0.6,"Central ROI detrended p-p %","P",0,0
+"peripheral_roi_polyfit_quad",100.0,200.0,50.0,300.0,"Peripheral ROI polyfit quadratic term","",0,0
+"odd_ghost_p-p",0.0,5.0,0.0,10.0,"Odd ghost p-p","",0,0
+"peripheral_roi_raw_p-p%",0.0,0.5,0.0,0.6,"Peripheral ROI raw p-p %","",0,0
+"odd_ghost_max",0.0,5.0,0.0,10.0,"Odd ghost max","",1,1
+"central_roi_polyfit_quad",-5.21634333271468e-06,5.54843534508463e-06,-7.0104731123479e-06,7.34256512471785e-06,"Central ROI polyfit quadratic term","",0,0
+"odd_ghost_min",0.0,5.0,0.0,10.0,"Odd ghost min","",0,0
+"central_roi_raw_p-p%",0.0,0.5,0.0,0.6,"Central ROI raw p-p %","",0,0
+"central_roi_SFNR",238.754898030312,365.602121158555,217.613694175605,386.743325013262,"Central ROI SFNR","F",0,0
+"peripheral_roi_SNR",100.0,200.0,50.0,300.0,"Peripheral ROI SNR","s",1,0
+"central_roi_raw_std%",0.0,0.15,0.0,0.25,"Central ROI raw stddev %","",0,0
+"even_ghost_min",0.0,5.0,0.0,10.0,"Even ghost min","",0,0
+"odd_ghost_std",0.0,5.0,0.0,10.0,"Odd ghost stddev","",0,0
+"central_roi_mean",100.0,200.0,50.0,300.0,"Central ROI mean","",0,0
+"central_roi_polyfit_lin",-0.00306061155726304,0.00338754176512665,-0.00413530377766132,0.00446223398552493,"Central ROI polyfit linear term","",0,0
+"peripheral_roi_polyfit_lin",100.0,200.0,50.0,300.0,"Peripheral ROI polyfit linear term","",1,0
+"odd_ghost_p-p%",0.0,5.0,0.0,10.0,"Odd ghost p-p %","O",0,0
+"central_roi_SNR",300.0,100000.0,250.0,100000.0,"Central ROI SNR","S",0,0
+"center_of_mass_y",28.0140073333838,32.9638687728109,27.1890304268127,33.788845679382,"Center of mass y","",0,0
+"center_of_mass_x",30.0528824213927,34.071011383917,29.383194260972,34.7406995443377,"Center of mass x","",1,1
+"center_of_mass_z",12.8178829000925,14.5672481911823,12.5263220182442,14.8588090730306,"Center of mass z","",0,0
+"even_ghost_p-p",0.0,5.0,0.0,10.0,"Even ghost p-p","",1,0
+"peripheral_roi_mean",100.0,200.0,50.0,300.0,"Peripheral ROI mean","",0,0
+"central_roi_detrended_std%",0.0,0.15,0.0,0.25,"Central ROI detrended stddev %","",0,0
+"peripheral_angle_SFNR_p-p%",0.0,10.0,0.0,10.0,"Peripheral angle SFNR p-p %","",0,0
+"central_roi_detrended_mean",1200.0,1750.0,1000.0,2000.0,"Central ROI detrended mean","M",0,0
+"peripheral_roi_detrended_std%",0.0,0.125,0.0,0.15,"Peripheral ROI detrended stddev %","",0,0
+"even_ghost_max",0.0,5.0,0.0,10.0,"Even ghost max","",0,0
+"peripheral_angle_p-p%",0.0,10.0,0.0,10.0,"Peripheral angle intensity p-p %","",0,0
+"peripheral_roi_SFNR",100.0,200.0,50.0,300.0,"Peripheral ROI SFNR","f",1,0

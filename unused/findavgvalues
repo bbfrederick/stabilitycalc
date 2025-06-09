@@ -1,0 +1,305 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import time
+import numpy as np
+
+
+def breaktag(thestring):
+    return("\n<br />" + thestring)
+
+
+def paratag(thestring):
+    return("<p>" + thestring + "</p>\n")
+
+
+def imagetag(imagename, imagewidth):
+    return("<p><a href=\"" + imagename + "\"><IMG BORDER=0 SRC=" + imagename + " width=\"" + str(imagewidth) + "\"></a></p>\n")
+
+
+def tablepropstag(thestring, tablewidth, align):
+    tablestring = "<table rules=\"none\" style=\"margin-center: 20px; text-align: " + align + "\"border=\"0\" width=\"" + str(tablewidth) + "\" cellpadding=\"2\">\n" + thestring + "</table>\n"
+    return(tablestring)
+
+
+def tablerowtag(thestring):
+    return("<tr>" + thestring + "</tr>\n")
+
+
+def tableentrytag(thestring):
+    return("<td>" + thestring + "</td>")
+
+
+def headertag(thestring):
+    return("<hr><h3>" + thestring + "</h3>")
+
+
+def smallheadertag(thestring):
+    return("<h4>" + thestring + "</h4>")
+
+
+def boldtag(thestring):
+    return("<b>" + thestring + "</b>")
+
+
+def greentag(thestring):
+    return("<FONT COLOR=\"00ff00\">" + thestring + "</FONT>")
+
+
+def redtag(thestring):
+    return("<FONT COLOR=\"ff0000\">" + thestring + "</FONT>")
+
+
+def yellowtag(thestring):
+    return("<FONT COLOR=\"888800\">" + thestring + "</FONT>")
+
+
+# send a command to the shell
+
+
+def doashellcmd(cmd):
+    a = os.popen(cmd)
+    while True:
+        line = a.readline()
+        if not line:
+            break
+        retval = line[:-1]
+        return retval
+
+########################################################################
+########################################################################
+#
+#
+#  Control flow starts here
+#
+#
+########################################################################
+#
+#       Initial setup
+#
+# read in the datafile
+if len(sys.argv) != 3:
+    print("usage: findavgvalues datadirectory outputdirectory")
+    exit()
+datadirectory = sys.argv[1]
+outputdirectory = sys.argv[2]
+
+# initialize the outut directory if need be
+
+#
+# scan the data directory for stability scans
+#
+stabilitydirs = os.listdir(datadirectory)
+stabilitydirs = [filename for filename in stabilitydirs if filename.startswith("stability_")]
+
+#
+# pull all the data files into a dictionary array
+#
+datadict = {}
+filenumber = 0
+num_12 = 0
+num_32 = 0
+for thisdir in stabilitydirs:
+    print("Beginning processing for " + thisdir)
+    elementdirs = os.listdir(datadirectory + "/" + thisdir)
+    elementdirs = [filename for filename in elementdirs if filename.startswith("element_")]
+    for thiselement in elementdirs:
+        datadict[filenumber] = {}
+        datadict[filenumber]['datadir:'] = datadirectory + "/" + thisdir + "/" + thiselement + "/procresults"
+        theanalysisfile = open(datadirectory + "/" + thisdir + "/" + thiselement + "/procresults/analysissummary.txt")
+        for line in theanalysisfile:
+            thepair = line.split()
+            datadict[filenumber][thepair[0]] = thepair[1]
+        theanalysisfile.close()
+        if datadict[filenumber]['Coil:'] == '32Ch_Head':
+            num_32 = num_32 + 1
+        if datadict[filenumber]['Coil:'] == 'HeadMatrix':
+            num_12 = num_12 + 1
+        filenumber = filenumber + 1
+
+reps_12 = num_12 / 4
+reps_32 = num_32 / 32
+print(str(reps_12) + " 12 channel coil runs")
+print(str(reps_32) + " 32 channel coil runs")
+
+elementnames = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', 'H31', 'H32', 'H1P', 'H2P', 'H3P', 'H4P']
+
+#######################################################################################
+#
+# sort the data up by coil and write to files
+#
+thearraylen = np.max([reps_12, reps_32])
+com_x_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+com_y_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+com_z_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+dirvec_x_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+dirvec_y_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+dirvec_z_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+maxloc_x_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+maxloc_y_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+maxloc_z_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+mean_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+pppc_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+stdpc_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+snr_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+sfnr_vals = np.zeros((len(elementnames), thearraylen), dtype=float)
+
+pos_12 = 0
+pos_32 = 0
+elementnum = np.zeros(len(elementnames))
+for i in range(filenumber):
+    whichcol = elementnames.index(datadict[i]['Element:'])
+    if datadict[i]['Object:'] == 'BIRN_phantom':
+        if datadict[i]['Protocol:'] != 'nothing':
+            com_x_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['center_of_mass_x:'])
+            com_y_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['center_of_mass_y:'])
+            com_z_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['center_of_mass_z:'])
+            maxloc_x_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_x:'])
+            maxloc_y_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_y:'])
+            maxloc_z_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_z:'])
+            dirvec_x_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_dirvec_x:'])
+            dirvec_y_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_dirvec_y:'])
+            dirvec_z_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_dirvec_z:'])
+            mean_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_mean:'])
+            pppc_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_p-p%:'])
+            stdpc_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_std%:'])
+            snr_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_SNR:'])
+            sfnr_vals[whichcol, elementnum[whichcol]] = float(datadict[i]['maxloc_roi_SFNR:'])
+            elementnum[whichcol] = elementnum[whichcol] + 1
+
+for i in range(len(elementnames)):
+    print("[", "'" + elementnames[i] + "'", ",",\
+        "[", np.mean(com_x_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(com_y_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(com_z_vals[i, 0:elementnum[i]]), "],",\
+        "[", np.mean(maxloc_x_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(maxloc_y_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(maxloc_z_vals[i, 0:elementnum[i]]), "],",\
+        "[", np.mean(dirvec_x_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(dirvec_y_vals[i, 0:elementnum[i]]), ",",\
+        np.mean(dirvec_z_vals[i, 0:elementnum[i]]), "]],")
+
+#######################################################################################
+# generate plot control files to graph all interesting stability parameters
+#
+# central and peripheral SNR and SFNR
+#
+pointsize = 'ps 2'
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtic auto\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:800]\n")
+PLOTCMDFILE.writelines("set title \"Absolute SNR and SFNR\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:5 title 'Central ROI SNR' with linespoints " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:6 title 'Peripheral ROI SNR' with linespoints " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:7 title 'Central ROI SFNR' with linespoints " + pointsize + " pt 4, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:8 title 'Peripheral ROI SFNR' with linespoints " + pointsize + " pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# central and peripheral stability
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_roistab", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtic auto\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:1.0]\n")
+PLOTCMDFILE.writelines("set title \"ROI stability: p-p variation in percent\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"p-p percent\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:3 title 'Central ROI' with linespoints " + pointsize + " pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:4 title 'Peripheral ROI' with linespoints " + pointsize + " pt 4\n")
+PLOTCMDFILE.close()
+
+#
+# ghosts
+#
+PLOTCMDFILE = open(outputdirectory + "/" + whichscan + "/plotcmds_ghost", "w")
+PLOTCMDFILE.writelines("set terminal jpeg\n set autoscale\n unset log\n unset label\n set xdata time\n set xtic auto\n set ytic auto\n set timefmt \"%Y%m%dT%H:%M:%S\"\n")
+PLOTCMDFILE.writelines("set xrange [\"20091120T00:00:00\":]\n")
+PLOTCMDFILE.writelines("set yrange [0:15.0]\n")
+PLOTCMDFILE.writelines("set title \"Ghost percentage\"\n")
+PLOTCMDFILE.writelines("set xlabel \"Date\"\n")
+PLOTCMDFILE.writelines("set ylabel \"Ghost amplitude (%)\"\n")
+PLOTCMDFILE.writelines("plot    \"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:9:11:10 title 'Odd ghost' with yerrorbars ps 1 pt 3, \\\n")
+PLOTCMDFILE.writelines("\"" + outputdirectory + "/" + whichscan + "/graphtemp\" using 2:12:14:13 title 'Even ghost' with yerrorbars ps 1 pt 4\n")
+PLOTCMDFILE.close()
+
+for targetcoil in ['TxRx_Head', 'HeadMatrix', '32Ch_Head']:
+    doashellcmd("cp " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_vals.txt " + outputdirectory + "/" + whichscan + "/graphtemp")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_snrsfnr > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_snrsfnr.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_roistab > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_roistab.jpg")
+    doashellcmd("gnuplot " + outputdirectory + "/" + whichscan + "/plotcmds_ghost > " + outputdirectory + "/" + whichscan + "/" + targetcoil + "_ghost.jpg")
+
+#######################################################################################
+# generate a report file
+#
+thisdate = time.strftime("%m/%d/%Y %H:%M:%S", time.localtime())
+REPORTFILE = open(outputdirectory + "/" + whichscan + "/" + "stabilityreport.html", "w")
+REPORTFILE.writelines("<TITLE>Stability summary generated on " + thisdate + "</TITLE></HEAD><BODY>\n")
+
+# Compose the image table
+myimwidth = 400
+imagehdrstr = headertag("Summary images")
+
+imcapstring = paratag(boldtag("CP head coil roi stability:"))
+thecproi_imagestr = imcapstring + imagetag("TxRx_Head_roistab.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("CP head coil SNR, SFNR:"))
+thecpsnrsfnr_imagestr = imcapstring + imagetag("TxRx_Head_snrsfnr.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("CP head coil ghost amplitude:"))
+thecpghost_imagestr = imcapstring + imagetag("TxRx_Head_ghost.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("12 channel head coil roi stability:"))
+the12chroi_imagestr = imcapstring + imagetag("HeadMatrix_roistab.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("12 channel head coil SNR, SFNR:"))
+the12chsnrsfnr_imagestr = imcapstring + imagetag("HeadMatrix_snrsfnr.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("12 channel head coil ghost amplitude:"))
+the12chghost_imagestr = imcapstring + imagetag("HeadMatrix_ghost.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("32 channel head coil roi stability:"))
+the32chroi_imagestr = imcapstring + imagetag("32Ch_Head_roistab.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("32 channel head coil SNR, SFNR:"))
+the32chsnrsfnr_imagestr = imcapstring + imagetag("32Ch_Head_snrsfnr.jpg", myimwidth)
+
+imcapstring = paratag(boldtag("32 channel head coil ghost amplitude:"))
+the32chghost_imagestr = imcapstring + imagetag("32Ch_Head_ghost.jpg", myimwidth)
+
+row1str = tablerowtag(tableentrytag(thecproi_imagestr) + tableentrytag(thecpsnrsfnr_imagestr) + tableentrytag(thecpghost_imagestr))
+row2str = tablerowtag(tableentrytag(the12chroi_imagestr) + tableentrytag(the12chsnrsfnr_imagestr) + tableentrytag(the12chghost_imagestr))
+row3str = tablerowtag(tableentrytag(the32chroi_imagestr) + tableentrytag(the32chsnrsfnr_imagestr) + tableentrytag(the32chghost_imagestr))
+REPORTFILE.writelines(tablepropstag(imagehdrstr + row1str + row2str + row3str, 500, "left"))
+
+# copy and link to individual reports
+REPORTFILE.writelines(headertag("Links to individual reports"))
+
+REPORTFILE.writelines(smallheadertag("CP Head Coil"))
+for i in range(filenumber):
+    if datadict[i]['Coil:'] == 'TxRx_Head':
+        doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        REPORTFILE.writelines("<p><a href=" + datadict[i]['datadir:'] + "/output.html>")
+        REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
+
+REPORTFILE.writelines(smallheadertag("12 channel head matrix"))
+for i in range(filenumber):
+    if datadict[i]['Coil:'] == 'HeadMatrix':
+        doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        REPORTFILE.writelines("<p><a href=" + datadict[i]['datadir:'] + "/output.html>")
+        REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
+
+REPORTFILE.writelines(smallheadertag("32 channel head coil"))
+for i in range(filenumber):
+    if datadict[i]['Coil:'] == '32Ch_Head':
+        doashellcmd("mkdir -p " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        doashellcmd("cp -r " + datadirectory + "/" + datadict[i]['datadir:'] + "/* " + outputdirectory + "/" + whichscan + "/" + datadict[i]['datadir:'])
+        REPORTFILE.writelines("<p><a href=" + datadict[i]['datadir:'] + "/output.html>")
+        REPORTFILE.writelines(datadict[i]['Date:'] + " " + datadict[i]['Time:'] + "</a></p>\n")
+
