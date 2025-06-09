@@ -85,7 +85,7 @@ if len(sys.argv) != 3:
 datadirectory = sys.argv[1]
 outputdirectory = sys.argv[2]
 
-# initialize the outut directory if need be
+# initialize the output directory if need be
 
 #
 # scan the data directory for stability scans

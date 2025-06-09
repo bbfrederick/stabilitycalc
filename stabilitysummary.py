@@ -28,7 +28,7 @@ def stabilitysummary(datadirectory, outputdirectory, whichscan, TargetisBIRNphan
                                                                                      whichscan,
                                                                                      '' if TargetisBIRNphantom else '--nonbirn'))
 
-    # initialize the outut directory if need be
+    # initialize the output directory if need be
     if not os.path.exists(pjoin(outputdirectory, whichscan)):
         os.makedirs(pjoin(outputdirectory, whichscan))
 

@@ -494,7 +494,7 @@ def stabilitycalc(dirname, filename, starttime, initxcenter=None, initycenter=No
     periph_dt_qualitytag = qualitypercent(periphstddev_dt, periphmean_dt, 'peripheral_roi_detrended_std%')
     periphpp_dt_qualitytag = qualitypercent(periphpp_dt, periphmean_dt, 'peripheral_roi_detrended_p-p%')
 
-    # do calculations regarding angular dependance
+    # do calculations regarding angular dependence
     meanangperiphval = np.mean(periphangmeans)
     meanangperiphsfnr = np.mean(periphangsfnrs)
     meanangperiphsnr = np.mean(avgperiphsnrvec)
