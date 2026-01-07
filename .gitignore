@@ -1,6 +1,10 @@
+.DS_Store
+*/.DS_Store
 venv
 config.ini
 TODO.txt
 *.pyc
 /data
 /.idea
+
+testdata/procresults/*
